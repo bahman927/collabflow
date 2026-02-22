@@ -1,0 +1,24 @@
+from rest_framework.permissions import BasePermission
+from memberships.models import WorkspaceMembership
+
+
+class IsWorkspaceMember(BasePermission):
+
+    def has_object_permission(self, request, view, obj):
+        membership = WorkspaceMembership.objects.filter(
+            user=request.user,
+            workspace=obj
+        ).first()
+
+        if not membership:
+            return False
+
+        # Everyone can read
+        if request.method in ["GET", "HEAD", "OPTIONS"]:
+            return True
+
+        # Only Owner can update/delete workspace
+        if membership.role == "Owner":
+            return True
+
+        return False
