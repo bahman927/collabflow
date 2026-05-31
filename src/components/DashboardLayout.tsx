@@ -1,11 +1,11 @@
-import React from "react";
+import React       from "react";
 import ProjectItem from "./ProjectItem";
 
-const projects = [
-  { title: "Design Dashboard UI", status: "To Do" },
-  { title: "Mobile App", status: "In Progress" },
-  { title: "Marketing Website", status: "Done" },
-]  as const
+// const projects = [
+//   { title: "Design Dashboard UI", status: "To Do" },
+//   { title: "Mobile App", status: "In Progress" },
+//   { title: "Marketing Website", status: "Done" },
+// ]  as const
 
 const DashboardLayout: React.FC = () => {
   return (

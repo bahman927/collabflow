@@ -1,22 +1,37 @@
-from rest_framework.viewsets import ReadOnlyModelViewSet
+from rest_framework.viewsets import ModelViewSet
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.exceptions import PermissionDenied
+
 from .models import Activity
 from .serializers import ActivitySerializer
+from workspaces.models import Workspace
 
 
-class ActivityViewSet(ReadOnlyModelViewSet):
+
+class ActivityViewSet(ModelViewSet):
     serializer_class = ActivitySerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return (
-            Activity.objects
-            .filter(workspace__memberships__user=self.request.user)
-            .select_related("user", "workspace")
-            .order_by("-created_at")
-        )
-    
+        # User sees only activities in workspaces they belong to
+        return Activity.objects.filter(
+            workspace__memberships__user=self.request.user
+        ).distinct()
 
+    def perform_create(self, serializer):
+        workspace_id = self.request.data.get("workspace_id")
+        if not workspace_id:
+            raise PermissionDenied("workspace_id is required")
+
+        workspace = Workspace.objects.get(id=workspace_id)
+
+        if not workspace.memberships.filter(user=self.request.user).exists():
+            raise PermissionDenied("Not allowed")
+
+        serializer.save(
+            workspace=workspace,
+            user=self.request.user
+        )
 
 
 #     🔹 ReadOnlyModelViewSet

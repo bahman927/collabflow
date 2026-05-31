@@ -1,14 +1,28 @@
-from django.urls import path
-from . import views
+from rest_framework.routers import DefaultRouter
+from .views import ProjectViewSet
 
-app_name = 'projects'  # namespacing is good practice
+router = DefaultRouter()
+# router.register(r'tasks', TaskViewSet, basename='task')
+router.register("projects", ProjectViewSet)
+
+
+urlpatterns = router.urls
+
+
+
+
+
+# from django.urls import path
+# from . import views
+
+# app_name = 'projects'  # namespacing is good practice
 
  
 
-urlpatterns = [
-    path("", views.ProjectListCreateAPIView.as_view(), name="list"),  # GET all projects / POST new project
-    path("<int:pk>/", views.ProjectRetrieveUpdateDestroyAPIView.as_view(), name="detail"),  # GET/PUT/PATCH/DELETE project
-]
+# urlpatterns = [
+#     path("", views.ProjectListCreateAPIView.as_view(), name="list"),  # GET all projects / POST new project
+#     path("<int:pk>/", views.ProjectRetrieveUpdateDestroyAPIView.as_view(), name="detail"),  # GET/PUT/PATCH/DELETE project
+# ]
 
 
 

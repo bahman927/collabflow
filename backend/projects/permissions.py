@@ -1,5 +1,5 @@
 from rest_framework.permissions import BasePermission
-from memberships.models import WorkspaceMembership
+from workspaces.models import WorkspaceMember
 
 
 class IsProjectWorkspaceMember(BasePermission):
@@ -7,7 +7,7 @@ class IsProjectWorkspaceMember(BasePermission):
     def has_object_permission(self, request, view, obj):
         workspace = obj.workspace
 
-        membership = WorkspaceMembership.objects.filter(
+        membership = WorkspaceMember.objects.filter(
             user=request.user,
             workspace=workspace
         ).first()

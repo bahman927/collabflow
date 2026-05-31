@@ -6,9 +6,12 @@ from .models import Activity
 @receiver(post_save, sender=Task)
 def create_task_activity(sender, instance, created, **kwargs):
     if created:
-        Activity.objects.create(
-            user=instance.assigned_to,
-            project=instance.project,
-            action="TASK_CREATED",
-            description=f"Task '{instance.title}' was created."
+        assignees = instance.assignees.select_related("member__user")
+
+        for assignee in assignees:
+            Activity.objects.create(
+                user=assignee.member.user,
+                project=instance.project,
         )
+
+       

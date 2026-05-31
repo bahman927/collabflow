@@ -23,8 +23,15 @@ class Project(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+class ProjectMember(models.Model):
+    
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='project_members')
+    member = models.ForeignKey('workspaces.WorkspaceMember', on_delete=models.CASCADE, related_name='project_assignments')
+    assigned_at = models.DateTimeField(auto_now_add=True)
+    assigned_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
+
     class Meta:
-        ordering = ["-created_at"]
+        unique_together = ('project', 'member')  # ← HERE, not on User
 
     def __str__(self):
-        return self.name
+        return f"{self.member} → {self.project.name}"

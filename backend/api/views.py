@@ -1,27 +1,15 @@
-from rest_framework.decorators import api_view
-from rest_framework.response import Response
-from rest_framework.reverse import reverse
+from rest_framework.viewsets import ModelViewSet
+from projects.models import Project
+from projects.serializers import ProjectSerializer
 
-@api_view(["GET"])
-def api_root(request, format=None):
-    return Response({
-        "users":    reverse("users:list", request=request, format=format),
-        "projects": reverse("projects:list", request=request, format=format),
-        "tasks":    reverse("tasks:list", request=request, format=format),
-        "token_obtain_pair": reverse("token_obtain_pair", request=request, format=format),
-        "token_refresh": reverse("token_refresh", request=request, format=format),
-    })
+class ProjectViewSet(ModelViewSet):
+    serializer_class = ProjectSerializer
 
+    def get_queryset(self):
+        queryset = Project.objects.all()
+        workspace_id = self.request.query_params.get("workspace")
 
-#  above api_root output is :
-# {
-#     "users": "http://localhost:8000/api/users/",
-#     "projects": "http://localhost:8000/api/projects/",
-#     "tasks": "http://localhost:8000/api/tasks/",
-#     "token_obtain_pair": "http://localhost:8000/api/token/",
-#     "token_refresh": "http://localhost:8000/api/token/refresh/"
-# }
+        if workspace_id:
+            queryset = queryset.filter(workspace_id=workspace_id)
 
-
-
- 
+        return queryset

@@ -1,501 +1,537 @@
+ // src/components/Dashboard.tsx
 
+import React, {useEffect} from "react";
+import { Link } from "react-router-dom";
+import { useWorkspace } from "../context/WorkspaceProvider";
+import { useProject } from "../context/ProjectProvider";
+import { useTask } from "../context/TaskProvider";
+import { useAuth } from "../hooks/useAuth";
+import type { Task, TaskStatus } from "../types/task";
 
-// src/components/Dashboard.tsx
-// import React from "react";
-// import DashboardLayout from "../components/DashboardLayout";
+/* ───────────────────────────── helpers ───────────────────────────── */
 
-// const Dashboard: React.FC = () => {
-//   return <DashboardLayout />;
-// };
+function greeting(): string {
+  const h = new Date().getHours();
+  if (h < 12) return "Good morning";
+  if (h < 17) return "Good afternoon";
+  return "Good evening";
+}
 
-// export default Dashboard;
+function relativeTime(dateStr: string): string {
+  const now = Date.now();
+  const then = new Date(dateStr).getTime();
+  const diffMs = now - then;
+  const mins = Math.floor(diffMs / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  if (days === 1) return "yesterday";
+  if (days < 7) return `${days}d ago`;
+  return new Date(dateStr).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+  });
+}
 
+const PRIORITY_DOT: Record<string, string> = {
+  urgent: "bg-red-500",
+  high: "bg-orange-500",
+  medium: "bg-yellow-400",
+  low: "bg-blue-400",
+};
 
-import React from "react";
-import ProjectItem from "./ProjectItem";
-import ActivityItem from "./ActivityItem";
+const STATUS_BADGE: Record<
+  TaskStatus,
+  { label: string; bg: string; text: string }
+> = {
+  todo: { label: "To Do", bg: "bg-gray-100", text: "text-gray-600" },
+  in_progress: {
+    label: "In Progress",
+    bg: "bg-blue-50",
+    text: "text-blue-700",
+  },
+  done: { label: "Done", bg: "bg-green-50", text: "text-green-700" },
+  overdue: { label: "Overdue", bg: "bg-red-50", text: "text-red-700" },
+};
 
-const DashboardLayout: React.FC = () => {
+/* ─────────────────────────── sub-components ──────────────────────── */
+
+function StatCard({
+  icon,
+  label,
+  count,
+  accent,
+  percentage,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  count: number;
+  accent: string;
+  percentage: number;
+}) {
   return (
-    <div className="p-6 bg-gray-100 min-h-screen">
-      <h2 className="font-bold text-3xl mb-4">Dashboard</h2>
+    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex flex-col gap-3 hover:shadow-md transition-shadow">
+      <div className="flex items-center justify-between">
+        <div className={`p-2.5 rounded-lg ${accent}`}>{icon}</div>
+        {percentage > 0 && (
+          <span className="text-xs font-medium text-gray-400">
+            {percentage}%
+          </span>
+        )}
+      </div>
+      <div>
+        <p className="text-2xl font-bold text-gray-900">{count}</p>
+        <p className="text-sm text-gray-500">{label}</p>
+      </div>
+    </div>
+  );
+}
 
-      {/* SEARCH BAR */}
-      <div className="bg-white rounded-xl shadow p-2 mb-4 max-w-lg">
-        <div className="relative">
-          <svg
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-            width="20"
-            height="20"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            viewBox="0 0 24 24"
-          >
-            <circle cx="11" cy="11" r="8" />
-            <line x1="21" y1="21" x2="16.65" y2="16.65" />
-          </svg>
-          <input
-            type="text"
-            placeholder="Search tasks and projects"
-            className="w-full pl-10  py-2 rounded-lg border border-gray-300
-                       focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
+/* Overlapping avatar stack */
+function AvatarStack({ members, max = 3 }: { members: { name: string; avatar?: string }[]; max?: number }) {
+  if (!members || members.length === 0) return null;
+
+  const visible = members.slice(0, max);
+  const overflow = members.length - max;
+
+  return (
+    <div className="flex items-center -space-x-2">
+      {visible.map((member, i) => (
+        <div
+          key={i}
+          title={member.name}
+          className="w-7 h-7 rounded-full border-2 border-white flex items-center justify-center text-[10px] font-semibold text-white shrink-0"
+          style={{
+            backgroundColor: nameToColor(member.name),
+            zIndex: visible.length - i,
+          }}
+        >
+          {member.avatar ? (
+            <img src={member.avatar} alt={member.name} className="w-full h-full rounded-full object-cover" />
+          ) : (
+            initials(member.name)
+          )}
+        </div>
+      ))}
+      {overflow > 0 && (
+        <div
+          className="w-7 h-7 rounded-full border-2 border-white bg-gray-200 flex items-center justify-center text-[10px] font-medium text-gray-600 shrink-0"
+          style={{ zIndex: 0 }}
+        >
+          +{overflow}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* Generate consistent color from name */
+function nameToColor(name: string): string {
+  const colors = [
+    "#6366f1", "#8b5cf6", "#ec4899", "#f43f5e",
+    "#f97316", "#eab308", "#22c55e", "#14b8a6",
+    "#06b6d4", "#3b82f6",
+  ];
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  return colors[Math.abs(hash) % colors.length];
+}
+
+/* Get initials from name */
+function initials(name: string): string {
+  return name
+    .split(" ")
+    .map((w) => w[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+}
+
+
+function TaskDistributionBar({
+  counts,
+  total,
+}: {
+  counts: Record<TaskStatus, number>;
+  total: number;
+}) {
+  if (total === 0) return null;
+
+  const segments: { key: TaskStatus; color: string; label: string }[] = [
+    { key: "done", color: "bg-green-500", label: "Done" },
+    { key: "in_progress", color: "bg-blue-500", label: "In Progress" },
+    { key: "todo", color: "bg-gray-400", label: "To Do" },
+    { key: "overdue", color: "bg-red-500", label: "Overdue" },
+  ];
+
+  return (
+    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+      <h3 className="text-sm font-semibold text-gray-700 mb-3">
+        Task Distribution
+      </h3>
+
+      {/* Bar */}
+      <div className="flex h-3 rounded-full overflow-hidden bg-gray-100">
+        {segments.map((seg) => {
+          const pct = (counts[seg.key] / total) * 100;
+          if (pct === 0) return null;
+          return (
+            <div
+              key={seg.key}
+              className={`${seg.color} transition-all duration-500`}
+              style={{ width: `${pct}%` }}
+              title={`${seg.label}: ${counts[seg.key]}`}
+            />
+          );
+        })}
+      </div>
+
+      {/* Legend */}
+      <div className="flex flex-wrap gap-4 mt-3">
+        {segments.map((seg) => (
+          <div key={seg.key} className="flex items-center gap-1.5 text-xs text-gray-500">
+            <span className={`w-2.5 h-2.5 rounded-full ${seg.color}`} />
+            {seg.label}{" "}
+            <span className="font-medium text-gray-700">
+              {counts[seg.key]}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function RecentTaskRow({ task }: { task: Task }) {
+
+  const badge = STATUS_BADGE[task.status] ?? STATUS_BADGE.todo;
+  const dot = PRIORITY_DOT[(task as any).priority] ?? "bg-gray-300";
+
+   // Adapt to your Task type — adjust field name as needed
+ const members = task.assignees.map((person) => ({
+  name: person.name,
+  avatar: person.avatarUrl,
+}));
+
+
+  return (
+    <li className="flex items-center justify-between py-3 border-b border-gray-50 last:border-0 group">
+      <div className="flex items-center gap-3 min-w-0">
+        <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${dot}`} />
+        <div className="min-w-0">
+          <p className="text-sm font-medium text-gray-800 truncate group-hover:text-indigo-600 transition-colors">
+            {task.name}
+          </p>
+          {task.description && (
+            <p className="text-xs text-gray-400 truncate max-w-xs">
+              {task.description}
+            </p>
+          )}
         </div>
       </div>
 
-      {/* MAIN CONTENT AREA */}
-      <div className="lg:flex gap-6">
+      <div className="flex items-center gap-3 shrink-0 ml-3">
+        {/* ← Overlapping avatars */}
+        <AvatarStack members={members} max={3} />
 
-        {/* LEFT SIDE */}
-        <div className="flex-1">
+        <span
+          className={`text-xs px-2 py-0.5 rounded-full font-medium ${badge.bg} ${badge.text}`}
+        >
+          {badge.label}
+        </span>
+        <span className="text-xs text-gray-400 w-16 text-right">
+          {relativeTime(task.updated_at)}
+        </span>
+      </div>
+     
+    </li>
+  );
+}
 
-          {/* Status Buttons */}
-          <div className="bg-white rounded-xl shadow p-4 mb-6">
-            <div className="flex flex-wrap gap-4 justify-between">
-              <button className="flex-1 rounded-md bg-blue-300 text-white font-semibold hover:bg-blue-700 transition text-sm">
-                3 To Do
-              </button>
-              <button className="flex-1 rounded-md bg-yellow-100 text-yellow-700 font-semibold hover:bg-yellow-200 transition">
-                2 In Progress
-              </button>
-              <button className="flex-1 rounded-lg bg-green-100 text-green-700 font-semibold hover:bg-green-200 transition">
-                3 Done
-              </button>
-              <button className="flex-1 rounded-lg bg-red-100 text-red-700 font-semibold hover:bg-red-200 transition">
-                4 Overdue
-              </button>
-            </div>
-          </div>
+ 
+function ProjectCard({
+  project,
+  tasks,
+  workspaceId,
+  onSelect,
+}: {
+  project: { id: number; name: string; description?: string };
+  tasks: Task[];
+  workspaceId: number;
+  onSelect: ()=> void;
+}) {
+  const projectTasks = tasks.filter((t) => t.project_id === project.id);
+  const done = projectTasks.filter((t) => t.status === "done").length;
+  const total = projectTasks.length;
+  const pct = total > 0 ? Math.round((done / total) * 100) : 0;
 
-          {/* Recent Tasks + Activity Feed */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+  return (
+    <Link
+      to={`/workspace/${workspaceId}/project/${project.id}/board`}
+      onClick={onSelect}
 
-            {/* Recent Tasks */}
-            <div className="bg-white rounded-xl shadow p-6">
-              <h2 className="text-2xl font-semibold mb-4">Recent Tasks</h2>
-              <ul className="space-y-3 text-lg">
-                <ProjectItem title="Design Dashboard UI part 2" status="To Do" />
-                <ProjectItem title="API Integration" status="In Progress" />
-                <ProjectItem title="Fix Login Bug" status="Done" />
-                <ProjectItem title="Client Billing" status="Overdue" />
-              </ul>
-            </div>
-
-            {/* Activity Feed */}
-            <div className="bg-white rounded-xl shadow p-6">
-              <h2 className="text-2xl font-semibold mb-4">Activity Feed</h2>
-              <ul className="space-y-4">
-                <ActivityItem
-                  name="Bahman"
-                  action="created a new task"
-                  time="2 hours ago"
-                  avatar="https://i.pravatar.cc/100?img=1"
-                />
-                <ActivityItem
-                  name="Sara"
-                  action="commented on a task"
-                  time="5 hours ago"
-                  avatar="https://i.pravatar.cc/100?img=5"
-                />
-                <ActivityItem
-                  name="Ali"
-                  action="marked task as Done"
-                  time="Yesterday"
-                  avatar="https://i.pravatar.cc/100?img=3"
-                />
-                <ActivityItem
-                  name="Robin"
-                  action="marked task as Done"
-                  time="Yesterday"
-                  avatar="https://i.pravatar.cc/100?img=8"
-                />
-              </ul>
-
-              
-            </div>
-
-          </div>
+      className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 hover:shadow-md hover:border-indigo-200 transition-all group block"
+    >
+      <div className="flex items-start justify-between mb-3">
+        <div className="min-w-0">
+          <h4 className="font-semibold text-gray-800 truncate group-hover:text-indigo-600 transition-colors">
+            {project.name}
+          </h4>
+          {project.description && (
+            <p className="text-xs text-gray-400 mt-0.5 truncate">
+              {project.description}
+            </p>
+          )}
         </div>
+        <span className="text-xs font-medium text-gray-400 shrink-0 ml-2">
+          {total} tasks
+        </span>
+      </div>
 
-        {/* RIGHT SIDE - Project List */}
-        <div className="w-full lg:w-80 mt-6 lg:mt-0">
-          <div className="bg-white rounded-xl shadow p-6 h-fit">
-            <h2 className="text-2xl font-semibold mb-4">Project List</h2>
-            <ul className="space-y-3 text-lg">
-              <ProjectItem title="Design Dashboard UI" status="To Do" />
-              <ProjectItem title="Marketing Website" status="In Progress" />
-              <ProjectItem title="Client Portal" status="Done" />
-              <ProjectItem title="Account System" status="Overdue" />
-              <ProjectItem title="Marketing System" status="Overdue" />
-              <ProjectItem title="Account System" status="Overdue" />
+      {/* Mini progress bar */}
+      <div className="h-1.5 rounded-full bg-gray-100 overflow-hidden">
+        <div
+          className="h-full bg-green-500 rounded-full transition-all duration-500"
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+      <div className="flex justify-between mt-2 text-xs text-gray-400">
+        <span>{done} completed</span>
+        <span>{pct}%</span>
+      </div>
+    </Link>
+  );
+}
+
+/* ───────────────────────────── icons ─────────────────────────────── */
+
+const IconTasks = () => (
+  <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+    <rect x="3" y="3" width="18" height="18" rx="2" />
+    <path d="M9 12l2 2 4-4" />
+  </svg>
+);
+
+const IconTodo = () => (
+  <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+    <circle cx="12" cy="12" r="9" />
+    <path d="M12 8v4" />
+    <circle cx="12" cy="16" r="0.5" fill="currentColor" />
+  </svg>
+);
+
+const IconProgress = () => (
+  <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+    <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
+  </svg>
+);
+
+const IconDone = () => (
+  <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+    <path d="M20 6L9 17l-5-5" />
+  </svg>
+);
+
+const IconOverdue = () => (
+  <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+    <circle cx="12" cy="12" r="9" />
+    <path d="M12 7v5l3 3" />
+  </svg>
+);
+
+const IconProjects = () => (
+  <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+    <path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" />
+  </svg>
+);
+
+/* ────────────────────────── main component ───────────────────────── */
+
+const Dashboard: React.FC = () => {
+  const { user } = useAuth();
+  const { currentWorkspace } = useWorkspace();
+  const { getWorkspaceTasks, getCurrentWorkspaceTasks} = useTask();
+  const { projects, setCurrentProject } = useProject();
+  const { tasks, loading } = useTask();
+  const normalize = (s: string) => s.toLowerCase() as TaskStatus;
+
+  if (!currentWorkspace) return null;
+
+  const wsTasks = getWorkspaceTasks(currentWorkspace.id);
+  
+  console.log('wsTasks : ', wsTasks)
+  console.log('Tasks : ', tasks)
+  console.log('currentWorkspace.id : ',  currentWorkspace.id)
+
+  const dashboardGrouped = wsTasks.reduce((acc, task) => {
+      const key = normalize(task.status);
+      if (!acc[key]) acc[key] = [];
+      acc[key].push(task);
+      return acc;
+  }, {} as Record<TaskStatus, Task[]>);
+
+  useEffect(() => {
+  setCurrentProject(null);
+}, []);
+
+  const counts = {
+  todo: dashboardGrouped["todo"]?.length ?? 0,
+  in_progress: dashboardGrouped["in_progress"]?.length ?? 0,
+  done: dashboardGrouped["done"]?.length ?? 0,
+  overdue: dashboardGrouped["overdue"]?.length ?? 0,
+};
+
+  const total = wsTasks.length;
+  const pct = (n: number) => (total > 0 ? Math.round((n / total) * 100) : 0);
+
+  const recentTasks = [...tasks]
+    .sort(
+      (a, b) =>
+        new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+    )
+    .slice(0, 7);
+
+  const userName =
+    (user as any)?.name ??
+    (user as any)?.email?.split("@")[0] ??
+    "";
+
+  return (
+    <div className="p-6 lg:p-8 bg-gray-50 min-h-screen space-y-6">
+      {/* ── Header ── */}
+      <header>
+        <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">
+          {greeting()}
+          {userName ? `, ${userName.charAt(0).toUpperCase() + userName.slice(1)}` : ""} 👋
+        </h1>
+        <p className="text-sm text-gray-500 mt-1">
+          {currentWorkspace
+            ? `Here's what's happening in ${currentWorkspace.name}`
+            : "Select a workspace to get started"}
+        </p>
+      </header>
+
+      {/* ── Stats Cards ── */}
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+        <StatCard
+          icon={<IconTasks />}
+          label="Total Tasks"
+          count={total}
+          accent="bg-indigo-50 text-indigo-600"
+          percentage={0}
+        />
+        <StatCard
+          icon={<IconTodo />}
+          label="To Do"
+          count={counts.todo}
+          accent="bg-gray-100 text-gray-600"
+          percentage={pct(counts.todo)}
+        />
+        <StatCard
+          icon={<IconProgress />}
+          label="In Progress"
+          count={counts.in_progress}
+          accent="bg-blue-50 text-blue-600"
+          percentage={pct(counts.in_progress)}
+        />
+        <StatCard
+          icon={<IconDone />}
+          label="Done"
+          count={counts.done}
+          accent="bg-green-50 text-green-600"
+          percentage={pct(counts.done)}
+        />
+        <StatCard
+          icon={<IconOverdue />}
+          label="Overdue"
+          count={counts.overdue}
+          accent="bg-red-50 text-red-600"
+          percentage={pct(counts.overdue)}
+        />
+      </div>
+
+      {/* ── Task Distribution Bar ── */}
+      <TaskDistributionBar counts={counts} total={total} />
+
+      {/* ── Two-column layout: Recent Tasks + Projects ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Recent Tasks */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-gray-800">
+              Recent Task Activity
+            </h2>
+            <span className="text-xs text-gray-400">Last updated</span>
+          </div>
+
+          {loading ? (
+            <div className="space-y-3">
+              {[...Array(4)].map((_, i) => (
+                <div
+                  key={i}
+                  className="h-10 bg-gray-100 rounded-lg animate-pulse"
+                />
+              ))}
+            </div>
+          ) : wsTasks.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-gray-600 text-sm">No tasks yet</p>
+              <p className="text-xs text-gray-400 mt-1">
+                Create a task to see activity here
+              </p>
+            </div>
+          ) : (
+            <ul>
+              {wsTasks.map((task) => (
+                <RecentTaskRow key={task.id} task={task} />
+              ))}
             </ul>
-          </div>
+          )}
         </div>
 
+        {/* Projects Overview */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+              <span className="p-1.5 rounded-lg bg-indigo-50 text-indigo-600">
+                <IconProjects />
+              </span>
+              Projects
+            </h2>
+            <span className="text-xs text-gray-400">
+              {projects.length} project{projects.length !== 1 ? "s" : ""}
+            </span>
+          </div>
+
+          {projects.length === 0 ? (
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 text-center">
+              <p className="text-gray-400 text-sm">No projects yet</p>
+              <p className="text-xs text-gray-300 mt-1">
+                Create a project to get started
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-3">
+              {projects.map((project) => (
+                <ProjectCard
+                  key={project.id}
+                  project={project}
+                  tasks={tasks}
+                  workspaceId={currentWorkspace?.id ?? 0}
+                  onSelect={() => setCurrentProject(project)}
+                />
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
 };
 
-export default DashboardLayout;
+export default Dashboard;
 
 
-
-// import React from "react";
-// import ProjectItem from "./ProjectItem";
-
-// const DashboardLayout: React.FC = () => {
-//   return (
-//      {/* MAIN CONTENT AREA */}
-// <div className="lg:flex gap-6">
-
-//   {/* LEFT SIDE */}
-//   <div className="flex-1">
-
-//     {/* Top Status Buttons */}
-//     <div className="bg-white rounded-xl shadow p-4 mb-6">
-//       <div className="flex flex-wrap gap-4 justify-between">
-//         <button className="flex-1 rounded-md bg-blue-300 text-white font-semibold hover:bg-blue-700 transition text-sm">
-//           3 To Do
-//         </button>
-//         <button className="flex-1 rounded-md bg-yellow-100 text-yellow-700 font-semibold hover:bg-yellow-200 transition">
-//           2 In Progress
-//         </button>
-//         <button className="flex-1 rounded-lg bg-green-100 text-green-700 font-semibold hover:bg-green-200 transition">
-//           3 Done
-//         </button>
-//         <button className="flex-1 rounded-lg bg-red-100 text-red-700 font-semibold hover:bg-red-200 transition">
-//           4 Overdue
-//         </button>
-//       </div>
-//     </div>
-
-//     {/* Recent Tasks + Activity Grid */}
-//     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
-//       {/* Recent Tasks */}
-//       <div className="bg-white rounded-xl shadow p-6">
-//         <h2 className="text-2xl font-semibold mb-4">Recent Tasks</h2>
-//         <ul className="space-y-3 text-lg">
-//           <ProjectItem title="Design Dashboard UI part 2" status="To Do" />
-//           <ProjectItem title="API Integration" status="In Progress" />
-//           <ProjectItem title="Fix Login Bug" status="Done" />
-//           <ProjectItem title="Client Billing" status="Overdue" />
-//         </ul>
-//       </div>
-
-//       {/* Activity Feed */}
-//       <div className="bg-white rounded-xl shadow p-6">
-//         <h2 className="text-2xl font-semibold mb-4">Activity Feed</h2>
-//         <ul className="space-y-4 text-lg">
-//           <li>
-//             <span className="font-semibold">Bahman</span> created a new task
-//             <p className="text-sm text-gray-500">2 hours ago</p>
-//           </li>
-//           <li>
-//             <span className="font-semibold">Sara</span> commented on a task
-//             <p className="text-sm text-gray-500">5 hours ago</p>
-//           </li>
-//           <li>
-//             <span className="font-semibold">Ali</span> marked task as Done
-//             <p className="text-sm text-gray-500">Yesterday</p>
-//           </li>
-//         </ul>
-//       </div>
-
-//     </div>
-//   </div>
-
-//   <div className="w-full lg:w-80 mt-6 lg:mt-0">
-//     <div className="bg-white rounded-xl shadow p-6 h-fit">
-//       <h2 className="text-2xl font-semibold mb-4">Project List</h2>
-//       <ul className="space-y-3 text-lg">
-//         <ProjectItem title="Design Dashboard UI" status="To Do" />
-//         <ProjectItem title="Marketing Website" status="In Progress" />
-//         <ProjectItem title="Client Portal" status="Done" />
-//         <ProjectItem title="Billing System" status="Overdue" />
-//       </ul>
-//     </div>
-//   </div>
-
-// </div> 
-
-
-
-//   );
-// };
-// export default DashboardLayout;
-
-  {/* RIGHT SIDE — Project List */}
-  
-
-
-
-  //   <div className="p-6 bg-gray-100 min-h-auto">
-  //      <p className="font-bold text-2xl mb-4"> Dashboard</p>
-  //     <div className="bg-white rounded-xl shadow p-2 mb-4 max-w-md">
-  //       <div className="relative">
-  //         <svg
-  //           className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-  //           width="20"
-  //           height="20"
-  //           fill="none"
-  //           stroke="currentColor"
-  //           strokeWidth="2"
-  //           viewBox="0 0 24 24"
-  //         >
-  //           <circle cx="11" cy="11" r="8" />
-  //           <line x1="21" y1="21" x2="16.65" y2="16.65" />
-  //         </svg>
-  //         <input
-  //           type="text"
-  //           placeholder="Search tasks and projects"
-  //           className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300
-  //                      focus:outline-none focus:ring-2 focus:ring-blue-500"
-  //         />
-  //       </div>
-  //     </div> 
-         
-  //     {/* Top Status Buttons */}
-  //     <div className="bg-white rounded-xl shadow p-4 mb-6">
-  //       <div className="flex flex-wrap gap-4 justify-between">
-  //         <button className="flex-1  rounded-md bg-blue-300 text-white   font-semibold hover:bg-blue-700 transition text-sm">
-  //          3 To Do
-  //         </button>
-  //         <button className="flex-1 rounded-md bg-yellow-100 text-yellow-700 font-semibold hover:bg-yellow-200 transition">
-  //           2 In Progress
-  //         </button>
-  //         <button className="flex-1   rounded-lg bg-green-100 text-green-700 font-semibold hover:bg-green-200 transition">
-  //           3 Done
-  //         </button>
-  //         <button className="flex-1  rounded-lg bg-red-100 text-red-700 font-semibold hover:bg-red-200 transition">
-  //           4 Overdue
-  //         </button>
-  //       </div>
-  //     </div>
-
-  //     {/* Search Bar */}
-      
-
-  //     {/* Bottom Section: 2 Columns */}
-  //     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-  //       {/* Recent Tasks */}
-  //       <div className="bg-white rounded-xl shadow p-6">
-  //         <h2 className="text-2xl font-semibold mb-4">Recent Tasks</h2>
-  //         <ul className="space-y-3 text-lg">
-  //           <ProjectItem title="Design Dashboard UI part 2" status="To Do" />
-  //           <ProjectItem title="API Integration" status="In Progress" />
-  //           <ProjectItem title="Fix Login Bug" status="Done" />
-  //           <ProjectItem title="Client Billing" status="Overdue" />
-  //         </ul>
-  //       </div>
-
-  //         {/* NEW: Activity Feed */}
-  //   <div className="bg-white rounded-xl shadow p-6">
-  //     <h2 className="text-2xl font-semibold mb-4">Activity Feed</h2>
-  //     <ul className="space-y-4 text-lg">
-  //       <li>
-  //         <span className="font-semibold">Bahman</span> created a new task
-  //         <p className="text-sm text-gray-500">2 hours ago</p>
-  //       </li>
-  //       <li>
-  //         <span className="font-semibold">Sara</span> commented on a task
-  //         <p className="text-sm text-gray-500">5 hours ago</p>
-  //       </li>
-  //       <li>
-  //         <span className="font-semibold">Ali</span> marked task as Done
-  //         <p className="text-sm text-gray-500">Yesterday</p>
-  //       </li>
-  //     </ul>
-  //   </div>
-  //   </div>
-   
-  // </div>
-   {/* Project List */}
-        //  <div className="bg-white rounded-xl shadow p-6">
-        //   <h2 className="text-2xl font-semibold mb-4">Project List</h2>
-        //   <ul className="space-y-3 text-lg">
-        //     <ProjectItem title="Design Dashboard UI" status="To Do" />
-        //     <ProjectItem title="Marketing Website" status="In Progress" />
-        //     <ProjectItem title="Client Portal" status="Done" />
-        //     <ProjectItem title="Billing System" status="Overdue" />
-        //   </ul>
-        // </div> 
-
-
-    
-
-
-
-
-
-
- {/* Project List */}
-        //  <div className="bg-white rounded-xl shadow p-6">
-        //   <h2 className="text-2xl font-semibold mb-4">Project List</h2>
-        //   <ul className="space-y-3 text-lg">
-        //     <ProjectItem title="Design Dashboard UI" status="To Do" />
-        //     <ProjectItem title="Marketing Website" status="In Progress" />
-        //     <ProjectItem title="Client Portal" status="Done" />
-        //     <ProjectItem title="Billing System" status="Overdue" />
-        //   </ul>
-        // </div> 
-
-
-// // const DashboardLayout = () => {
-// //   return (
-// //     <div className="p-6 bg-gray-100 min-h-screen">
-// //       <p className="font-bold text-2xl mb-4"> Dashboard</p>
-// //       <div className="bg-white w-140 rounded-xl shadow  ml-10 mb-3">
-        
-//         <div className="relative">
-//           {/* Search Icon */}
-//           <svg
-//             className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-//             width="20"
-//             height="20"
-//             fill="none"
-//             stroke="currentColor"
-//             strokeWidth="2"
-//             viewBox="0 0 24 24"
-//           >
-//             <circle cx="11" cy="11" r="8" />
-//             <line x1="21" y1="21" x2="16.65" y2="16.65" />
-//           </svg>
-
-//           {/* Input */}
-//           <input
-//             type="text"
-//             placeholder="Search tasks or projects"
-//             className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300
-//                       focus:outline-none focus:ring-2 focus:ring-blue-500"
-//           />
-//         </div>
-// //     </div>
-
-// //       {/* <div className="bg-white  w-120 rounded-xl shadow p-6 ml-20 mb-3">
-// //       </div> */}
-// //       {/* Top Status Card */}
-// //       <div className="bg-white rounded-xl shadow p-4 mb-4">
-// //         <p className="font-semibold text-lg">Recent Tasks</p>
-// //         <div className="flex flex-wrap gap-4 justify-between mt-1">
-// //           <button className="flex-1 min-w-22.5 py-1  rounded-lg bg-blue-300  font-semibold  hover:bg-blue-400 transition">
-// //            7 To Do
-// //           </button>
-
-// //           <button className="flex-1 min-w-35 py-3 rounded-lg bg-yellow-100 text-yellow-700 font-semibold hover:bg-yellow-200 transition">
-// //            5 In Progress
-// //           </button>
-
-// //           <button className="flex-1 min-w-35 py-3 rounded-lg bg-green-100 text-green-700 font-semibold hover:bg-green-200 transition">
-// //            3 Done
-// //           </button>
-
-// //           <button className="flex-1 min-w-35 py-3 rounded-lg bg-red-100 text-red-700 font-semibold hover:bg-red-200 transition">
-// //            4 Overdue
-// //           </button>
-// //         </div>
-// //       </div>
-
-// //       {/* Bottom Section */}
-// //       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-// //         {/* Recent Tasks Card */}
-// //         <div className="bg-white rounded-xl shadow p-6">
-// //           <h2 className="text-lg font-semibold mb-4">Recent Tasks</h2>
-
-// //           <ul className="space-y-3">
-// //             <li className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-// //               <span>Design Dashboard UI</span>
-// //               <span className="text-sm text-blue-600">To Do</span>
-// //             </li>
-
-// //             <li className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-// //               <span>API Integration</span>
-// //               <span className="text-sm text-yellow-600">In Progress</span>
-// //             </li>
-
-// //             <li className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-// //               <span>Fix Login Bug</span>
-// //               <span className="text-sm text-green-600">Done</span>
-// //             </li>
-// //           </ul>
-// //         </div>
-
-// //         {/* Project List Card */}
-// //         <div className="bg-white rounded-xl shadow p-6">
-// //           <h2 className="text-lg font-semibold mb-4">Project Lists</h2>
-
-// //           <ul className="space-y-3">
-// //             <li className="p-3 bg-gray-50 rounded-lg">
-// //               <p className="font-medium">CollabFlow</p>
-// //               <p className="text-sm text-gray-500">Team Collaboration App</p>
-// //             </li>
-
-// //             <li className="p-3 bg-gray-50 rounded-lg">
-// //               <p className="font-medium">Task Manager</p>
-// //               <p className="text-sm text-gray-500">Internal Productivity Tool</p>
-// //             </li>
-
-// //             <li className="p-3 bg-gray-50 rounded-lg">
-// //               <p className="font-medium">Client Portal</p>
-// //               <p className="text-sm text-gray-500">Customer Dashboard</p>
-// //             </li>
-// //           </ul>
-// //         </div>
-// //       </div>
-// //     </div>
-// //   );
-// // };
-
-// // export default DashboardLayout;
-
-
-
-
-
-
-
-// // // src/pages/Dashboard.tsx
-
-// // // src/pages/Dashboard.tsx
-// // // import React from "react";
-// // // import { Link } from "react-router-dom";
-
-// // // const Dashboard: React.FC = () => {
-// // //   return (
-// // //     <div className="p-6 bg-slate-50 min-h-screen">
-// // //       <h2 className="text-blue-900 font-extrabold mb-6">Dashboard</h2>
-
-// // //       <p className="text-slate-700 mb-4">
-// // //         Welcome to your CollabFlow dashboard. Manage projects, tasks, and teams here.
-// // //       </p>
-
-// // //       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-// // //         <Link
-// // //           to="/projects"
-// // //           className="rounded-lg bg-blue-200 p-6 text-white font-medium hover:bg-blue-400 transition"
-// // //         >
-// // //           View Projects
-// // //         </Link>
-// // //         <div className="rounded-lg bg-white p-6 shadow">Recent Activity</div>
-// // //         <div className="rounded-lg bg-white p-6 shadow">Team Overview</div>
-// // //       </div>
-// // //     </div>
-// // //   );
-// // // };
-
-// // // export default Dashboard;
-
-
-
-// // // const Dashboard = () => {
-// // //   return (
-// // //     <div className="p-6">
-// // //       <h1 className="text-2xl font-bold mb-4">Dashboard</h1>
-// // //       <p>Welcome to CollabFlow! Here you can see your workspaces and projects.</p>
-// // //     </div>
-// // //   );
-// // // };
-
-// // // export default Dashboard;
+ 

@@ -1,24 +1,32 @@
+
 from rest_framework.permissions import BasePermission
-from memberships.models import WorkspaceMembership
+from workspaces.models import WorkspaceMember
+from rest_framework.permissions import BasePermission
+from .models import WorkspaceMember
 
-
-class IsWorkspaceMember(BasePermission):
-
-    def has_object_permission(self, request, view, obj):
-        membership = WorkspaceMembership.objects.filter(
-            user=request.user,
-            workspace=obj
-        ).first()
-
-        if not membership:
+class IsWorkspaceAdminOrOwner(BasePermission):
+    """
+    Allows access only to workspace owners and admins.
+    """
+    def has_permission(self, request, view):
+        workspace_id = view.kwargs.get('workspace_id')
+        try:
+            member = WorkspaceMember.objects.get(
+                workspace_id=workspace_id,
+                user=request.user,
+                is_active=True,
+            )
+            return member.role in ('owner', 'admin')
+        except WorkspaceMember.DoesNotExist:
             return False
+ 
 
-        # Everyone can read
-        if request.method in ["GET", "HEAD", "OPTIONS"]:
-            return True
+class IsWorkspaceOwner(BasePermission):
+    def has_permission(self, request, view):
+        workspace_id = view.kwargs.get('workspace_id')
 
-        # Only Owner can update/delete workspace
-        if membership.role == "Owner":
-            return True
-
-        return False
+        return WorkspaceMember.objects.filter(
+            workspace_id=workspace_id,
+            user=request.user,
+            role='Owner'
+        ).exists()

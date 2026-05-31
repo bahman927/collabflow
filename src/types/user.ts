@@ -1,6 +1,10 @@
 // src/types/user.ts
-export type User = {
-  id: number;
-  name: string;
-  email: string;
-};
+export interface User {
+  id: number
+  email: string
+  full_name: string
+  workspace?: {
+    id: number
+    name: string
+  }
+}

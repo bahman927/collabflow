@@ -1,15 +1,10 @@
  
-from django.urls                    import path, include
-from rest_framework.routers         import DefaultRouter
-from rest_framework_simplejwt.views import (
-    TokenObtainPairView,
-    TokenRefreshView,
-)
-
+from rest_framework.routers import DefaultRouter
 from projects.views   import ProjectViewSet
 from workspaces.views import WorkspaceViewSet
 from tasks.views      import TaskViewSet
 from activities.views import ActivityViewSet
+
 
 router = DefaultRouter()
 
@@ -17,27 +12,18 @@ router.register("projects",   ProjectViewSet,   basename="projects")
 router.register("workspaces", WorkspaceViewSet, basename="workspaces")
 router.register("tasks",      TaskViewSet,      basename="tasks")
 router.register("activities", ActivityViewSet,  basename="activities")
+ 
+urlpatterns = router.urls
 
-urlpatterns = [
-    path("", include(router.urls)),
+ 
 
-    # JWT endpoints (NOT router)
-    path("auth/login/",   TokenObtainPairView.as_view,  name="token_obtain_pair"),
-    path("auth/refresh/", TokenRefreshView.as_view(),   name="token_refresh"),
-]
-
-
-
-# Final API structure result from above urlpatterns
+# Final API structure result from above urlpatterns are:
 # /api/projects/
 # /api/workspaces/
 # /api/tasks/
 # /api/activities/
 
-# /api/auth/login/
-# /api/auth/refresh/
-
-
+ 
 # Why JWT Should NOT Be In Router
 
 # Routers are for:

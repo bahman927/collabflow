@@ -1,116 +1,164 @@
-import React, { createContext, useContext, useState, ReactNode } from "react";
+export const BASE_URL = "http://localhost:8000"; // your backend
+import {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useEffect,
+} from "react";
 
-// Define the shape of your user object
-export interface User {
-  id: number;
-  name: string;
-  role: "Owner" | "Member" | "Viewer";
+import {
+  Tokens,
+  User,
+  SignupData,
+  LoginData,
+  AuthResponse,
+} from "../types/auth";
+
+import apiFetch      from '../api/apiFetch' 
+import {useNavigate} from 'react-router'
+import { LogOut } from "lucide-react";
+export interface ApiRequestInit extends RequestInit {
+  auth?: boolean; // default true
 }
 
-// Context value type
-interface AuthContextType {
+export interface AuthContextType {
   user: User | null;
-  login: (user: User) => void;
+  tokens: Tokens | null;
+   setTokens: (tokens: Tokens | null) => void;
+  isAuthenticated: boolean;
+  login: (data: LoginData) => Promise<void>;
+  signup: (data: SignupData) => Promise<void>;
   logout: () => void;
+  apiFetch: <T>(
+    url: string,
+    options?: ApiRequestInit
+  ) => Promise<T>;
 }
 
-// Create context
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Provider
-export const AuthProvider = ({ children }: { children: ReactNode }) => {
+export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+
+  const [tokens, setTokens] = useState<Tokens | null>(null);
   const [user, setUser] = useState<User | null>(null);
 
-  const login = (userData: User) => setUser(userData);
-  const logout = () => setUser(null);
+  let navigate = useNavigate()
+
+  const logout = useCallback(() => {
+    setTokens(null);
+    setUser(null);
+    localStorage.removeItem("tokens");
+    navigate("/", {replace: true})
+  }, [navigate]);
+
+  // Persist tokens
+  useEffect(() => {
+    if (tokens) {
+      localStorage.setItem("tokens", JSON.stringify(tokens));
+    } else {
+      localStorage.removeItem("tokens");
+    }
+  }, [tokens]);
+
+  // Hydrate tokens on startup
+  useEffect(() => {
+    const stored = localStorage.getItem("tokens");
+    if (stored) {
+      setTokens(JSON.parse(stored));
+    }
+  }, []);
+
+   // wrappedFetch binds apiFetch to React state
+  const wrappedFetch = useCallback( <T,>(url: string, options: ApiRequestInit = {}) => {
+          return apiFetch<T>(url, options, () => tokens, setTokens, logout);
+       }, [tokens, logout]
+  );
+
+  const login = useCallback(
+    async (data: LoginData) => {
+      try {
+        const tokenResult = await wrappedFetch<AuthResponse>(
+          `${BASE_URL}/api/auth/token/`,
+          {
+            method: "POST",
+            body: JSON.stringify(data),
+            auth: false,
+          }
+        );
+
+        setTokens({
+          access: tokenResult.access,
+          refresh: tokenResult.refresh,
+        });
+
+        const me = await wrappedFetch<User>(`${BASE_URL}/api/users/me/`, {
+          method: "GET",
+          auth: true,
+        });
+
+        setUser(me);
+      } catch (err: any) {
+        throw new Error(err.message);
+      }
+    },
+    [wrappedFetch]
+  );
+
+  const signup = useCallback(
+    async (data: SignupData) => {
+      console.log("base_url in authProvider-signup :", BASE_URL)
+      try {
+        await wrappedFetch(BASE_URL + "/api/users/register/", {
+          method: "POST",
+          body: JSON.stringify(data),
+          auth: false,
+        });
+
+        await login({ email: data.email, password: data.password });
+      } catch (err: any) {
+        throw new Error(err.message);
+      }
+    },
+    [wrappedFetch, login]
+  );
+
+  // Hydrate user when tokens load
+  useEffect(() => {
+    if (!tokens) return;
+
+    const loadUser = async () => {
+      try {
+        const me = await wrappedFetch<User>(BASE_URL + "/api/users/me/", {
+          method: "GET",
+          auth: true,
+        });
+        setUser(me);
+      } catch {
+        logout();
+      }
+    };
+
+    loadUser();
+  }, [tokens, wrappedFetch, logout]);
 
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        tokens,
+        setTokens,
+        isAuthenticated: !!user,
+        login,
+        signup,
+        logout,
+        apiFetch: wrappedFetch,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
 };
 
-// ✅ Custom hook to use the auth context
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error("useAuth must be used within an AuthProvider");
-  }
-  return context;
-};
 
 
-
-// // src/context/AuthProvider.tsx
-// import { useState, useEffect, useContext } from "react";
-// import type { ReactNode } from "react";
-// import { AuthContext } from "../context/AuthContext";
-// import type { AuthContextType } from "../context/AuthContext";
-
-// import type { User } from "../types/user";
-
-// interface Props {
-//   children: ReactNode;
-// }
-
-// export const AuthProvider = ({ children }: Props) => {
-//   const [user, setUser] = useState<User | null>(null);
-//   const [loading, setLoading] = useState<boolean>(true);
-
-//   // Derived boolean from user state
-//   const isAuthenticated: AuthContextType["isAuthenticated"] = !!user;
-
-//   // Simulate fetching current user from API
-//   useEffect(() => {
-//     const fetchUser = async () => {
-//       setLoading(true);
-//       try {
-//         // Replace with real API call
-//         const token = localStorage.getItem("token");
-//         if (token) {
-//           // Example: fetch user info
-//           const demoUser: User = { id: 1, name: "Demo User", email:"bahman@gmail.com" };
-//           setUser(demoUser);
-//         } else {
-//           setUser(null);
-//         }
-//       } catch (err) {
-//         setUser(null);
-//       } finally {
-//         setLoading(false);
-//       }
-//     };
-
-//     fetchUser();
-//   }, []);
-
-//   // Login function
-//   const login: AuthContextType["login"] = (token) => {
-//     localStorage.setItem("token", token);
-//     // Example: set a demo user
-//     setUser({ id: 1, name: "Demo User", email:"bahman@gmail.com" });
-//   };
-
-//   // Logout function
-//   const logout: AuthContextType["logout"] = () => {
-//     localStorage.removeItem("token");
-//     setUser(null);
-//   };
-
-//   return (
-//     <AuthContext.Provider
-//       value={{ user, login, logout, isAuthenticated, loading }}
-//     >
-//       {children}
-//     </AuthContext.Provider>
-//   );
-// };
-
-// export const useAuth = () => {
-//   const context = useContext(AuthContext);
-//   if (!context) {
-//     throw new Error("useAuth must be used within an AuthProvider");
-//   }
-//   return context;
-// };

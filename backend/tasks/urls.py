@@ -1,18 +1,11 @@
-from django.urls import path
-from . import views
+ 
+from rest_framework.routers import DefaultRouter
+from .views import TaskViewSet
 
-app_name = 'tasks'
+router = DefaultRouter()
+router.register(r'tasks', TaskViewSet, basename='task')
 
-
-from django.urls import path
-from . import views
-
-app_name = "tasks"
-
-urlpatterns = [
-    path("", views.TaskListCreateAPIView.as_view(), name="list"),  # GET all tasks / POST new task
-    path("<int:pk>/", views.TaskRetrieveUpdateDestroyAPIView.as_view(), name="detail"),  # GET/PUT/PATCH/DELETE task
-]
+urlpatterns = router.urls
 
 
  

@@ -4,14 +4,15 @@ import { Link } from "react-router-dom";
 
 const Landing: React.FC = () => {
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-slate-50 px-6 text-center">
-      <h1 className="text-4xl font-bold text-slate-900 mb-4">
+    <div className="flex flex-col items-center justify-center mt-2 bg-slate-50 px-6 text-center">
+      
+      <h1 className="text-3xl font-bold text-blue-700 mb-4 mt-2">
         Welcome to CollabFlow
       </h1>
-      <p className="text-lg text-slate-700 mb-6">
+      <p className="text-xl font-bold text-slate-600 mb-6">
         Streamline your team collaboration and manage projects effortlessly.
       </p>
-
+      <img src="/CollabFlow.jpeg" alt="CollabFlow Landing" className="h-140 w-230" />
       <div className="flex gap-4">
         <Link
           to="/signup"
@@ -22,7 +23,7 @@ const Landing: React.FC = () => {
 
         <Link
           to="/login"
-          className="rounded-lg border border-blue-600 px-6 py-3 text-blue-600 font-medium hover:bg-blue-50 transition"
+          className="rounded-lg border border-blue-600 px-6 py-3 text-blue-600 font-semibold hover:bg-blue-50 transition"
         >
           Login
         </Link>

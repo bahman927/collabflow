@@ -1,9 +1,15 @@
 {
+
   "compilerOptions": {
+    "ignoreDeprecations": "6.0",
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"]
+    },
     "target": "ES6",
     "lib": ["DOM", "DOM.Iterable", "ESNext"],
     "module": "ESNext",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "jsx": "react-jsx",         // ✅ key
     "strict": true,
     "esModuleInterop": true,
@@ -14,3 +20,4 @@
   },
   "include": ["src"]
 }
+ 

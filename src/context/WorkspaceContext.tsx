@@ -1,13 +1,14 @@
-// src/context/WorkspaceContext.ts
 import { createContext } from "react";
 import type { Workspace } from "../types/workspace";
 
-export type WorkspaceContextType = {
+interface WorkspaceContextType {
   workspaces: Workspace[];
   currentWorkspace: Workspace | null;
-  setCurrentWorkspace(id: number): void;
-};
+  loading: boolean;
+  switchWorkspace: (workspaceId: number) => void;
+}
 
-export const WorkspaceContext = createContext<WorkspaceContextType>(
-  {} as WorkspaceContextType
-);
+export const WorkspaceContext =
+  createContext<WorkspaceContextType | null>(null);
+
+ 

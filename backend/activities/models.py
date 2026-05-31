@@ -1,6 +1,7 @@
 from django.db import models
 from django.conf import settings
 from workspaces.models import Workspace
+from projects.models import Project
 
 
 class Activity(models.Model):
@@ -23,16 +24,22 @@ class Activity(models.Model):
     workspace = models.ForeignKey(
                                  Workspace,
                                  on_delete=models.CASCADE,
-                                 related_name="activities"
+                                 related_name="activities",
+                                 null=True,  
+                                 blank=True  
                                 )
 
     user = models.ForeignKey(
                                 settings.AUTH_USER_MODEL,
                                 on_delete=models.CASCADE,
-                                related_name="activities"
+                                related_name="activities",
+                                null=True,
+                                blank=True,
                             )
 
-     
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, null=True, blank=True)
+    action = models.CharField(max_length=50)
+    description = models.TextField()
 
     message = models.TextField(default="")
 
@@ -40,6 +47,7 @@ class Activity(models.Model):
 
     class Meta:
         ordering = ["-created_at"]
-
-    def __str__(self):
-        return f"{self.user.email} - {self.activity_type}"
+# ✅ Safe version
+def __str__(self):
+    email = self.user.email if self.user else "Deleted User"
+    return f"{email} - {self.action}"

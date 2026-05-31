@@ -6,6 +6,7 @@ class ActivitySerializer(serializers.ModelSerializer):
 
     user_email = serializers.ReadOnlyField(source="user.email")
     workspace_name = serializers.ReadOnlyField(source="workspace.name")
+    workspace_id = serializers.ReadOnlyField(source="workspace.id")
 
     class Meta:
         model = Activity

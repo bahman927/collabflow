@@ -4,15 +4,16 @@ import { useAuth } from "../hooks/useAuth";
 import { useWorkspace } from "../hooks/useWorkspace";
 
 export default function Navbar() {
+  const [workspaceOpen, setWorkspaceOpen] = useState(false);
+  const [userOpen, setUserOpen] = useState(false);
   const { user, logout } = useAuth();
+
   const {
     workspaces,
     currentWorkspace,
-    setCurrentWorkspace,
   } = useWorkspace();
 
-  const [workspaceOpen, setWorkspaceOpen] = useState(false);
-  const [userOpen, setUserOpen] = useState(false);
+  
 
   return (
     <header className="h-14 flex items-center justify-between px-6 bg-white border-b">
@@ -23,7 +24,7 @@ export default function Navbar() {
           className="flex items-center gap-2 px-3 py-1.5 rounded-md border text-sm font-medium hover:bg-gray-50"
         >
           <span>{currentWorkspace?.name ?? "Select workspace"}</span>
-          <span className="text-xs">▾</span>
+          <span className="text-emerald-300">▾</span>
         </button>
 
         {workspaceOpen && (
@@ -32,7 +33,6 @@ export default function Navbar() {
               <button
                 key={ws.id}
                 onClick={() => {
-                  setCurrentWorkspace(ws.id);
                   setWorkspaceOpen(false);
                 }}
                 className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
@@ -77,57 +77,4 @@ export default function Navbar() {
 
 
 
-
-// // src/components/Navbar.tsx
-// import { useAuth } from "../hooks/useAuth";
-
-// export default function Navbar() {
-//   const { user, logout } = useAuth();
-
-//   return (
-//     <header className="h-14 flex items-center justify-between px-6 border-b bg-white">
-//       {/* Left */}
-//       <div className="text-lg font-semibold text-gray-800">
-//         CollabFlow
-//       </div>
-
-//       {/* Right */}
-//       <div className="flex items-center gap-4">
-//         <span className="text-sm text-gray-600">
-//           {user?.email}
-//         </span>
-
-//         <button
-//           onClick={logout}
-//           className="text-sm px-3 py-1 rounded bg-red-500 text-white hover:bg-red-600"
-//         >
-//           Logout
-//         </button>
-//       </div>
-//     </header>
-//   );
-// }
-
-
-
-// import { useAuth } from "../hooks/useAuth";
-
-// const Navbar = () => {
-//   const { user, logout } = useAuth();
-
-//   return (
-//     <header className="h-14 flex items-center justify-between px-6 border-b">
-//       <h1 className="font-semibold text-lg">CollabFlow</h1>
-
-//       {user && (
-//         <button
-//           onClick={logout}
-//           className="text-sm text-red-600 hover:underline"
-//         >
-//           Logout
-//         </button>
-//       )}
-//     </header>
-//   );
-// };
-
+ 
