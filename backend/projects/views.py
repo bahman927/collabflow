@@ -2,6 +2,7 @@
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import PermissionDenied
+from workspaces.activity.logger import ActivityLogger
 
 from .models import Project
 from .serializers import ProjectSerializer
@@ -42,8 +43,11 @@ class ProjectViewSet(ModelViewSet):
             workspace__memberships__user=user
         ).distinct()
 
-
+    # ---------------------------------------------------------
+    # PROJECT CREATED
+    # ---------------------------------------------------------
     def perform_create(self, serializer):
+        user = self.request.user
         workspace_id = self.request.data.get("workspace_id")
         if not workspace_id:
             raise PermissionDenied("workspace_id is required")
@@ -56,7 +60,6 @@ class ProjectViewSet(ModelViewSet):
                 user=self.request.user
             ).first()
         
-        print("role = ", membership, membership.role)
         if not membership or membership.role != "Owner":
            raise PermissionDenied("Only workspace owners can create projects.")
  
@@ -66,13 +69,43 @@ class ProjectViewSet(ModelViewSet):
             created_by=self.request.user
         )
 
-        # Log activity
-        Activity.objects.create(
-            activity_type="PROJECT_CREATED",
+        # CENTRAL LOGGER
+        ActivityLogger.project_created(
+            actor=user,
             workspace=workspace,
-            user=self.request.user,
-            message=f"{self.request.user.email} created project '{project.name}'"
+            project=project
         )
+
+      # ---------------------------------------------------------
+    # PROJECT UPDATED
+    # ---------------------------------------------------------
+    def perform_update(self, serializer):
+        project = serializer.save()
+        workspace = project.workspace
+
+        ActivityLogger.project_updated(
+            actor=self.request.user,
+            workspace=workspace,
+            project=project
+        )
+
+    # ---------------------------------------------------------
+    # PROJECT DELETED
+    # ---------------------------------------------------------
+    def destroy(self, request, *args, **kwargs):
+        project = self.get_object()
+        workspace = project.workspace
+        project_name = project.name
+
+        response = super().destroy(request, *args, **kwargs)
+
+        ActivityLogger.project_deleted(   
+            actor=request.user,
+            workspace=workspace,
+            project_name=project_name
+        )
+
+        return response
 
 class ProjectListCreateView(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated]

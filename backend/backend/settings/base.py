@@ -52,7 +52,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework_simplejwt.token_blacklist",
     "decouple",
-    'django_extensions',
+    # 'django_extensions',
      
     # local apps
      "api",
@@ -85,13 +85,16 @@ REST_FRAMEWORK = {
     ),
 }
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=120),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
     "AUTH_HEADER_TYPES": ("Bearer",),
-     "ROTATE_REFRESH_TOKENS": True,
-     "BLACKLIST_AFTER_ROTATION": True,
-    
+    "ROTATE_REFRESH_TOKENS": False,
+    "BLACKLIST_AFTER_ROTATION": False,
+    "SIGNING_KEY": "p9$F3!a8@Lk29#sD7qP0vB1zX4mN6rT", 
 }
+
+    
+
 
 TEMPLATES = [
     {
@@ -108,9 +111,18 @@ TEMPLATES = [
     },
 ]
 
-STATIC_URL = "/static/"
 
 STATIC_ROOT = BASE_DIR / "staticfiles"
+STATIC_URL = "/static/"
+STATICFILES_DIRS = [BASE_DIR / "static"]
+
+ 
+
+import warnings
+warnings.filterwarnings("ignore", module="django_extensions")
+
+
+
 
 # STATICFILES_DIRS = [
 #     BASE_DIR / "static",

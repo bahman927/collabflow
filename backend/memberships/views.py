@@ -7,6 +7,7 @@ from django.db.models import Q
 from users.models import User
 from tasks.models import Task 
 from workspaces.models import Workspace, WorkspaceMember
+from workspaces.activity.logger import ActivityLogger
 from .serializers import (
     MemberSerializer,
     InviteMemberSerializer,
@@ -93,10 +94,13 @@ class MemberViewSet(viewsets.ModelViewSet):
             user=user,
         ).first()
 
-        print("DEBUG request.data =", request.data)
-        print("DEBUG validated =", serializer.validated_data)
-        print("DEBUG task_ids =", serializer.validated_data.get("task_ids"))
+         # ⭐ Log activity
+        ActivityLogger.member_added(request.user, workspace, user)
 
+        # print("DEBUG request.data =", request.data)
+        # print("DEBUG validated =", serializer.validated_data)
+        # print("DEBUG task_ids =", serializer.validated_data.get("task_ids"))
+        
 
         # ───────────────────────────────────────────────
         # CASE A — EXISTING MEMBER → only assign tasks

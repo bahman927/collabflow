@@ -4,7 +4,7 @@ from projects.views   import ProjectViewSet
 from workspaces.views import WorkspaceViewSet
 from tasks.views      import TaskViewSet
 from activities.views import ActivityViewSet
-
+from django.urls      import path
 
 router = DefaultRouter()
 
@@ -13,7 +13,11 @@ router.register("workspaces", WorkspaceViewSet, basename="workspaces")
 router.register("tasks",      TaskViewSet,      basename="tasks")
 router.register("activities", ActivityViewSet,  basename="activities")
  
-urlpatterns = router.urls
+
+urlpatterns = router.urls 
+
+    
+
 
  
 

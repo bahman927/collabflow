@@ -52,7 +52,7 @@ class Task(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        unique_together = ("project", "name"),
+        unique_together = ("workspace","project", "name"),
         ordering = ["-created_at"]
 
     def __str__(self):

@@ -8,6 +8,7 @@ User = get_user_model()
 
 
 class MemberSerializer(serializers.ModelSerializer):
+    tasks = serializers.SerializerMethodField()
     userId = serializers.CharField(
         source='user.id', read_only=True
     )
@@ -45,23 +46,19 @@ class MemberSerializer(serializers.ModelSerializer):
             'projects', 'tasks',
         ]
 
+    
+
     def get_displayName(self, obj):
-        full = (
-            f"{obj.user.first_name} "
-            f"{obj.user.last_name}"
-        ).strip()
+        full = f"{obj.user.first_name} {obj.user.last_name}".strip()
         return full or obj.user.email
     
     def get_projects(self, obj):
-        from tasks.models import Task
-        from tasks.models import TaskAssignee
-
+       
         assignments = (
             TaskAssignee.objects
             .filter(member=obj)
             .select_related("task", "task__project")
         )
-
        
         seen = set()
         projects = []
@@ -74,12 +71,11 @@ class MemberSerializer(serializers.ModelSerializer):
                 "name": p.name,
             })
         return projects
-
+    
     def get_tasks(self, obj):
-        from tasks.models import Task
         tasks = Task.objects.filter(
-        assignees__member__user=obj.user,
-        project__workspace=obj.workspace,
+            assignees__member=obj,
+            project__workspace=obj.workspace,
         )
 
         return [
@@ -91,7 +87,7 @@ class MemberSerializer(serializers.ModelSerializer):
             }
             for t in tasks
         ]
-
+ 
 
 class InviteMemberSerializer(serializers.Serializer):
     email = serializers.EmailField()

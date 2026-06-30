@@ -5,7 +5,15 @@ from rest_framework.exceptions import PermissionDenied
 from .models import Activity
 from .serializers import ActivitySerializer
 from workspaces.models import Workspace
-
+from datetime import timedelta
+from django.utils import timezone
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from activities.models import Activity
+from rest_framework.decorators import action
 
 
 class ActivityViewSet(ModelViewSet):
@@ -26,12 +34,110 @@ class ActivityViewSet(ModelViewSet):
         workspace = Workspace.objects.get(id=workspace_id)
 
         if not workspace.memberships.filter(user=self.request.user).exists():
+            
             raise PermissionDenied("Not allowed")
+        
+       
 
         serializer.save(
             workspace=workspace,
             user=self.request.user
         )
+
+
+    @action(detail=False, methods=["get"], url_path="debug")
+    def debug(self, request):
+        rows = Activity.objects.all().order_by("-created_at").values()
+        return Response(list(rows))
+            
+   
+
+class ActivityCreateView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, workspace_pk):
+        workspace = Workspace.objects.get(pk=workspace_pk)
+
+        Activity.objects.create(
+            workspace=workspace,
+            user=request.user,
+            activity_type=request.data.get("activity_type"),
+            action=request.data.get("action"),
+            message=request.data.get("message", ""),
+        )
+
+        return Response({"status": "ok"})
+
+
+class CurrentActivityView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    # In your CurrentActivityView
+    def get(self, request, workspace_pk):
+        print("🔥 VIEW REACHED")
+
+        try:
+            events = Activity.objects.filter(
+                workspace_id=workspace_pk,
+                created_at__gte=timezone.now() - timezone.timedelta(hours=1)
+            )
+            serializer = ActivitySerializer(events, many=True)
+            print("🔥 ACTIVITY RESPONSE:", serializer.data)
+            return Response(serializer.data)
+        except Exception as e:
+            import traceback
+            print("🔥 BACKEND ERROR:", e)
+            traceback.print_exc()
+            raise
+
+ 
+    
+class WeeklyActivitySummaryView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, workspace_pk):
+        since = timezone.now() - timedelta(days=7)
+
+        events = (
+            Activity.objects
+            .filter(workspace_id=workspace_pk, created_at__gte=since)
+            .select_related("user")
+        )
+
+        workspace = Workspace.objects.get(id=workspace_pk)
+
+        # FIX: use the correct relation name
+        members = workspace.memberships.select_related("user")
+
+        summary = []
+
+        for member in members:
+            user_events = events.filter(user_id=member.user_id)
+
+            summary.append({
+                "memberId": member.id,
+                "memberName": member.user.full_name,
+                "tasksCompleted": user_events.filter(
+                    activity_type="TASK_UPDATED",
+                    action="completed"
+                ).count(),
+                "tasksAssigned": user_events.filter(
+                    activity_type="TASK_CREATED"
+                ).count(),
+                "comments": user_events.filter(
+                    action="commented"
+                ).count(),
+                "statusChanges": user_events.filter(
+                    activity_type="TASK_UPDATED",
+                    action="status_changed"
+                ).count(),
+            })
+
+        return Response(summary)
+
+
+   
+
 
 
 #     🔹 ReadOnlyModelViewSet

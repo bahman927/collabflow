@@ -15,4 +15,4 @@ class User(AbstractUser):
     class Meta:
         pass
     def __str__(self):
-        return self.email
+     return self.full_name or self.email.split("@")[0].capitalize()

@@ -12,13 +12,13 @@ class WorkspaceMemberInline(admin.TabularInline):
  
 @admin.register(Workspace)
 class WorkspaceAdmin(admin.ModelAdmin):
-    list_display = ('name', 'created_by', 'created_at')
+    list_display = ('id','name', 'created_by', 'created_at')
     inlines = [WorkspaceMemberInline]
 
 
 @admin.register(WorkspaceMember)
 class WorkspaceMemberAdmin(admin.ModelAdmin):
-    list_display = ('user', 'workspace', 'role', 'is_active',)
+    list_display = ( 'id', 'user', 'workspace', 'role', 'is_active',)
     list_filter = ('role', 'is_active')
     search_fields = (
         "user__email",

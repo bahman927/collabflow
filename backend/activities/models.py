@@ -12,6 +12,7 @@ class Activity(models.Model):
                         ("TASK_UPDATED", "Task Updated"),
                         ("TASK_MOVED", "Task Moved"),
                         ("MEMBER_ADDED", "Member Added"),
+                        ("MEMBER_REMOVED", "Member Removed"),
                     )
     activity_type = models.CharField(
                         max_length=50,
@@ -39,7 +40,6 @@ class Activity(models.Model):
 
     project = models.ForeignKey(Project, on_delete=models.CASCADE, null=True, blank=True)
     action = models.CharField(max_length=50)
-    description = models.TextField()
 
     message = models.TextField(default="")
 

@@ -8,6 +8,7 @@ class WorkspaceSerializer(serializers.ModelSerializer):
  owner = serializers.ReadOnlyField(source="created_by.id")
  owner_email = serializers.ReadOnlyField(source="created_by.email")
  member_count = serializers.SerializerMethodField()
+ 
 
  class Meta:
         model = Workspace
@@ -173,14 +174,18 @@ class WorkspaceMemberDetailSerializer(serializers.ModelSerializer):
                 projects.append({"id": p.id, "name": p.name})
 
         return projects
-
+    
     def get_tasks(self, obj):
         from tasks.models import TaskAssignee
 
         assignments = (
             TaskAssignee.objects
-            .filter(member=obj)
+            .filter(
+                member=obj,
+                task__workspace=obj.workspace   # ⭐ critical fix
+            )
             .select_related("task", "task__project")
+            .distinct()
         )
 
         return [
@@ -196,7 +201,7 @@ class WorkspaceMemberDetailSerializer(serializers.ModelSerializer):
             for a in assignments
         ]
 
-
+ 
 class WorkspaceMemberSerializer(serializers.ModelSerializer):
     user = serializers.SerializerMethodField()
 

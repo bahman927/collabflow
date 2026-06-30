@@ -16,7 +16,7 @@ from .models import Invitation
 from .serializers import InvitationSerializer, WorkspaceMemberDetailSerializer
 from rest_framework.viewsets import ModelViewSet
 from .permissions import IsWorkspaceOwner
-
+from workspaces.activity.logger import ActivityLogger
 from .models import Workspace, WorkspaceMember, Invitation
 from .serializers import (
     WorkspaceSerializer,
@@ -62,6 +62,7 @@ class WorkspaceViewSet(ModelViewSet):
         )
 
 class WorkspaceMemberViewSet(viewsets.ModelViewSet):
+    
     @action(detail=False, methods=['get'])
     def list_members(self, request, workspace_id=None):
         members = WorkspaceMember.objects.filter(
@@ -70,6 +71,26 @@ class WorkspaceMemberViewSet(viewsets.ModelViewSet):
      
         serializer = WorkspaceMemberDetailSerializer(members, many=True)
         return Response(serializer.data)
+    
+    def destroy(self, request, workspace_id=None, pk=None):
+        member = self.get_object()
+
+        if member.role == 'owner':
+            return Response(
+                {'error': 'Cannot remove workspace owner'},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        actor = request.user
+        removed_user = member.user
+        workspace = member.workspace
+        # Delete the member
+        member.delete()
+            
+        # Log activity
+        ActivityLogger.member_removed(actor, workspace, removed_user)
+        
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
 
 
 class InvitationViewSet(viewsets.ModelViewSet):

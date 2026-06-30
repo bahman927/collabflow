@@ -21,8 +21,8 @@ urlpatterns = [
 
     # 📦 MAIN API
     path("api/", include("api.urls")),
-    
     path("", include("workspaces.urls")),
+    path("api/", include("activities.urls")), 
 
    ]
 for url in get_resolver().url_patterns:

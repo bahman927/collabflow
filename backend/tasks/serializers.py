@@ -2,8 +2,10 @@ from rest_framework import serializers
 from .models import Task, TaskAssignee
 from users.models import User
 from projects.models import Project
-from workspaces.models import WorkspaceMember
-
+from workspaces.models import WorkspaceMember, Workspace
+from workspaces.utils import ensure_member_role
+from activities.models import Activity
+from workspaces.activity.logger import ActivityLogger
 
 class TaskAssigneeSerializer(serializers.ModelSerializer):
     name = serializers.SerializerMethodField()
@@ -17,12 +19,16 @@ class TaskAssigneeSerializer(serializers.ModelSerializer):
 
 
 class TaskSerializer(serializers.ModelSerializer):
+    workspace = serializers.PrimaryKeyRelatedField(
+        queryset=Workspace.objects.all(),
+        required=True
+    )
     project_id = serializers.PrimaryKeyRelatedField(
         queryset=Project.objects.all(),
         source='project',
     )
-    assignees = serializers.SerializerMethodField()           # READ — returns list of member
-    assignee_ids = serializers.ListField(                     # WRITE — accepts member IDs
+    assignees = serializers.SerializerMethodField()
+    assignee_ids = serializers.ListField(
         child=serializers.IntegerField(),
         write_only=True,
         required=False,
@@ -41,74 +47,107 @@ class TaskSerializer(serializers.ModelSerializer):
             "status",
             "project_id",
             "project",
-            "workspace", 
+            "workspace",
             "assignees",
             "assignee_ids",
             "assignee_emails",
             "created_at",
             "updated_at",
         ]
-        read_only_fields = ["workspace","project"]
+        read_only_fields = ["project"]
 
-    def get_assignee_emails(self, obj):
-     return [a.member.user.email for a in obj.assignees.select_related("member__user")]
-
-    # ── READ: return all TaskAssignee members ──
-    def get_assignees(self, obj):
-        task_assignees = obj.assignees.select_related('member__user').all()
+    # -----------------------------
+    # READ: return list of assignees
+    # -----------------------------
+    def get_assignees(self, task):
+        assignees = task.assignees.select_related("member__user").all()
 
         result = []
-        for ta in task_assignees:
-            user = ta.member.user
-            full_name = f"{user.first_name} {user.last_name}".strip()
+        for a in assignees:
+            user = a.member.user
+            full_name = user.get_full_name().strip()
             result.append({
-                'id': user.id,
-                'member_id': ta.member.id,
-                'name': full_name or user.email,
-                'email': user.email,
+                "id": user.id,
+                "member_id": a.member.id,
+                "name": full_name or user.email,
+                "email": user.email,
             })
 
-        
-
         return result
- 
-    def _sync_assignees(self, task, member_ids):
-     if member_ids is None:
-        return
 
-     member_ids = list(set(member_ids))          
-
-        # Validate all IDs are members of the task's workspace
-     workspace = task.project.workspace
-     valid_members = WorkspaceMember.objects.filter(
-            id__in=member_ids,
-            workspace=workspace,
-        )
-
-     if valid_members.count() != len(member_ids):
-        raise serializers.ValidationError({
-                "assignee_ids": "One or more member IDs are not in this workspace."
-        })
-     task.assignees.exclude(member_id__in=member_ids).delete()
+    # -----------------------------
+    # READ: return list of emails
+    # -----------------------------
+    def get_assignee_emails(self, task):
+        return [
+            a.member.user.email
+            for a in task.assignees.select_related("member__user").all()
+        ]
 
     
-     for member_id in member_ids:
-            TaskAssignee.objects.get_or_create(task=task, member_id=member_id)
+
+    # ── READ: return all TaskAssignee members ──
+     # ----------------------------------------------------
+    # ASSIGNEE SYNC
+    # ----------------------------------------------------
+    def _sync_assignees(self, task, member_ids):
+        workspace = task.project.workspace
+        actor = self.context["request"].user
 
 
+        # If omitted → clear all assignees
+        if member_ids is None:
+            removed = list(task.assignees.all())
+            task.assignees.all().delete()
 
-    def create(self, validated_data):
-        member_ids = validated_data.pop('assignee_ids', None)
-        task = super().create(validated_data)
-        self._sync_assignees(task, member_ids)
-        return task
+            for assignee in removed:
+                ActivityLogger.task_unassigned(
+                    actor=actor,
+                    workspace=workspace,
+                    task=task,
+                    unassigned_user=assignee.member.user
+                )
+            return
 
-    def update(self, instance, validated_data):
-        member_ids = validated_data.pop('assignee_ids', None)
-        task = super().update(instance, validated_data)
-        self._sync_assignees(task, member_ids)
-        return task
+        # Deduplicate
+        member_ids = list(set(member_ids))
 
+        # Track old assignees
+        old_assignees = list(task.assignees.all())
+
+        old_ids = {a.member_id for a in old_assignees}
+
+        # Remove old
+        task.assignees.exclude(member_id__in=member_ids).delete()
+
+        # Log removed
+        removed = [a for a in old_assignees if a.member_id not in member_ids]
+        for assignee in removed:
+            ActivityLogger.task_unassigned(
+                actor=actor,
+                workspace=workspace,
+                task=task,
+                unassigned_user=assignee.member.user
+            )
+
+        # Add new
+        for member_id in member_ids:
+            member = WorkspaceMember.objects.get(id=member_id)
+
+            obj, created = TaskAssignee.objects.get_or_create(
+                task=task,
+                member=member
+            )
+
+            if created:
+                ActivityLogger.task_assigned(
+                    actor=actor,
+                    workspace=workspace,
+                    task=task,
+                    assigned_user=member.user
+                )
+    
+   
     def validate_assigned_to(self, value):
         project_id = self.initial_data.get('project_id') or (
             self.instance and self.instance.project_id
@@ -126,3 +165,32 @@ class TaskSerializer(serializers.ModelSerializer):
         if value not in allowed:
             raise serializers.ValidationError("Invalid status")
         return value
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        return data
+    
+    def create(self, validated_data):
+        print('taskSerializer->valiated_data in update() ->', validated_data)
+        member_ids = (
+            validated_data.pop("assignee_ids", None)
+            or validated_data.pop("assigneeIds", None)
+            or validated_data.pop("taskIds", None)
+        )
+
+        # member_ids = validated_data.pop('assignee_ids', None)
+        task = super().create(validated_data)
+        self._sync_assignees(task, member_ids)
+        return task
+
+    def update(self, instance, validated_data):
+        print('taskSerializer->valiated_data in update() ->', validated_data)
+        member_ids = (
+            validated_data.pop("assignee_ids", None)
+            or validated_data.pop("assigneeIds", None)
+            or validated_data.pop("taskIds", None)
+        )
+        # member_ids = validated_data.pop('assignee_ids', None)
+        task = super().update(instance, validated_data)
+        self._sync_assignees(task, member_ids)
+        return task
