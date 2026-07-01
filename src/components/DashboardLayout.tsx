@@ -1,13 +1,11 @@
 import React       from "react";
 import ProjectItem from "./ProjectItem";
+import { useProject } from "@/context/ProjectProvider";
 
-// const projects = [
-//   { title: "Design Dashboard UI", status: "To Do" },
-//   { title: "Mobile App", status: "In Progress" },
-//   { title: "Marketing Website", status: "Done" },
-// ]  as const
 
+ 
 const DashboardLayout: React.FC = () => {
+  const { projects } = useProject();
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
@@ -36,11 +34,15 @@ const DashboardLayout: React.FC = () => {
       {/* Projects */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
        {projects.map((project) => (
-          <ProjectItem
-            key={project.title}
+         <ProjectItem
+            key={project.id}
+            task={project}
+            taskId={project.id}
             title={project.title}
             status={project.status}
-          />
+            onDelete={handleDeleteTask}
+/>
+
 ))}
 
       </div>

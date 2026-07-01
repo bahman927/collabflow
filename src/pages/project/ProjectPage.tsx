@@ -29,8 +29,13 @@ export default function ProjectPage() {
   const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
   const [showModal, setShowModal] = useState(false);
   const projectTasks = tasks.filter(
-    (task) => task.project_id === currentProject?.id
+    // (task) => task.project === currentProject?.id
+    (task) => task.workspace === currentWorkspace?.id
+
   );
+  // console.log("ONE TASK:", tasks[0]);
+
+  // console.log('projectTasks :', projectTasks)
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
@@ -44,7 +49,7 @@ const handleDeleteProject = async () => {
   if (!currentProject) return;
   await removeProject(currentProject.id);
   setCurrentProject(null);
-  navigate(`/Dashboard`);
+  navigate(`/home`);
   // window.location.href = `/workspace/${currentWorkspace?.id}`;
 };
 
@@ -59,6 +64,9 @@ const handleDeleteProject = async () => {
     overdue: "Overdue",
 };
 
+  useEffect(() => {
+    setCurrentTask(null);
+  }, [currentProject?.id]);
 
   const handleCreate = async (data: { name: string; description: string }) => {
   try {
@@ -82,29 +90,13 @@ const hasTask = () => {
         (groupedTasks.overdue?.length ?? 0) > 0
       );
     }
- 
-const { projectId } = useParams();
-const project = projects.find((p) => p.id === Number(projectId));
-useEffect(() => {
-  if (currentWorkspace && project) {
-    loadTasks(project.id);
+// console.log('groupTask.overdue : ', groupedTasks.overdue?.length)
+ useEffect(() => {
+  if (currentWorkspace && currentProject) {
+    loadTasks(currentProject.id);
   }
-}, [currentWorkspace, project?.id]);
+}, [currentWorkspace, currentProject?.id]);
  
-useEffect(() => {
-  if (!projectId) {
-    if (!currentProject && projects.length > 0) setCurrentProject(projects[0]);
-    return;
-  }
-
-  const id = Number(projectId);
-  if (currentProject?.id === id) return;
-     const match = projects.find((p) => p.id === id);
-
-  if (match) setCurrentProject(match);
-}, [projectId, projects, currentProject, setCurrentProject]);
- 
-
  if  (!currentProject) {
     return (
       <div className="flex flex-col items-center justify-center h-[calc(100vh-80px)] text-center px-6">
@@ -196,7 +188,7 @@ useEffect(() => {
                  {groupedTasks.done?.length || 0} Done
               </button>
               <button className="flex-1 rounded-lg bg-red-100 text-red-700 font-semibold hover:bg-red-200 transition">
-                 {groupedTasks.done?.length || 0} Overdue
+                 {groupedTasks.overdue?.length || 0} Overdue
               </button>
             </div>
           </div>
@@ -253,12 +245,15 @@ useEffect(() => {
           onCreate={handleCreate}
         />  
 
-        <TaskDetailDrawer
-          task={currentTask}
-          onClose={() => setCurrentTask(null)}
-          onUpdate={updateTask}
-          onRequestDelete={(task) => setTaskToDelete(task)}
-        />
+       {currentTask && (
+          <TaskDetailDrawer
+            task={currentTask}
+            onClose={() => setCurrentTask(null)}
+            onUpdate={updateTask}
+            onRequestDelete={(task) => setTaskToDelete(task)}
+          />
+        )}
+
 
         <EditProjectModal
           isOpen={showEditModal}
@@ -279,8 +274,6 @@ useEffect(() => {
             projectName={currentProject?.name ?? ""}
           />
         </Modal>
-
-
 
     </div>
     

@@ -1,24 +1,19 @@
 from activities.models import Activity
-import logging
-logger = logging.getLogger("activities")
-class ActivityLogger:
-    
+
+class ActivityLogger: 
     @staticmethod
-    def log(user, workspace, activity_type, action, message, description=""):
+    def log(user, workspace, activity_type, action, message):
         Activity.objects.create(
             user=user,
             workspace=workspace,
             activity_type=activity_type,
             action=action,
             message=message,
-            description=description
         )
-
 
     # -------------------------
     # MEMBER EVENTS
     # -------------------------
-
     @staticmethod
     def member_added(actor, workspace, added_user):
         print("added_user : ", added_user)
@@ -26,16 +21,16 @@ class ActivityLogger:
         ActivityLogger.log(
             user=added_user,
             workspace=workspace,
-            activity_type="MEMBER_ADDED",
-            action="added",
-            message=f"{name} joined the workspace"
+            activity_type="MEMBER_INVITED",
+            action="invited",
+            message=f"invited member '{name}' to workspace"
         )
 
     @staticmethod
     def member_removed(actor, workspace, removed_user):
         name = removed_user.email.split("@")[0].capitalize()
         ActivityLogger.log(
-            user=removed_user,
+            user=actor,
             workspace=workspace,
             activity_type="MEMBER_REMOVED",
             action="removed",
@@ -68,7 +63,6 @@ class ActivityLogger:
     # -------------------------
     # TASK EVENTS
     # -------------------------
-
     @staticmethod
     def task_created(actor, workspace, task):
         ActivityLogger.log(
@@ -78,6 +72,16 @@ class ActivityLogger:
             action="created",
             message=f"created task '{task.name}'"
         )
+        
+    @staticmethod
+    def task_completed(actor, workspace, task):
+        ActivityLogger.log(
+            user=actor,
+            workspace=workspace,
+            activity_type="TASK_COMPLETED",
+            action="completed",
+            message=f"completed task '{task.title}'"
+        )    
 
     @staticmethod
     def task_updated(actor, workspace, task):
@@ -98,6 +102,34 @@ class ActivityLogger:
             action="deleted",
             message=f"deleted task '{task_name}'"
         )    
+
+     #--------------------------
+    # TASK ASSIGNMENT
+    #--------------------------
+    @staticmethod
+    def task_assigned(actor, workspace, task, assigned_user):
+        name = assigned_user.email.split("@")[0].capitalize()
+        ActivityLogger.log(
+            user=actor,
+            workspace=workspace,
+            activity_type="TASK_ASSIGNED",
+            action="assigned",
+            message=f"assigned task '{task.name}' to '{name}' ",
+        )
+
+    @staticmethod
+    def task_unassigned(actor, workspace, task, unassigned_user):
+        name = unassigned_user.email.split("@")[0].capitalize()
+        ActivityLogger.log(
+            user=actor,
+            workspace=workspace,
+            activity_type="TASK_UNASSIGNED",
+            action="unassigned",
+            message=f"unassigned '{name}' from task '{task.name}'",
+        )
+ 
+   
+    
 
     # -------------------------
     # PROJECT EVENTS
@@ -149,33 +181,4 @@ class ActivityLogger:
 
     
 
-    #--------------------------
-    # TASK ASSIGNMENT
-    #--------------------------
-    @staticmethod
-    def task_assigned(actor, workspace, task, assigned_user):
-        logger.debug(f"[LOGGER] task_assigned called: actor={actor.id}, workspace={workspace.id}, task={task.id}, assigned_user={assigned_user.id}")
-        name = assigned_user.email.split("@")[0].capitalize()
-        ActivityLogger.log(
-            user=actor,
-            workspace=workspace,
-            activity_type="TASK_ASSIGNED",
-            action="assigned",
-            message=f"assigned '{name}' to task '{task.name}'",
-            description=f"{actor.email} assigned {name} to task '{task.name}'"
-        )
-        logger.debug("[LOGGER] Activity row created")
-
-    @staticmethod
-    def task_unassigned(actor, workspace, task, unassigned_user):
-        name = unassigned_user.email.split("@")[0].capitalize()
-        ActivityLogger.log(
-            user=actor,
-            workspace=workspace,
-            activity_type="TASK_UNASSIGNED",
-            action="unassigned",
-            message=f"unassigned '{name}' from task '{task.name}'",
-            description=f"{actor.email} unassigned {name} from task '{task.name}'"
-        )
- 
    

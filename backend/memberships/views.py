@@ -172,13 +172,30 @@ class MemberViewSet(viewsets.ModelViewSet):
 
     def destroy(self, request, workspace_id=None, pk=None):
         member = self.get_object()
+
         if member.role == 'owner':
             return Response(
                 {'error': 'Cannot remove workspace owner'},
                 status=status.HTTP_403_FORBIDDEN,
             )
+
+        # ⭐ Capture BEFORE deletion
+        actor = request.user
+        workspace = member.workspace
+        removed_user = member.user
+
+        # ⭐ Log BEFORE deletion
+        ActivityLogger.member_removed(
+            actor=actor,
+            workspace=workspace,
+            removed_user=removed_user
+        )
+
+        # ⭐ Now delete safely
         member.delete()
+
         return Response(status=status.HTTP_204_NO_CONTENT)
+
 
 
 

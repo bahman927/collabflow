@@ -12,6 +12,7 @@ import { Project, ProjectCreateData, ProjectUpdateData } from "../types/project"
 import { projectService }    from "../services/projectService";
 import { useAuth }           from "../hooks/useAuth";
 import { useWorkspace }      from "./WorkspaceProvider";
+import { useActivity }          from "../context/ActivityProvider";
 
 interface ProjectContextType {
   projects: Project[];
@@ -28,7 +29,7 @@ const ProjectContext = createContext<ProjectContextType | null>(null);
 export const ProjectProvider = ({ children }: { children: React.ReactNode }) => {
   const { apiFetch } = useAuth();
   const { currentWorkspace } = useWorkspace();
-
+  const activity = useActivity();
   const [projects, setProjects] = useState<Project[]>([]);
   const [currentProject, setCurrentProject] = useState<Project | null>(null);
 
@@ -92,68 +93,86 @@ const createProject = useCallback(
         prev.map((p) => (p.id === tempId ? created : p))
       );
 
-      // ✅ Fix: replace the optimistic currentProject with the real one
       setCurrentProject(created);
+
+      // ⭐ NEW — refresh activity feed
+      await activity.refresh();
+
     } catch (err) {
       setProjects((prev) => prev.filter((p) => p.id !== tempId));
       setCurrentProject(null);
       throw err;
     }
   },
-  [apiFetch]
+  [apiFetch, activity]
 );
 
   // -----------------------------
   // Update project (optimistic)
   // -----------------------------
   const updateProject = useCallback(
-    async (id: number, data: ProjectUpdateData) => {
+  // async (id: number, data: ProjectUpdateData) => {
+   async (id: number, data: ProjectUpdateData): Promise<void> => {
+    // ⭐ Optimistic update
+    setProjects((prev) =>
+      prev.map((p) => (p.id === id ? { ...p, ...data } : p))
+    );
+
+    try {
+      const { url, options } = projectService.update(id, data);
+      const updated = await apiFetch<Project>(url, options);
+
+      // Replace optimistic with real
       setProjects((prev) =>
-        prev.map((p) => (p.id === id ? { ...p, ...data } : p))
+        prev.map((p) => (p.id === id ? updated : p))
       );
 
-      try {
-        const { url, options } = projectService.update(id, data);
-        const updated = await apiFetch<Project>(url, options);
-
-        setProjects((prev) =>
-          prev.map((p) => (p.id === id ? updated : p))
-        );
-
-        if (currentProject?.id === id) {
-          setCurrentProject(updated);
-        }
-      } catch (err) {
-        await fetchProjects();
-        throw err;
+      if (currentProject?.id === id) {
+        setCurrentProject(updated);
       }
-    },
-    [apiFetch, currentProject, fetchProjects]
-  );
+
+      // ⭐ NEW — refresh activity feed
+      await activity.refresh();
+      
+    } catch (err) {
+      // Roll back optimistic update
+      await fetchProjects();
+      throw err;
+    }
+  },
+  [apiFetch, currentProject, fetchProjects, activity]
+);
 
   // -----------------------------
   // Delete project (optimistic)
   // -----------------------------
   const deleteProject = useCallback(
-    async (id: number) => {
-      const previous = projects;
+  async (id: number) => {
+    const previous = projects;
 
-      setProjects((prev) => prev.filter((p) => p.id !== id));
+    // ⭐ Optimistic removal
+    setProjects((prev) => prev.filter((p) => p.id !== id));
 
-      try {
-        const { url, options } = projectService.delete(id);
-        await apiFetch(url, options);
+    try {
+      const { url, options } = projectService.delete(id);
+      await apiFetch(url, options);
 
-        if (currentProject?.id === id) {
-          setCurrentProject(null);
-        }
-      } catch (err) {
-        setProjects(previous);
-        throw err;
+      if (currentProject?.id === id) {
+        setCurrentProject(null);
       }
-    },
-    [apiFetch, projects, currentProject]
-  );
+
+      // ⭐ NEW — refresh activity feed
+      await activity.refresh();
+
+    } catch (err) {
+      // Roll back optimistic removal
+      setProjects(previous);
+      throw err;
+    }
+  },
+  [apiFetch, projects, currentProject, activity]
+);
+
 
   // -----------------------------
   // Auto-load when workspace changes

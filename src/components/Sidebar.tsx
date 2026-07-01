@@ -29,8 +29,7 @@ export default function Sidebar({ userRole = "Owner", onAssignProjectClick }: Si
     showFor?: ("Owner" | "Member" | "Viewer")[]; // optional visibility
   }> = [
 
-  { label: "Home", path: "/home", icon: Home,  color: "#4f46e5" }, 
-  
+  { label: "Dashboard", path: "/dashboard", icon: Home,  color: "#4f46e5" }, 
   { label: "Workspaces", path: "/workspaces", icon: Building2,  color: "#4f46e5" },
   { label: "Projects",  path: "/projects",  icon: FolderKanban, color: "#16a34a" },
   { label: "Activity",  path: "/activity",  icon: Activity,     color: "#ea580c" },

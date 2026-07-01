@@ -1,0 +1,12 @@
+ 
+python manage.py shell
+Then:
+
+
+from tasks.models import Task, Workspace
+
+task = Task.objects.get(id=87)
+ws = Workspace.objects.get(id=76)
+
+task.workspace = ws
+task.save()

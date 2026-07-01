@@ -20,6 +20,10 @@ import { createMemberService }  from "../services/memberService";
 import { useAuth }              from "../hooks/useAuth";
 import { useWorkspace }         from "./WorkspaceProvider";
 import { getTokens }            from '../services/authService';
+import { useActivity }          from "../context/ActivityProvider";
+
+
+
 
 interface MemberContextType {
   members: Member[];
@@ -37,10 +41,12 @@ interface MemberContextType {
  const MemberContext =
   createContext<MemberContextType | null>(null);
 
-export function MemberProvider({ children }: { children: React.ReactNode }) {
-  const { tokens, setTokens, logout } = useAuth();
+  export function MemberProvider({ children }: { children: React.ReactNode
+    }) {
+  const {apiFetch, tokens, setTokens, logout } = useAuth();
   const { currentWorkspace } = useWorkspace();
-
+  const activity = useActivity();
+  
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -69,13 +75,11 @@ export function MemberProvider({ children }: { children: React.ReactNode }) {
 
 
   const fetchMembers = useCallback(async () => {
-     console.log('fetchMembers called with workspaceId:', currentWorkspace?.id);
     if (!workspaceId) return;
     setLoading(true);
     setError(null);
     try {
       const data = await memberService.getAll( workspaceId);
-      console.log('fetchMembers returned:', data);
       setMembers(data);
     } catch (err) {
        console.error('fetchMembers error:', err);  
@@ -90,53 +94,58 @@ export function MemberProvider({ children }: { children: React.ReactNode }) {
   }, [workspaceId, filters, memberService]);
 
 
- const inviteMember = useCallback(
+const inviteMember = useCallback(
   async (invite: MemberInvite): Promise<Member> => {
     if (!workspaceId) throw new Error('No workspace selected');
 
-     return await memberService.invite(workspaceId, invite);
+    const member = await memberService.invite(workspaceId, invite);
+    await activity.refresh();   
+
+    return member;
   },
-  [workspaceId]
+  [workspaceId, activity]
 );
 
-  const updateMember = useCallback(
-    async (
-      memberId: number,
-      update: MemberUpdate
-    ): Promise<Member> => {
-      if (!workspaceId)
-        throw new Error('No workspace selected');
-      const updated =
-        await memberService.update(
-          workspaceId,
-          memberId,
-          update
-        );
-      setMembers((prev) =>
-        prev.map((m) =>
-          m.id === memberId ? updated : m
-        )
-      );
-      return updated;
-    },
-    [workspaceId]
-  );
 
- const removeMember = useCallback(
-  async (memberId: number): Promise<void> => {
+const updateMember = useCallback(
+  async (memberId: number, update: MemberUpdate): Promise<Member> => {
     if (!workspaceId) throw new Error('No workspace selected');
 
-    // Ghost member (no valid id) — just remove from state
-    if (!memberId) {
-      setMembers((prev) => prev.filter((m) => m.id !== memberId));
-      return;
-    }
+    const updated = await memberService.update(
+      workspaceId,
+      memberId,
+      update
+    );
+
+    setMembers(prev =>
+      prev.map(m => (m.id === memberId ? updated : m))
+    );
+
+    // await refreshActivity(); // ⭐ sync activity feed
+    await activity.refresh(); // ⭐ sync activity feed
+
+    return updated;
+  },
+  // [workspaceId, refreshActivity]
+  [workspaceId, activity]
+);
+
+const removeMember = useCallback(
+  async (memberId: number): Promise<void> => {
+    if (!workspaceId) throw new Error("No workspace selected");
 
     await memberService.remove(workspaceId, memberId);
-    setMembers((prev) => prev.filter((m) => m.id !== memberId));
+
+    setMembers(prev => prev.filter(m => m.id !== memberId));
+
+    // await refreshActivity(); // ⭐ sync activity feed
+     await activity.refresh();
   },
-  [workspaceId]
+  // [workspaceId, refreshActivity]
+  [workspaceId, activity]
 );
+
+
 
 
   const setFilters = useCallback(
@@ -165,9 +174,8 @@ export function MemberProvider({ children }: { children: React.ReactNode }) {
     [members]
   );
 
-  useEffect(() => {
-    fetchMembers();
-  }, [currentWorkspace]);
+  
+
 
   const value = useMemo<MemberContextType>(
     () => ({

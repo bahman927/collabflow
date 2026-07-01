@@ -8,13 +8,15 @@ import PublicRoute    from   "./PublicRoute";
 import Landing        from "../pages/Landing";
 import Login          from "../pages/Login";
 import Signup         from "../pages/Signup";
-import TaskBoard          from "../pages/task/TaskBoard";
+import TaskBoard      from "../pages/task/TaskBoard";
 import TaskPanel      from "../components/TaskPanel";
-import ProjectPage      from "../pages/project/ProjectPage";
+import ProjectPage    from "../pages/project/ProjectPage";
 import Dashboard      from "../components/Dashboard";
+import Home           from "../pages/Home";
 import {useAuth}      from "../hooks/useAuth"
-import WorkspacePage from "../pages/workspace/WorkspacePage";
+import WorkspacePage  from "../pages/workspace/WorkspacePage";
 import { MembersPage } from "../components/members/MemberPage";
+import ActivityPage   from    "../pages/ActivityPage"
 
  export default function AppRoutes() {
   const {user} = useAuth()
@@ -22,9 +24,6 @@ import { MembersPage } from "../components/members/MemberPage";
   return (
   <Routes>
 
-      {/* ---------------------- */}
-      {/* Public routes          */}
-      {/* ---------------------- */}
     <Route element={<AppLayout />}>
        {/* Public routes */}
       <Route element={<PublicRoute isAuthenticated={isAuthenticated} />}>
@@ -33,14 +32,16 @@ import { MembersPage } from "../components/members/MemberPage";
 
       {/* Protected routes */}
       <Route element={<ProtectedRoute isAuthenticated={isAuthenticated} />}>
+        <Route path="/home"                element={<Home />} />
         <Route path="/dashboard"           element={<Dashboard />} />
         <Route path="/workspaces"          element={<WorkspacePage />} />
         <Route path="/projects"            element={<ProjectPage />} />
-        <Route path="/projects/:projectId" element={<ProjectPage />} />
         <Route path="/workspace/:workspaceId/project/:projectId/board" element={<TaskBoard />} />
 
         <Route path="/tasks"               element={<TaskPanel />} /> 
         <Route path="/members"             element={<MembersPage />} /> 
+        <Route path="/activity"            element={<ActivityPage />} />
+
       </Route>
 
     </Route>

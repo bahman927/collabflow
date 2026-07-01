@@ -6,7 +6,7 @@ import { Task, TaskStatus, TaskUpdateData, TaskCreateData } from "../types/task"
 const WORKSPACES_BASE = "http://localhost:8000/api/workspaces";
 const TASKS_BASE      = "http://localhost:8000/api/tasks";
 
-export const taskService = {
+export  const taskService = {
   list(workspaceId: number) {
     return {
       // url: `${BASE_URL}/?project=${projectId}`,
@@ -33,6 +33,7 @@ export const taskService = {
   name: string;
   description?: string;
   project_id: number;
+  workspace: number;
   priority?: string;
   due_date?: string | null;
   assignee_ids?: number[];
@@ -47,7 +48,17 @@ export const taskService = {
   };
 },
 
- 
+ unassign(taskId: number, memberId: number) {
+  return {
+    url: `${TASKS_BASE}/${taskId}/assignees/${memberId}/`,
+    options: {
+      method: "DELETE",
+      auth: true,
+    },
+  };
+},
+
+
 
   update(taskId: number, data: TaskUpdateData) {
     return {
@@ -66,4 +77,14 @@ export const taskService = {
       options: { method: "DELETE", auth: true},
     };
   },
-};
+
+ removeAssignee(workspaceId: number, taskId: number, memberId: number) {
+  return {
+    url: `${WORKSPACES_BASE}/${workspaceId}/tasks/${taskId}/assignees/${memberId}/`,
+    options: {
+      method: "DELETE",
+      auth: true,
+    },
+  };
+}
+}

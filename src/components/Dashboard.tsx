@@ -7,6 +7,8 @@ import { useProject } from "../context/ProjectProvider";
 import { useTask } from "../context/TaskProvider";
 import { useAuth } from "../hooks/useAuth";
 import type { Task, TaskStatus } from "../types/task";
+import { ActivityPanel } from '../components/ActivityPanel';
+import { useMember } from "@/context/MemberProvider";
 
 /* ───────────────────────────── helpers ───────────────────────────── */
 
@@ -209,11 +211,10 @@ function RecentTaskRow({ task }: { task: Task }) {
   const badge = STATUS_BADGE[task.status] ?? STATUS_BADGE.todo;
   const dot = PRIORITY_DOT[(task as any).priority] ?? "bg-gray-300";
 
-   // Adapt to your Task type — adjust field name as needed
- const members = task.assignees.map((person) => ({
-  name: person.name,
-  avatar: person.avatarUrl,
-}));
+  const avatarMembers = task.assignees.map((a) => ({
+    name: a.name,
+    avatar: a.avatarUrl ?? undefined
+   }));
 
 
   return (
@@ -234,7 +235,7 @@ function RecentTaskRow({ task }: { task: Task }) {
 
       <div className="flex items-center gap-3 shrink-0 ml-3">
         {/* ← Overlapping avatars */}
-        <AvatarStack members={members} max={3} />
+        <AvatarStack members={avatarMembers} max={3} />
 
         <span
           className={`text-xs px-2 py-0.5 rounded-full font-medium ${badge.bg} ${badge.text}`}
@@ -250,7 +251,6 @@ function RecentTaskRow({ task }: { task: Task }) {
   );
 }
 
- 
 function ProjectCard({
   project,
   tasks,
@@ -352,18 +352,19 @@ const IconProjects = () => (
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
   const { currentWorkspace } = useWorkspace();
-  const { getWorkspaceTasks, getCurrentWorkspaceTasks} = useTask();
+  const { getWorkspaceTasks, fetchTasks, tasks, loading} = useTask();
   const { projects, setCurrentProject } = useProject();
-  const { tasks, loading } = useTask();
   const normalize = (s: string) => s.toLowerCase() as TaskStatus;
 
   if (!currentWorkspace) return null;
 
   const wsTasks = getWorkspaceTasks(currentWorkspace.id);
-  
-  console.log('wsTasks : ', wsTasks)
-  console.log('Tasks : ', tasks)
-  console.log('currentWorkspace.id : ',  currentWorkspace.id)
+     
+  useEffect(() => {
+      if (!currentWorkspace?.id) return;
+      fetchTasks(currentWorkspace.id);
+    }, [currentWorkspace?.id]);
+
 
   const dashboardGrouped = wsTasks.reduce((acc, task) => {
       const key = normalize(task.status);
@@ -373,15 +374,15 @@ const Dashboard: React.FC = () => {
   }, {} as Record<TaskStatus, Task[]>);
 
   useEffect(() => {
-  setCurrentProject(null);
-}, []);
+    setCurrentProject(null);
+  }, []);
 
   const counts = {
-  todo: dashboardGrouped["todo"]?.length ?? 0,
-  in_progress: dashboardGrouped["in_progress"]?.length ?? 0,
-  done: dashboardGrouped["done"]?.length ?? 0,
-  overdue: dashboardGrouped["overdue"]?.length ?? 0,
-};
+    todo: dashboardGrouped["todo"]?.length ?? 0,
+    in_progress: dashboardGrouped["in_progress"]?.length ?? 0,
+    done: dashboardGrouped["done"]?.length ?? 0,
+    overdue: dashboardGrouped["overdue"]?.length ?? 0,
+  };
 
   const total = wsTasks.length;
   const pct = (n: number) => (total > 0 ? Math.round((n / total) * 100) : 0);
@@ -397,6 +398,8 @@ const Dashboard: React.FC = () => {
     (user as any)?.name ??
     (user as any)?.email?.split("@")[0] ??
     "";
+
+    
 
   return (
     <div className="p-6 lg:p-8 bg-gray-50 min-h-screen space-y-6">
@@ -456,16 +459,69 @@ const Dashboard: React.FC = () => {
       <TaskDistributionBar counts={counts} total={total} />
 
       {/* ── Two-column layout: Recent Tasks + Projects ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Recent Tasks */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-800">
-              Recent Task Activity
+      <div className="grid grid-cols-1 md:grid-cols-2   gap-8">
+
+        {/* Projects Overview */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+              <span className="p-1.5 rounded-lg bg-indigo-50 text-indigo-600">
+                <IconProjects />
+              </span>
+              Projects
             </h2>
-            <span className="text-xs text-gray-400">Last updated</span>
+            <span className="text-xs text-gray-400">
+              {projects.length} project{projects.length !== 1 ? "s" : ""}
+            </span>
           </div>
 
+          {projects.length === 0 ? (
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 text-center">
+              <p className="text-gray-400 text-sm">No projects yet</p>
+              <p className="text-xs text-gray-300 mt-1">
+                Create a project to get started
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-3 lg:pr-6">
+              {projects.map((project) => (
+                <ProjectCard
+                  key={project.id}
+                  project={project}
+                  tasks={tasks}
+                  workspaceId={currentWorkspace?.id ?? 0}
+                  onSelect={() => setCurrentProject(project)}
+                />
+              ))}
+            </div>
+          )}
+          
+        </div>    
+        {/* Recent Tasks */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8  ">
+         <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+
+              {/* Icon */}
+              <span className="p-1.5 rounded-lg bg-emerald-50 text-green-600">
+                <IconTasks />
+              </span>
+
+              {/* All text in ONE inline span */}
+              <span className="flex items-center gap-1">
+                Recent
+                <span className="text-green-600">
+                  task{wsTasks.length !== 1 ? "s" : ""}
+                </span>
+                Activity
+                <span className="text-gray-500">
+                  ({wsTasks.length})
+                </span>
+              </span>
+
+            </h2>
+          </div>
+            
           {loading ? (
             <div className="space-y-3">
               {[...Array(4)].map((_, i) => (
@@ -490,42 +546,7 @@ const Dashboard: React.FC = () => {
             </ul>
           )}
         </div>
-
-        {/* Projects Overview */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-              <span className="p-1.5 rounded-lg bg-indigo-50 text-indigo-600">
-                <IconProjects />
-              </span>
-              Projects
-            </h2>
-            <span className="text-xs text-gray-400">
-              {projects.length} project{projects.length !== 1 ? "s" : ""}
-            </span>
-          </div>
-
-          {projects.length === 0 ? (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 text-center">
-              <p className="text-gray-400 text-sm">No projects yet</p>
-              <p className="text-xs text-gray-300 mt-1">
-                Create a project to get started
-              </p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 gap-3">
-              {projects.map((project) => (
-                <ProjectCard
-                  key={project.id}
-                  project={project}
-                  tasks={tasks}
-                  workspaceId={currentWorkspace?.id ?? 0}
-                  onSelect={() => setCurrentProject(project)}
-                />
-              ))}
-            </div>
-          )}
-        </div>
+           
       </div>
     </div>
   );

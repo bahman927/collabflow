@@ -16,7 +16,7 @@ interface ProjectItemProps {
   status: Status;
   onDelete: (id: number) => void;
   editable?: boolean;
-   onClick?: () => void;
+  onClick?: () => void;
 }
 
 // Map known projects to icons

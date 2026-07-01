@@ -57,7 +57,8 @@ export default function TaskBoard() {
   // -----------------------------
   useEffect(() => {
     setCurrentTask(null);
-  }, []);
+  }, [currentProject?.id]);
+
 
   // -----------------------------
   // 3. Sync currentProject with URL

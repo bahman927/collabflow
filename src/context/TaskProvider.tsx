@@ -18,7 +18,11 @@ import {
 import { taskService }  from "../services/taskService";
 import { useAuth }      from "../hooks/useAuth";
 import { useProject }   from "./ProjectProvider";
+import { useMember }    from "./MemberProvider";
 import { useWorkspace } from "../hooks/useWorkspace";
+import { useActivity } from "../context/ActivityProvider";
+
+
 
 interface TaskContextType {
   tasks: Task[];
@@ -28,13 +32,16 @@ interface TaskContextType {
   loadTasks: (projectId?: number) => Promise<void>;
   loading: boolean;
   error: string | null;
-  fetchTasks: () => Promise<void>;
+  fetchTasks: (workspaceId: number) => Promise<void>;
   createTask: (data: TaskCreateData) => Promise<void>;
-  updateTask: (id: string, data: TaskUpdateData) => Promise<void>; 
+  updateTask: (id: string | number, data: TaskUpdateData) => Promise<void>; 
   deleteTask: (id: number) => Promise<void>;                       
   moveTask: (id: number, status: TaskStatus) => Promise<void>; 
   getWorkspaceTasks: (workspaceId: number) => Task[];
   getCurrentWorkspaceTasks: () => Task[];
+  removeAssignee: (taskId: number, memberId: number) => Promise<void>;
+  updateTaskInState: (taskId: number, patch: Partial<Task>) => void;
+  
 
 }
 
@@ -42,20 +49,19 @@ interface TaskContextType {
 const TaskContext = createContext<TaskContextType | null>(null);
 
 export const TaskProvider = ({ children }: { children: React.ReactNode }) => {
+
   const { apiFetch, isAuthenticated } = useAuth();
-  const { currentProject } = useProject();
+  const { currentProject, projects, setCurrentProject } = useProject();
   const { role, currentWorkspace, currentWorkspaceMember } = useWorkspace();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [currentTask, setCurrentTask] = useState<Task | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [workspaceTasks, setWorkspaceTasks] = useState<Task[]>([]);
-  // const [projectTasks, setProjectTasks] = useState<Task[]>([]);
+  const { setMembers } = useMember();
+  const activity = useActivity();
 
-
-  // const normalizeStatus = (s: string): TaskStatus =>
-  //    s.toLowerCase() as TaskStatus;
-
+ const normalizedRole = role?.toLowerCase();
  const normalizeStatus = (s: string): TaskStatus => {
   if (!s) return "todo"; // fallback
   switch (s.toUpperCase()) {
@@ -85,28 +91,27 @@ export const TaskProvider = ({ children }: { children: React.ReactNode }) => {
           // 1. Fetch all tasks for the workspace
           const { url, options } = taskService.list(currentWorkspace.id);
           const allTasks = await apiFetch<Task[]>(url, options);
-
+         
           // 2. Filter by project (if provided)
-          let projectTasks = projectId
+          let filtered = projectId
             ? allTasks.filter((t) => t.project === projectId)
             : allTasks;
 
           // 3. Filter by membership (owner sees all, member sees assigned)
-          if (role !== "owner") {
-            const userId = currentWorkspaceMember?.user.id;
+          const normalizedRole = role?.toLowerCase();
 
-            projectTasks = projectTasks.filter((task) =>
+          if (normalizedRole !== "owner") {
+            const userId = currentWorkspaceMember?.user?.id;
+
+            filtered = filtered.filter((task) =>
               task.assignees?.some((a) => a.id === userId)
             );
           }
 
           // 4. Update state
-          setTasks(projectTasks);
+          setTasks(filtered);
 
-          // 5. Auto-select first task
-          if (!currentTask && projectTasks.length > 0) {
-            setCurrentTask(projectTasks[0]);
-          }
+           
         } catch (err: any) {
           console.error("TASK LOAD ERROR:", err);
           setError(err.message || "Failed to load tasks");
@@ -118,7 +123,8 @@ export const TaskProvider = ({ children }: { children: React.ReactNode }) => {
         apiFetch,
         currentWorkspace,
         currentWorkspaceMember,
-        role,
+        // role,
+        normalizedRole,
         currentTask,
       ]
     );
@@ -129,7 +135,6 @@ export const TaskProvider = ({ children }: { children: React.ReactNode }) => {
   }, [tasks, currentProject?.id]);
 
   const groupedTasks = useMemo(() => {
-      console.log('projectTasks : ', projectTasks)
       return projectTasks.reduce((acc, task) => {
         const key = normalizeStatus(task.status);
         if (!acc[key]) acc[key] = [];
@@ -139,7 +144,6 @@ export const TaskProvider = ({ children }: { children: React.ReactNode }) => {
       }, {} as Record<TaskStatus, Task[]>);
     }, [projectTasks]);
 
-  console.log('groupedTasks in taskProvider : ', groupedTasks)
 
 // fetch from the backend
   const fetchProjectTasks = useCallback(async () => {
@@ -155,7 +159,6 @@ export const TaskProvider = ({ children }: { children: React.ReactNode }) => {
   const getWorkspaceTasks = useCallback(
     (WorkspaceId: number) => {
       return tasks.filter(
-        // t => t.workspace === workspaceId);
         t => t.workspace === WorkspaceId )
     },
     [tasks]
@@ -170,28 +173,25 @@ export const TaskProvider = ({ children }: { children: React.ReactNode }) => {
   // -----------------------------
   // Fetch tasks for selected project
   // -----------------------------
-  const fetchTasks = useCallback(async () => {
-      if (!currentProject) return;
+  const fetchTasks = useCallback(
+    async (workspaceId: number) => {
+      if (!workspaceId) return;
 
       try {
         setLoading(true);
         setError(null);
 
-        const { url, options } = taskService.list(currentProject.id);
+        const { url, options } = taskService.list(workspaceId);
         const data = await apiFetch<Task[]>(url, options);
 
         setTasks(data);
-
-        // Auto-select first task if none selected
-        if (!currentTask && data.length > 0) {
-          setCurrentTask(data[0]);
-        }
+ 
       } catch (err: any) {
         setError(err.message || "Failed to load tasks");
       } finally {
         setLoading(false);
       }
-  }, [apiFetch, currentProject]);
+  }, [apiFetch]);
 
    const fetchWorkspaceTasks = useCallback(async () => {
       if (!currentWorkspace) return;
@@ -206,7 +206,6 @@ export const TaskProvider = ({ children }: { children: React.ReactNode }) => {
 
         const data = await apiFetch<Task[]>(url, options);
         setTasks(data);
-        // setWorkspaceTasks(data);
 
       } catch (err: any) {
         setError(err.message || "Failed to load workspace tasks");
@@ -218,78 +217,129 @@ export const TaskProvider = ({ children }: { children: React.ReactNode }) => {
   // -----------------------------
   // Create task (optimistic)
   // -----------------------------
- const createTask = useCallback(
-    async (data: TaskCreateData) => {
-      if (!currentProject) return;
-     const tempId = -Math.floor(Math.random() * 1000000);
+const createTask = useCallback(
+  async (data: TaskCreateData) => {
+    if (!currentProject) return;
+
+    const tempId = -Math.floor(Math.random() * 1000000);
 
     const optimistic: Task = {
-        id: tempId,
+      id: tempId,
+      name: data.name ?? "",
+      description: data.description ?? "",
+      status: "todo",
+      priority: data.priority ?? "medium",
+      due_date: data.due_date ?? null,
+      project_id: currentProject!.id,
+      project: currentProject!.id,
+      workspace: currentWorkspace!.id,
+      assignees: [],
+      assignee_emails: [],
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
 
-        name: data.name ?? "",                 
-        description: data.description ?? "",   // ⭐ never undefined
+    setTasks((prev) => [...prev, optimistic]);
 
-        status: "todo",         // ⭐ fallback
-        priority: data.priority ?? "medium",   // ⭐ fallback
+    try {
+      const nameExists = tasks.some(
+        (t) => (t.name ?? "").toLowerCase() === (data.name ?? "").toLowerCase()
+      );
 
-        due_date: data.due_date ?? null,       // ⭐ null is allowed
-
-        project_id: currentProject!.id,
-        project: currentProject!.id,
-
-        workspace: currentWorkspace!.id,
-
-        assignees: [],
-        assignee_emails: [],
-
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      };
-
-       setTasks((prev) => [...prev, optimistic]);
-
-       try {
-        const nameExists = tasks.some(
-          (t) => (t.name ?? "").toLowerCase() === (name ?? "").toLowerCase()
-
-        );
-
-        if (nameExists) {
-          alert("A task with this name already exists.");
-          return;
-        }
-
-       // ✅ NEW — passes everything through
-        const { url, options } = taskService.create({
-          name: data.name,
-          description: data.description,
-          project_id: currentProject?.id!,
-          assignee_ids: data.assignee_ids,
-          priority: data.priority,
-          due_date: data.due_date,
-        });
-
-
-        const created = await apiFetch<Task>(url, options);
-
-        setTasks((prev) =>
-          prev.map((t) => (t.id === tempId ? created : t))
-        );
-      } catch (err) {
-        setTasks((prev) => prev.filter((t) => t.id !== tempId));
-        throw err;
+      if (nameExists) {
+        alert("A task with this name already exists.");
+        return;
       }
-    },
-  [apiFetch, currentProject]
+
+      const { url, options } = taskService.create({
+        name: data.name,
+        description: data.description,
+        project_id: currentProject.id,
+        workspace: currentWorkspace!.id,
+        assignee_ids: data.assignee_ids,
+        priority: data.priority,
+        due_date: data.due_date,
+      });
+
+      const created = await apiFetch<Task>(url, options);
+
+      setTasks((prev) =>
+        prev.map((t) => (t.id === tempId ? created : t))
+      );
+
+      // ⭐ NEW — refresh activity feed
+      await activity.refresh();
+
+    } catch (err) {
+      setTasks((prev) => prev.filter((t) => t.id !== tempId));
+      throw err;
+    }
+  },
+  [apiFetch, currentProject, currentWorkspace, tasks, activity]
 );
 
+ 
+
+const updateTaskInState = (taskId: number, patch: Partial<Task>) => {
+  setTasks(prev =>
+    prev.map(t =>
+      t.id === taskId
+        ? { ...t, ...patch }
+        : t
+    )
+  );
+};
+
+const removeAssignee = async (taskId: number, memberId: number) => {
+  const task = tasks.find(t => t.id === taskId);
+  if (!task) return;
+
+  const { url, options } = taskService.removeAssignee(
+    task.workspace,
+    taskId,
+    memberId
+  );
+
+  await apiFetch(url, options);
+  const memberEmail = task.assignees.find(a => a.id === memberId)?.email;
+
+  // ⭐ Update UI state
+  setTasks(prev =>
+    prev.map(t =>
+      t.id === taskId
+        ? {
+            ...t,
+            assignees: t.assignees.filter(a => a.id !== memberId),
+             assignee_emails: memberEmail
+              ? t.assignee_emails.filter(e => e !== memberEmail)
+              : t.assignee_emails
+          }
+        : t
+    )
+  );
+
+  // ⭐ NEW — refresh activity feed
+  await activity.refresh();
+};
+
+ 
   // -----------------------------
   // Update task (optimistic)
   // -----------------------------
 
  const updateTask = useCallback(
-  async (id: string, data: TaskUpdateData) => {
+  async (id: string | number, data: TaskUpdateData) => {
     const numericId = Number(id);
+
+    const existing = tasks.find(t => t.id === numericId);
+    if (!existing) throw new Error("Task not found in state");
+
+    const payload = {
+      ...existing,
+      ...data,
+      project: existing.project,
+      workspace: existing.workspace,
+    };
 
     const { url, options } = taskService.update(numericId, data);
     const updated = await apiFetch<Task>(url, options);
@@ -301,9 +351,13 @@ export const TaskProvider = ({ children }: { children: React.ReactNode }) => {
     if (currentTask?.id === numericId) {
       setCurrentTask(updated);
     }
+
+    // ⭐ NEW — refresh activity feed
+    await activity.refresh();
   },
-  [apiFetch, currentTask]
+  [apiFetch, currentTask, tasks, activity]
 );
+
 
   
    const tasksRef = useRef<Task[]>([]);
@@ -316,76 +370,84 @@ export const TaskProvider = ({ children }: { children: React.ReactNode }) => {
   // -----------------------------
   // Delete task (optimistic)
   // -----------------------------
- const deleteTask = useCallback(
+const deleteTask = useCallback(
   async (id: number) => {
     const numericId = Number(id);
 
-    // Store previous state for rollback
     const previous = tasksRef.current;
 
-    // Optimistic update
-    setTasks((prev) => prev.filter((t) => t.id !== numericId));
+    // Optimistic removal
+    setTasks(prev => prev.filter(t => t.id !== numericId));
 
     try {
       const { url, options } = taskService.delete(String(numericId));
       await apiFetch(url, options);
 
-      // Ensure state stays clean after server confirms
-      setTasks((prev) => prev.filter((t) => t.id !== numericId));
+      setTasks(prev => prev.filter(t => t.id !== numericId));
 
-      // Clear currentTask if it was deleted
       if (currentTask?.id === numericId) {
         setCurrentTask(null);
       }
-      console.log("ProjectPage rendered", tasks.length);
+
+      // ⭐ NEW — refresh activity feed
+      await activity.refresh();
 
     } catch (err) {
-      // Rollback on failure
       setTasks(previous);
       throw err;
     }
   },
-  [apiFetch, currentTask]
-);
- 
-
-  const moveTask = useCallback(
-      async (id: number, status: TaskStatus) => {
-        const numericId = Number(id);
-        // optimistic update
-        setTasks(prev =>
-          prev.map(t =>
-            t.id === numericId ? { ...t, status, updated_at: new Date().toISOString() } : t
-          )
-        );
-
-        try {
-          const { url, options } = taskService.update(id, { status });
-          const updated = await apiFetch<Task>(url, options);
-
-          setTasks(prev =>
-            prev.map(t => (t.id === numericId ? updated : t))
-          );
-
-          if (currentTask?.id === numericId) {
-            setCurrentTask(updated);
-          }
-        } catch (err) {
-          await fetchTasks(); // rollback
-          throw err;
-        }
-      },
-  [apiFetch, currentTask, fetchTasks]
+  [apiFetch, currentTask, activity]
 );
 
  
-   useEffect(() => {
-    console.log('currentTask in effect-dashboard :', currentTask)
-      if (currentWorkspace) {
-        fetchWorkspaceTasks();
-         setCurrentTask(null);  
+
+const moveTask = useCallback(
+  async (id: number, status: TaskStatus) => {
+    const numericId = Number(id);
+
+    // ⭐ Optimistic update
+    setTasks(prev =>
+      prev.map(t =>
+        t.id === numericId
+          ? { ...t, status, updated_at: new Date().toISOString() }
+          : t
+      )
+    );
+
+    try {
+      const { url, options } = taskService.update(id, { status });
+      const updated = await apiFetch<Task>(url, options);
+
+      setTasks(prev =>
+        prev.map(t => (t.id === numericId ? updated : t))
+      );
+
+      if (currentTask?.id === numericId) {
+        setCurrentTask(updated);
       }
-    }, [currentWorkspace, fetchWorkspaceTasks]);
+
+      // ⭐ NEW — refresh activity feed
+      await activity.refresh();
+
+    } catch (err) {
+      if (currentWorkspace?.id) {
+        await fetchTasks(currentWorkspace.id);
+      }
+      throw err;
+    }
+  },
+  [apiFetch, currentTask, fetchTasks, currentWorkspace, activity]
+);
+
+
+ 
+useEffect(() => {
+  if (projects.length > 0 && !currentProject) {
+    setCurrentProject(projects[0]);
+  }
+}, [projects, currentProject]);
+
 
   // -----------------------------
   // Reset on logout
@@ -416,6 +478,8 @@ export const TaskProvider = ({ children }: { children: React.ReactNode }) => {
         getWorkspaceTasks,
         getCurrentWorkspaceTasks,
         loadTasks,
+        removeAssignee,
+        updateTaskInState,
 
       }}
     >

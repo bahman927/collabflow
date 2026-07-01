@@ -13,6 +13,16 @@ export interface Person {
   avatarUrl?: string;
 }
 
+export interface TaskAssignee {
+  id: number;          // TaskAssignee row ID
+  member_id: number;   // WorkspaceMember ID
+  name: string;
+  email: string;
+  avatar_url?: string | null;    
+  avatarUrl?: string | null;    
+}
+
+
 
 export interface Task {
   id: number;
@@ -24,7 +34,7 @@ export interface Task {
   project_id: number;
   project: number;
   workspace: number;      // ⭐ CORRECT
-  assignees: any[];
+  assignees: TaskAssignee[];
   assignee_emails: string[];
   created_at: string;
   updated_at: string;

@@ -48,7 +48,8 @@ export default function TaskPanel() {
 
   const handleStatusChange = async (newStatus: TaskStatus) => {
     try {
-      await moveTask(String(currentTask.id), newStatus);
+      // await moveTask(String(currentTask.id), newStatus);
+      await moveTask(currentTask.id, newStatus);
     } catch (err: any) {
       console.error("STATUS UPDATE ERROR:", err);
       alert(err?.message || "Failed to update status");

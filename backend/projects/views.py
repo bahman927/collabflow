@@ -97,15 +97,15 @@ class ProjectViewSet(ModelViewSet):
         workspace = project.workspace
         project_name = project.name
 
-        response = super().destroy(request, *args, **kwargs)
-
-        ActivityLogger.project_deleted(   
+        # ⭐ Log BEFORE deletion
+        ActivityLogger.project_deleted(
             actor=request.user,
             workspace=workspace,
             project_name=project_name
         )
 
-        return response
+        return super().destroy(request, *args, **kwargs)
+
 
 class ProjectListCreateView(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated]

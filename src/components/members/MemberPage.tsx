@@ -1,4 +1,4 @@
-import React, { useState }    from 'react';
+import React, { useState, useEffect }    from 'react';
 import { useMember }          from '../../context/MemberProvider';
 import { useAuth }            from '../../hooks/useAuth';
 import { useWorkspace }       from '../../context/WorkspaceProvider';
@@ -36,9 +36,15 @@ const filteredMembers = members.filter((m) =>
   m.firstName.toLowerCase().includes(search.toLowerCase()) ||
   m.lastName.toLowerCase().includes(search.toLowerCase())
 );
-console.log('filtered members : ', filteredMembers)
-console.log('search: ', search)
-const finalMembers = Object.values(uniqueMembers)
+
+const workspaceMembers = members.map((m) => ({
+  id: m.id,
+  name: m.displayName,
+  avatar: m.avatarUrl ?? undefined,
+  role: m.role
+}));
+ 
+// const finalMembers = Object.values(uniqueMembers)
 
   const { currentWorkspace }              = useWorkspace();
   const [showAddModal, setShowAddModal]   = useState(false);
@@ -50,14 +56,16 @@ const handleSelectMember = (member: Member) => {
   setSearch("");
 };
 
+useEffect(() => {
+  fetchMembers();
+ }, []);
+
   // Find current user's membership to get their role
  const currentMembership = members.find((m) => m.userId === user?.id.toString());
-//  console.log("currentMemberShip : ", currentMembership, currentMembership?.role)
 
  const canInvite =
   currentMembership?.role?.toLowerCase() === 'owner' ||
   currentMembership?.role?.toLowerCase() === 'admin';
-// console.log("canInvit : ", canInvite)
 
   return (
     <div className="max-w-4xl mx-auto px-6 py-8">

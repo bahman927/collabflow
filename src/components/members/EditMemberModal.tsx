@@ -34,6 +34,7 @@ export function EditMemberModal({
     setSubmitting(true);
     setError(null);
     try {
+      console.log('in handleSave ', member.id)
       await updateMember(member.id, { role });
       onClose();
     } catch (err) {
@@ -51,6 +52,7 @@ export function EditMemberModal({
     if (!member) return;
     setSubmitting(true);
     try {
+      console.log('in handleRemove ', member.id)
       await removeMember(member.id);
       onClose();
     } catch (err) {

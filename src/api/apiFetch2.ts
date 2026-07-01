@@ -1,5 +1,7 @@
 // apiFetch.ts
 import { Tokens } from "../types/auth";
+import { toast } from "react-hot-toast";
+
 
 const BASE_URL = "http://localhost:8000";
 
@@ -74,7 +76,6 @@ export default async function apiFetch<T = any>(
   // Prepare headers
    let  headers = new Headers(options.headers);
   
-  // Auto-add Content-Type for JSON bodies (skip for FormData)
   if (
     options.body &&
     !(options.body instanceof FormData) &&
@@ -86,8 +87,6 @@ export default async function apiFetch<T = any>(
   // Handle authentication header
   if (requiresAuth) {
     
-    // console.log("requiresAuth → tokens:", tokens);
-
     if (tokens?.access) {
       // We have an access token - use it
       headers.set("Authorization", `Bearer ${tokens.access}`);
@@ -98,27 +97,27 @@ export default async function apiFetch<T = any>(
         setTokens,
         logout
       );
-      // console.log("newAccessToken in apiFetch2 83:", newAccessToken)
       if (newAccessToken) {
         headers.set("Authorization", `Bearer ${newAccessToken}`);
       } else {
         // Refresh failed
-        return Promise.reject(new Error("Not authenticated 106"));
+        toast.error("Session expired — please log in again.");
+        logout();
+        window.location.href = "/login";
+        return Promise.reject(new Error("SESSION_EXPIRED"));
       }
     } else {
       // No tokens at all
       logout();
-      // return Promise.reject(new Error("Not Authenticated 111"));
     }
   }
    
   const executeFetch = async () => {
+    // console.log('options :', options, ' url : ', url, ' headers :', headers)
     try {
-      //  console.log("url options headers :" , {url, options, headers})
       return await fetch(url, {
         ...options,
         headers,
-        //credentials: 'include'
       });
     } catch (err: any) {
       console.error("Failed to create task:", err.message);
@@ -127,13 +126,13 @@ export default async function apiFetch<T = any>(
   };
 
 // Make the request
-let response;
+    let response;
 
-try {
-  response = await executeFetch();
-} catch (err) {
-  throw new Error("Network error. Please check your connection.");
-}
+    try {
+      response = await executeFetch();
+    } catch (err) {
+      throw new Error("Network error. Please check your connection.");
+    }
 
   if (response.status === 401 && requiresAuth && tokens?.refresh) {
     console.log("Token expired, attempting refresh...");
@@ -143,14 +142,13 @@ try {
       setTokens,
       logout
     );
-    // console.log("newAccessToken in apiFetch2 117:", newAccessToken)
     if (newAccessToken) {
       headers.set("Authorization", `Bearer ${newAccessToken}`);
       // Retry the original request
       response = await executeFetch();
     } else {
       // Refresh failed
-      return Promise.reject(new Error("Session expired. Please login again."));
+       return Promise.reject(new Error("Session expired. Please login again."));
     }
   }
 
@@ -161,20 +159,32 @@ try {
       const errorData = await response.json();
       errorMessage = errorData.detail || errorData.message || JSON.stringify(errorData);
     } catch {
-      // If not JSON, get as text
-      // errorMessage = await response.text();
+      
     }
     
     throw new Error(errorMessage);
   }
      
-  // Return successful response as JSON
-  //  return response.json();
-  try {
-  return await response.json();
-} catch (e) {
-  console.warn('Response not JSON, returning empty object');
-  return {} as T;
+  const text = await response.text();
+
+// No body → return null or [] depending on your API
+if (!text.trim()) {
+    return [] as T; // for list endpoints
 }
+
+try {
+    return JSON.parse(text) as T;
+} catch (e) {
+    console.warn("Response not JSON, returning empty object");
+    return {} as T;
+}
+
+  
+  // try {
+  //   return await response.json();
+  //  } catch (e) {
+  //     console.warn('Response not JSON, returning empty object');
+  //     return {} as T;
+  //  }
 
 }

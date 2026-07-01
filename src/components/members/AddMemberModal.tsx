@@ -128,7 +128,8 @@ const handleSubmit = async (e: React.FormEvent) => {
      ) ? prev : [...prev, res]
     );
 
-    await fetchTasks();   // refresh task list immediately
+    await fetchTasks(currentWorkspace.id);
+   // refresh task list immediately
     onClose();
   } catch (err: any) {
     const backendError =

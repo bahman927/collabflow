@@ -1,6 +1,14 @@
 // src/components/task/TaskDetailDrawer.tsx
 
 import { useState, useEffect, useRef } from "react";
+import { taskService } from "@/services/taskService";
+import { useAuth }           from "../../hooks/useAuth";
+import { useTask }           from "@/context/TaskProvider";
+import { TaskAssignee } from "../../types/task";
+
+
+
+
 import type { Task, TaskStatus, TaskPriority, TaskUpdateData } from "../../types/task";
 
 /* ───────────────────────────── constants ─────────────────────────── */
@@ -189,7 +197,7 @@ function EditableText({
 interface Props {
   task: Task | null;
   onClose: () => void;
-  onUpdate: (id: string, data: TaskUpdateData) => Promise<void>;
+  onUpdate: (id: string | number, data: TaskUpdateData) => Promise<void>;
   onRequestDelete?: (task: Task) => void; 
 }
 
@@ -202,6 +210,9 @@ export default function TaskDetailDrawer({
 
   // Reset delete confirm UI (no longer used)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [confirmRemoveId, setConfirmRemoveId] = useState<number | null>(null);
+  const { apiFetch } = useAuth();
+  const { updateTaskInState } = useTask();
 
   // Reset internal UI when task changes
   useEffect(() => {}, [task?.id]);
@@ -216,10 +227,51 @@ export default function TaskDetailDrawer({
       if (e.key === "Escape") onClose();
     };
     if (task) window.addEventListener("keydown", handleKey);
-    return () => window.removeEventListener("keydown", handleKey);
+      return () => window.removeEventListener("keydown", handleKey);
   }, [task, onClose]);
 
   if (!task) return null;
+
+
+const handleConfirmRemove = async (memberId: number) => {
+  const { url, options } = taskService.removeAssignee(
+    task.workspace,
+    task.id,
+    memberId
+  );
+
+  await apiFetch(url, options);
+
+  // 1️⃣ Compute updated assignees
+  const updatedAssignees = task.assignees.filter(
+    a => a.member_id !== memberId
+  );
+
+  // 2️⃣ Update backend (PATCH) — ONLY assignee_ids allowed
+  await onUpdate(task.id, {
+    assignee_ids: updatedAssignees.map(a => a.member_id)
+  });
+
+  // 3️⃣ Update UI state locally — NOT through onUpdate()
+  updateTaskInState(task.id, {
+    assignees: updatedAssignees
+  });
+
+  setConfirmRemoveId(null);
+};
+
+
+
+
+  const normalizeAssignee = (person: any) => {
+      return {
+        memberId: person.member_id,     // ✔ correct ID for DELETE
+        fullName: person.name || person.email || "Unknown",
+      };
+    };
+
+
+
 
   const currentPriority =
     PRIORITY_OPTIONS.find((p) => p.value === (task as any).priority) ??
@@ -256,7 +308,7 @@ export default function TaskDetailDrawer({
           {/* Task name */}
           <EditableText
             value={task.name}
-            onSave={(name) => onUpdate(String(task.id), { name })}
+            onSave={(name) => onUpdate((task.id), { name })}
             className="text-xl font-bold text-gray-900"
             placeholder="Task name"
           />
@@ -268,7 +320,7 @@ export default function TaskDetailDrawer({
             </label>
             <EditableText
               value={task.description ?? ""}
-              onSave={(description) => onUpdate(String(task.id), { description })}
+              onSave={(description) => onUpdate((task.id), { description })}
               as="textarea"
               className="text-sm text-gray-700"
               placeholder="Add a description..."
@@ -291,7 +343,7 @@ export default function TaskDetailDrawer({
                 {STATUS_OPTIONS.map((opt) => (
                   <button
                     key={opt.value}
-                    onClick={() => onUpdate(String(task.id), { status: opt.value })}
+                    onClick={() => onUpdate((task.id), { status: opt.value })}
                     className={`text-xs px-3 py-1 rounded-full font-medium transition-all ${
                       task.status === opt.value
                         ? `${opt.color} ring-2 ring-offset-1 ring-current`
@@ -314,7 +366,7 @@ export default function TaskDetailDrawer({
                 {PRIORITY_OPTIONS.map((opt) => (
                   <button
                     key={opt.value}
-                    onClick={() => onUpdate(String(task.id), { priority: opt.value } as any)}
+                    onClick={() => onUpdate((task.id), { priority: opt.value } as any)}
                     className={`text-xs px-3 py-1 rounded-full font-medium flex items-center gap-1.5 transition-all ${
                       (task as any).priority === opt.value
                         ? `bg-white ring-2 ${opt.ring} ring-offset-1 text-gray-800`
@@ -339,13 +391,13 @@ export default function TaskDetailDrawer({
                   type="date"
                   value={toInputDate(task.due_date)}
                   onChange={(e) =>
-                    onUpdate(String(task.id), { due_date: e.target.value || null })
+                    onUpdate((task.id), { due_date: e.target.value || null })
                   }
                   className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
                 {task.due_date && (
                   <button
-                    onClick={() => onUpdate(String(task.id), { due_date: null })}
+                    onClick={() => onUpdate((task.id), { due_date: null })}
                     className="text-xs text-gray-400 hover:text-red-500 transition"
                   >
                     Clear
@@ -361,28 +413,115 @@ export default function TaskDetailDrawer({
                 Assignees
               </div>
               <div className="flex flex-wrap gap-2">
-                {task.assignees?.length ? (
+               {task.assignees?.length ? (
+                  task.assignees.map((person) => {
+                    const { memberId, fullName } = normalizeAssignee(person);
+                    console.log("ASSIGNEE RAW:", person);
+
+                    return (
+                      <div key={memberId}>
+                        {confirmRemoveId === memberId ? (
+                          <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-full px-3 py-1">
+                            <span className="text-xs text-red-700">Remove {fullName}?</span>
+
+                            <button
+                              onClick={() => handleConfirmRemove(memberId)}
+                              className="text-xs bg-red-600 text-white px-2 py-0.5 rounded hover:bg-red-700"
+                            >
+                              Yes
+                            </button>
+
+                            <button
+                              onClick={() => setConfirmRemoveId(null)}
+                              className="text-xs text-gray-500 px-2 py-0.5 rounded hover:bg-gray-200"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 text-xs bg-gray-100 text-gray-700 rounded-full px-3 py-1">
+                            <span className="w-5 h-5 rounded-full bg-indigo-500 text-white flex items-center justify-center text-[10px] font-bold">
+                              {fullName
+                                .split(" ")
+                                .map((n: string) => n[0])
+                                // .map((part) => part[0])  
+                                .join("")
+                                .slice(0, 2)}
+                            </span>
+
+                            {fullName}
+
+                            <button
+                              className="ml-1 text-gray-400 hover:text-red-600"
+                              onClick={() => setConfirmRemoveId(memberId)}
+                            >
+                              ✕
+                            </button>
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })
+                ) : (
+                  <span className="text-xs text-gray-400 italic py-1">No assignees</span>
+                )}
+
+
+                {/* {task.assignees?.length ? (
                   task.assignees.map((person) => (
-                    <span
-                      key={person.id}
-                      className="inline-flex items-center gap-1.5 text-xs bg-gray-100 text-gray-700 rounded-full px-3 py-1"
-                    >
-                      <span className="w-5 h-5 rounded-full bg-indigo-500 text-white flex items-center justify-center text-[10px] font-bold">
-                        {person.name
-                          .split(" ")
-                          .map((n:string) => n[0])
-                          .join("")
-                          .slice(0, 2)}
-                      </span>
-                      {person.name}
-                    </span>
+                    <div key={person.id}>
+                      {confirmRemoveId === person.id ? (
+                        // ⭐ Confirmation UI
+                        <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-full px-3 py-1">
+                          <span className="text-xs text-red-700">Remove {person.name}?</span>
+
+                          <button
+                            onClick={() => handleConfirmRemove(person.id)}
+                            className="text-xs bg-red-600 text-white px-2 py-0.5 rounded hover:bg-red-700"
+                          >
+                            Yes
+                          </button>
+
+                          <button
+                            onClick={() => setConfirmRemoveId(null)}
+                            className="text-xs text-gray-500 px-2 py-0.5 rounded hover:bg-gray-200"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      ) : (
+                        // ⭐ Normal assignee chip
+                        <span
+                          className="inline-flex items-center gap-1.5 text-xs bg-gray-100 text-gray-700 rounded-full px-3 py-1"
+                        >
+                          <span className="w-5 h-5 rounded-full bg-indigo-500 text-white flex items-center justify-center text-[10px] font-bold">
+                            {person.name
+                              .split(" ")
+                              .map((n: string) => n[0])
+                              .join("")
+                              .slice(0, 2)}
+                          </span>
+
+                          {person.name}
+
+                          <button
+                            className="ml-1 text-gray-400 hover:text-red-600"
+                            onClick={() => setConfirmRemoveId(person.id)}
+                          >
+                            ✕
+                          </button>
+                        </span>
+                      )}
+                    </div>
                   ))
                 ) : (
                   <span className="text-xs text-gray-400 italic py-1">
                     No assignees
                   </span>
-                )}
+                )} */}
               </div>
+
+            
             </div>
           </div>
 

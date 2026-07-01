@@ -18,7 +18,8 @@ export default function AppHeader() {
       <div className="flex items-center gap-6">
 
         {/* Logo */}
-        <Link to="/dashboard" className="flex items-center gap-3">
+        <Link
+          to="/home" className="flex items-center gap-3">
           <img src="/CollabFlow-logo.png" className="h-19" alt="CollabFlow" />
           <h1 className="text-3xl font-bold">
             <span className="text-indigo-600">CollabFlow</span>
@@ -31,14 +32,14 @@ export default function AppHeader() {
       <div>
          <WorkspaceSwitcher />
       </div>
-      <div>
+      {/* <div>
         <Link
               to="/dashboard"
               className="block px-4 py-2 hover:bg-gray-100 text-blue-400 text-medium font-medium"
             >
               Dashboard
         </Link>
-      </div>
+      </div> */}
       {/* Right Section: Notifications + Profile */}
       <div className="flex items-center gap-4">
  
