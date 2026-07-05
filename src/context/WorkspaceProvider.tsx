@@ -18,6 +18,11 @@ import {
 import { workspaceService } from "../services/workspaceService";
 import { useAuth } from "../hooks/useAuth";
 import { Task } from "@/types/task";
+import { useProject } from "../context/ProjectProvider";
+import { useTask } from "../context/TaskProvider";
+import { useMember } from "../context/MemberProvider";
+import { useActivity } from "../context/ActivityProvider";
+
 
 interface WorkspaceContextType {
   workspaces: Workspace[];
@@ -48,7 +53,6 @@ export const WorkspaceContext = createContext<WorkspaceContextType | null>(null)
 export const WorkspaceProvider = ({ children }: { children: React.ReactNode }) => {
   const { apiFetch, user } = useAuth();
   const isAuthenticated = !!user
-
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [currentWorkspace, setCurrentWorkspace] = useState<Workspace | null>(null);
   const [currentWorkspaceMember, setCurrentWorkspaceMember] =
@@ -180,6 +184,8 @@ export const WorkspaceProvider = ({ children }: { children: React.ReactNode }) =
     },
     [apiFetch, currentWorkspace]
   );
+
+  
 
   /**
    * Auto-load workspaces when user logs in

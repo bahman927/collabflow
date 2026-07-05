@@ -74,12 +74,11 @@ class CurrentActivityView(APIView):
 
     # In your CurrentActivityView
     def get(self, request, workspace_pk):
-        print("🔥 VIEW REACHED")
 
         try:
             events = Activity.objects.filter(
                 workspace_id=workspace_pk,
-                created_at__gte=timezone.now() - timezone.timedelta(hours=1)
+                created_at__gte=timezone.now() - timezone.timedelta(days=2)
             )
             serializer = ActivitySerializer(events, many=True)
             print("🔥 ACTIVITY RESPONSE:", serializer.data)
@@ -134,6 +133,18 @@ class WeeklyActivitySummaryView(APIView):
             })
 
         return Response(summary)
+
+class FullActivityFeedView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, workspace_id):
+        activities = Activity.objects.filter(
+            workspace=workspace_id
+        ).order_by('-created_at')
+
+        serializer = ActivitySerializer(activities, many=True)
+        return Response(serializer.data)
+   
 
 
    

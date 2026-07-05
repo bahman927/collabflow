@@ -29,7 +29,7 @@ interface TaskContextType {
   groupedTasks: Record<TaskStatus, Task[]>; 
   currentTask: Task | null;
   setCurrentTask: (task: Task | null) => void;
-  loadTasks: (projectId?: number) => Promise<void>;
+  loadTasks: (projectId?: number) => Promise<Task[]>;
   loading: boolean;
   error: string | null;
   fetchTasks: (workspaceId: number) => Promise<void>;
@@ -58,7 +58,6 @@ export const TaskProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [workspaceTasks, setWorkspaceTasks] = useState<Task[]>([]);
-  const { setMembers } = useMember();
   const activity = useActivity();
 
  const normalizedRole = role?.toLowerCase();
@@ -82,7 +81,7 @@ export const TaskProvider = ({ children }: { children: React.ReactNode }) => {
 
   const loadTasks = useCallback(
       async (projectId?: number) => {
-        if (!currentWorkspace) return;
+        if (!currentWorkspace) return [];
 
         try {
           setLoading(true);
@@ -110,11 +109,12 @@ export const TaskProvider = ({ children }: { children: React.ReactNode }) => {
 
           // 4. Update state
           setTasks(filtered);
+          return filtered; 
 
-           
         } catch (err: any) {
           console.error("TASK LOAD ERROR:", err);
           setError(err.message || "Failed to load tasks");
+          return []
         } finally {
           setLoading(false);
         }
@@ -123,7 +123,6 @@ export const TaskProvider = ({ children }: { children: React.ReactNode }) => {
         apiFetch,
         currentWorkspace,
         currentWorkspaceMember,
-        // role,
         normalizedRole,
         currentTask,
       ]
@@ -268,7 +267,7 @@ const createTask = useCallback(
       );
 
       // ⭐ NEW — refresh activity feed
-      await activity.refresh();
+      await activity.fetchActivity();
 
     } catch (err) {
       setTasks((prev) => prev.filter((t) => t.id !== tempId));
@@ -319,7 +318,7 @@ const removeAssignee = async (taskId: number, memberId: number) => {
   );
 
   // ⭐ NEW — refresh activity feed
-  await activity.refresh();
+  await activity.fetchActivity();
 };
 
  
@@ -353,7 +352,7 @@ const removeAssignee = async (taskId: number, memberId: number) => {
     }
 
     // ⭐ NEW — refresh activity feed
-    await activity.refresh();
+    await activity.fetchActivity();
   },
   [apiFetch, currentTask, tasks, activity]
 );
@@ -390,7 +389,7 @@ const deleteTask = useCallback(
       }
 
       // ⭐ NEW — refresh activity feed
-      await activity.refresh();
+      await activity.fetchActivity();
 
     } catch (err) {
       setTasks(previous);
@@ -428,7 +427,7 @@ const moveTask = useCallback(
       }
 
       // ⭐ NEW — refresh activity feed
-      await activity.refresh();
+      await activity.fetchActivity();
 
     } catch (err) {
       if (currentWorkspace?.id) {

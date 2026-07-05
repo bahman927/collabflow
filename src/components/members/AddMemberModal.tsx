@@ -8,7 +8,8 @@ import { projectService }      from '../../services/projectService';
 import { taskService }         from '../../services/taskService';
 import   apiFetch              from '../../api/apiFetch2';
 import {useTask}               from "../../context/TaskProvider"
-// import { useMember }           from '../../context/MemberProvider';
+import { useWorkspaceRefresh } from "../../hooks/useWorkspaceRefresh";
+
 import { MemberRole, Member, MemberInvite }          from '../../types/member';
 import { useMember } from "../../context/MemberProvider";
 
@@ -33,16 +34,20 @@ interface TaskOption {
 
 export default function AddMemberModal({ isOpen, onClose, inviteMember }: Props) {
   const { tokens, setTokens, logout } = useAuth();
-  const { currentWorkspace } = useWorkspace();
-  const [role, setRole] = useState<MemberRole>('member');
-  const [email, setEmail] = useState('');
+  const { currentWorkspace }          = useWorkspace();
+  const [role, setRole]               = useState<MemberRole>('member');
+  const [email, setEmail]             = useState('');
   const [selectedProjects, setSelectedProjects] = useState<number[]>([]);
   const [selectedTasks, setSelectedTasks] = useState<number[]>([]);
-  const [projects, setProjects] = useState<ProjectOption[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const { members, setMembers } = useMember();
-  const { fetchTasks } = useTask();   // ⭐ import from TaskProvider
+  const [projects, setProjects]       = useState<ProjectOption[]>([]);
+  const [loading, setLoading]         = useState(false);
+  const [error, setError]             = useState('');
+  const { members, setMembers }       = useMember();
+  const { fetchTasks, loadTasks, tasks }     = useTask();   
+  const workspaceRefresh              = useWorkspaceRefresh();
+  const [filteredTasks, setFilteredTasks] = useState<TaskOption[]>([]);
+  const [projectTasksMap, setProjectTasksMap] = useState<Record<number, TaskOption[]>>({});
+
 
   const { tasks: allTasks } = useTask();
 
@@ -73,17 +78,18 @@ export default function AddMemberModal({ isOpen, onClose, inviteMember }: Props)
   }, [isOpen, currentWorkspace]);
 
 
-const filteredTasks = useMemo(() => {
-  if (selectedProjects.length === 0) return [];
-  return allTasks
-    .filter(t => selectedProjects.includes(t.project_id))
-    .map(t => ({
-      id: t.id,
-      title: t.name,        // API returns 'name', not 'title'
-      projectId: t.project_id,
-    }));
-}, [selectedProjects, allTasks]);
+// const filteredTasks = useMemo(() => {
+//   if (selectedProjects.length === 0) return [];
+//   return allTasks
+//     .filter(t => selectedProjects.includes(t.project_id))
+//     .map(t => ({
+//       id: t.id,
+//       title: t.name,        // API returns 'name', not 'title'
+//       projectId: t.project_id,
+//     }));
+// }, [selectedProjects, allTasks]);
 
+ 
   useEffect(() => {
     if (!isOpen) {
       setEmail('');
@@ -91,23 +97,71 @@ const filteredTasks = useMemo(() => {
       setSelectedProjects([]);
       setSelectedTasks([]);
       setProjects([]);
-      // setTasks([]);
       setError('');
     }
   }, [isOpen]);
 
   // ── Handlers ───────────────────────────────────────
-  const toggleProject = (id: number) => {
-    setSelectedProjects((prev) =>
-      prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]
-    );
+ 
+ 
+
+const toggleProject = async (projectId: number) => {
+  setSelectedProjects(prev => {
+    const next = prev.includes(projectId)
+      ? prev.filter(id => id !== projectId)
+      : [...prev, projectId];
+
+    // if at least one project selected, load tasks for the last toggled one
+    if (!prev.includes(projectId)) {
+      loadTasks(projectId); // ⭐ fetch tasks for this project
+    }
+
+    // if none selected after toggle, you can clear tasks if you want
+    if (next.length === 0) {
+       setSelectedTasks([]);
+      // optional: clear tasks in local state if you keep a separate list
+    }
+
+    return next;
+  });
+};
+
+useEffect(() => {
+  if (selectedProjects.length === 0) {
+    setFilteredTasks([]);
+    return;
+  }
+
+  const load = async () => {
+    const newMap: Record<number, TaskOption[]> = {};
+
+    for (const projectId of selectedProjects) {
+      const tasksForProject = await loadTasks(projectId); // ⭐ modify loadTasks to return tasks
+      newMap[projectId] = tasksForProject.map(t => ({
+        id: t.id,
+        title: t.name,
+        projectId: t.project,
+      }));
+    }
+
+    setProjectTasksMap(newMap);
+
+    // merge all selected project tasks
+    const merged = Object.values(newMap).flat();
+    setFilteredTasks(merged);
   };
 
+  load();
+}, [selectedProjects]);
+
+
+  
   const toggleTask = (id: number) => {
     setSelectedTasks((prev) =>
       prev.includes(id) ? prev.filter((t) => t !== id) : [...prev, id]
     );
   };
+ 
 
 const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
@@ -127,6 +181,7 @@ const handleSubmit = async (e: React.FormEvent) => {
      m.tasks?.some(t => t.id === res.tasks?.[0]?.id)
      ) ? prev : [...prev, res]
     );
+    await workspaceRefresh();
 
     await fetchTasks(currentWorkspace.id);
    // refresh task list immediately

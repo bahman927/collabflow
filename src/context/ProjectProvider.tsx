@@ -96,7 +96,7 @@ const createProject = useCallback(
       setCurrentProject(created);
 
       // ⭐ NEW — refresh activity feed
-      await activity.refresh();
+      await activity.fetchActivity();
 
     } catch (err) {
       setProjects((prev) => prev.filter((p) => p.id !== tempId));
@@ -132,7 +132,7 @@ const createProject = useCallback(
       }
 
       // ⭐ NEW — refresh activity feed
-      await activity.refresh();
+      await activity.fetchActivity();
       
     } catch (err) {
       // Roll back optimistic update
@@ -162,7 +162,7 @@ const createProject = useCallback(
       }
 
       // ⭐ NEW — refresh activity feed
-      await activity.refresh();
+      await activity.fetchActivity();
 
     } catch (err) {
       // Roll back optimistic removal

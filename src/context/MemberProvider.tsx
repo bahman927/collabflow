@@ -19,10 +19,10 @@ import {
 import { createMemberService }  from "../services/memberService";
 import { useAuth }              from "../hooks/useAuth";
 import { useWorkspace }         from "./WorkspaceProvider";
+import { useProject }           from "../context/ProjectProvider";
+import { useTask }              from "../context/TaskProvider";
 import { getTokens }            from '../services/authService';
 import { useActivity }          from "../context/ActivityProvider";
-
-
 
 
 interface MemberContextType {
@@ -46,10 +46,13 @@ interface MemberContextType {
   const {apiFetch, tokens, setTokens, logout } = useAuth();
   const { currentWorkspace } = useWorkspace();
   const activity = useActivity();
-  
+  const { fetchProjects, currentProject } = useProject();
+  const { fetchTasks } = useTask();
+  // const { workspaceRefresh } = useWorkspace();
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { fetchActivity } = useActivity();
   const [filters, setFiltersState] =
     useState<MemberFilters>({
       search: '',
@@ -96,39 +99,46 @@ interface MemberContextType {
 
 const inviteMember = useCallback(
   async (invite: MemberInvite): Promise<Member> => {
-    if (!workspaceId) throw new Error('No workspace selected');
+    if (!workspaceId) throw new Error("No workspace selected");
 
     const member = await memberService.invite(workspaceId, invite);
-    await activity.refresh();   
+
+     // update local member state
+    setMembers(prev => [...prev, member]);
 
     return member;
   },
-  [workspaceId, activity]
+  [workspaceId]
 );
+
+
 
 
 const updateMember = useCallback(
   async (memberId: number, update: MemberUpdate): Promise<Member> => {
-    if (!workspaceId) throw new Error('No workspace selected');
+    if (!workspaceId) throw new Error("No workspace selected");
 
-    const updated = await memberService.update(
-      workspaceId,
-      memberId,
-      update
-    );
+    const updated = await memberService.update(workspaceId, memberId, update);
 
     setMembers(prev =>
       prev.map(m => (m.id === memberId ? updated : m))
     );
 
-    // await refreshActivity(); // ⭐ sync activity feed
-    await activity.refresh(); // ⭐ sync activity feed
+    await activity.fetchActivity();
+
+    // ⭐ NEW — refresh projects
+    await fetchProjects();
+
+    // ⭐ NEW — refresh tasks for the current project
+    if (currentProject?.id) {
+      await fetchTasks(currentProject.id);
+    }
 
     return updated;
   },
-  // [workspaceId, refreshActivity]
-  [workspaceId, activity]
+  [workspaceId, activity, fetchProjects, fetchTasks, currentProject]
 );
+
 
 const removeMember = useCallback(
   async (memberId: number): Promise<void> => {
@@ -138,12 +148,19 @@ const removeMember = useCallback(
 
     setMembers(prev => prev.filter(m => m.id !== memberId));
 
-    // await refreshActivity(); // ⭐ sync activity feed
-     await activity.refresh();
+    await activity.fetchActivity();
+
+    // ⭐ NEW — refresh projects
+    await fetchProjects();
+
+    // ⭐ NEW — refresh tasks for the current project
+    if (currentProject?.id) {
+      await fetchTasks(currentProject.id);
+    }
   },
-  // [workspaceId, refreshActivity]
-  [workspaceId, activity]
+  [workspaceId, activity, fetchProjects, fetchTasks, currentProject]
 );
+
 
 
 

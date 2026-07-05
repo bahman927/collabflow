@@ -19,3 +19,25 @@ export interface WeeklyMemberSummary {
   comments: number;
   statusChanges: number;
 }
+
+export interface FullActivityItem {
+  id: number;
+  actorName: string;
+  description: string;     // ⭐ REQUIRED
+  message: string | null;  // optional, backend returns null
+  created_at: string;
+}
+
+
+
+export interface Activity {
+  id: number;
+  workspace: number;
+  project: number | null;
+  task: number | null;
+  actor: number;
+  actorName: string;
+  action: string;
+  message: string;
+  created_at: string;
+}

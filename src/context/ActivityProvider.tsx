@@ -8,17 +8,21 @@ import React, {
   useMemo,
 } from 'react';
 import { useWorkspace } from './WorkspaceProvider';
-import { CurrentActivityItem, WeeklyMemberSummary } from '../types/activity';
+
+import { Activity, CurrentActivityItem, WeeklyMemberSummary, FullActivityItem } from '../types/activity';
 import { useAuth }           from "../hooks/useAuth";
 
-interface ActivityContextType {
+export interface ActivityContextType {
   loading: boolean;
   error: string | null;
+
   currentActivity: CurrentActivityItem[];
   weeklySummary: WeeklyMemberSummary[];
-  refresh: () => Promise<void>;
-}
+  fullActivity: FullActivityItem[]; 
 
+  fetchActivity: () => Promise<void>;   
+}
+ 
 const ActivityContext = createContext<ActivityContextType | null>(null);
 
 export function ActivityProvider({ children }: { children: React.ReactNode }) {
@@ -28,6 +32,10 @@ export function ActivityProvider({ children }: { children: React.ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const [currentActivity, setCurrentActivity] = useState<CurrentActivityItem[]>([]);
   const [weeklySummary, setWeeklySummary] = useState<WeeklyMemberSummary[]>([]);
+  const [fullActivity, setFullActivity] = useState<FullActivityItem[]>([]);
+  const {tokens, setTokens, logout} = useAuth()
+  // const activityService = createActivityService(tokens, setTokens, logout);
+
 
   const workspaceId = currentWorkspace?.id;
 
@@ -36,13 +44,16 @@ export function ActivityProvider({ children }: { children: React.ReactNode }) {
     setLoading(true);
     setError(null);
     try {
-      const [currentRes, weeklyRes] = await Promise.all([
+      const [currentRes, weeklyRes, fullRes] = await Promise.all([
         apiFetch(`http://localhost:8000/api/workspaces/${workspaceId}/activity/current/`, { auth: true }),
         apiFetch(`http://localhost:8000/api/workspaces/${workspaceId}/activity/weekly/`, { auth: true }),
+        apiFetch(`http://localhost:8000/api/workspaces/${workspaceId}/activity/full/`, { auth: true }),
       ]);
 
       setCurrentActivity(currentRes as CurrentActivityItem[]);
       setWeeklySummary(weeklyRes as WeeklyMemberSummary[]);
+      setFullActivity(fullRes as FullActivityItem[]);
+
     } catch (err) {
       console.error("fetchActivity error", err);
       setError("Failed to load activity");
@@ -50,23 +61,23 @@ export function ActivityProvider({ children }: { children: React.ReactNode }) {
       setLoading(false);
     }
   }, [workspaceId]);
-
+ 
 // ⭐ THIS WAS MISSING
 useEffect(() => {
   fetchActivity();
 }, [fetchActivity]);
 
  
-  const value = useMemo(
-    () => ({
-      loading,
-      error,
-      currentActivity,
-      weeklySummary,
-      refresh: fetchActivity,
-    }),
-    [loading, error, currentActivity, weeklySummary, fetchActivity]
-  );
+  const value: ActivityContextType = {
+    loading,
+    error,
+    currentActivity,
+    weeklySummary,
+    fullActivity,
+    fetchActivity,
+  };
+
+  
 
   return (
     <ActivityContext.Provider value={value}>

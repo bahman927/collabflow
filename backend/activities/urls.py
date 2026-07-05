@@ -4,6 +4,7 @@ from .views import (
     ActivityViewSet,
     CurrentActivityView,
     WeeklyActivitySummaryView,
+    FullActivityFeedView,
     ActivityCreateView
 )
 
@@ -27,6 +28,12 @@ urlpatterns = [
         WeeklyActivitySummaryView.as_view(),
         name="activity-weekly"
     ),
+    path(
+        "workspaces/<int:workspace_id>/activity/full/",
+        FullActivityFeedView.as_view(),
+        name="activity-full"
+    ),
+
 ]
 
 # Include router URLs

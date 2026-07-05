@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Modal } from '../shared/Modal';
-import { AvatarChip } from '../shared/AvatarChip';
-import { useMember } from '../../context/MemberProvider';
-import { Member, MemberRole } from '../../types/member';
+import { Modal }                      from '../shared/Modal';
+import { AvatarChip }                 from '../shared/AvatarChip';
+import { useMember }                  from '../../context/MemberProvider';
+import { Member, MemberRole }         from '../../types/member';
 
 interface EditMemberModalProps {
   isOpen: boolean;

@@ -44,7 +44,6 @@ const workspaceMembers = members.map((m) => ({
   role: m.role
 }));
  
-// const finalMembers = Object.values(uniqueMembers)
 
   const { currentWorkspace }              = useWorkspace();
   const [showAddModal, setShowAddModal]   = useState(false);
