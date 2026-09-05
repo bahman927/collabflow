@@ -65,34 +65,4 @@ class WorkspaceMember(models.Model):
      def __str__(self):
         return f"{self.user} in {self.workspace} ({self.role})"
      
-     
-class Invitation(models.Model):
-
-      email = models.EmailField()
-
-      workspace = models.ForeignKey(
-        "workspaces.Workspace",
-        on_delete=models.CASCADE,
-        related_name="invitations"
-    )
-
-      role = models.CharField(
-        max_length=20,
-        choices=(
-            ("Member", "Member"),
-            ("Viewer", "Viewer"),
-        )
-    )
-
-      invited_by = models.ForeignKey(
-        "users.User",
-        on_delete=models.CASCADE
-    )
-      project_ids = models.JSONField(default=list, blank=True)
-      task_ids = models.JSONField(default=list, blank=True)
-      created_at = models.DateTimeField(auto_now_add=True)
-
-      accepted = models.BooleanField(default=False)
-
-      def __str__(self):
-        return f"{self.email} invited to {self.workspace.name}"
+ 

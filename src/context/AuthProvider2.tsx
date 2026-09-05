@@ -1,5 +1,5 @@
 // 📁 contexts/AuthProvider.tsx (your existing code)
-const BASE_URL = "http://localhost:8000"; // your backend
+const BASE_URL = "http://localhost:8000"; 
 import {
   createContext,
   useContext,
@@ -13,29 +13,13 @@ import {
   User,
   SignupData,
   LoginData,
-  AuthResponse,
+  AuthContextType
 } from "../types/auth";
 
-import apiFetch    from '../api/apiFetch2' 
+import apiFetch      from "../api/apiFetch2"
 import {useNavigate} from 'react-router'
-export interface ApiRequestInit extends RequestInit {
-  auth?: boolean; // default true
-}
 
-
-export interface AuthContextType {
-  user: User | null;
-  tokens: Tokens | null;
-  setTokens: (tokens: Tokens | null) => void;
-  isAuthenticated: boolean;
-  login: (data: LoginData) => Promise<void>;
-  signup: (data: SignupData) => Promise<void>;
-  logout: () => void;
-  apiFetch: <T>(
-    url: string,
-    options?: ApiRequestInit
-  ) => Promise<T>;
-}
+export interface ApiRequestInit extends RequestInit { auth?: boolean;}
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
@@ -50,66 +34,80 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const logout = useCallback(() => {
     setTokens(null);
     setUser(null);
-    // isAuthenticated = false
   
     localStorage.removeItem("tokens");
     navigate("/")
   }, []);
 
- useEffect(() => {
+  useEffect(() => {
     const stored = localStorage.getItem("tokens");
     if (stored) {
       setTokens(JSON.parse(stored));
     }
-  }, []);
+   }, []);
 
   // Your wrappedFetch passes the getter function to apiFetch
-  const wrappedFetch = useCallback(
-    <T,>(url: string, options: ApiRequestInit = {}) => {
-      // IMPORTANT: Passing () => tokens (getter) not tokens directly
-      return apiFetch<T>(url, options, () => tokens, setTokens, logout);
+ 
+
+  const wrappedFetch = useCallback( <T,>
+      (url: string,
+       options: ApiRequestInit = {},
+       tokenOverride?: Tokens) => {
+      return apiFetch<T>(
+        url,
+        options,
+        () => tokenOverride ?? tokens,
+        setTokens,
+        logout);
     },
-    [tokens, logout]  // Recreated when tokens or logout change
+    [tokens, logout]  
   );
 
   const login = useCallback(async (data: LoginData) => {
-    // Step 1: Get tokens (no auth needed)
-    const tokenResult = await wrappedFetch<AuthResponse>(
-      `${BASE_URL}/api/auth/token/`,
-      {
-        method: "POST",
-        body: JSON.stringify(data),
-        auth: false,  // ← No auth header for login
-      }
+
+    interface TokenResponse {
+     access: string;
+     refresh: string;
+    }
+
+    const tokenResult = await wrappedFetch<TokenResponse>(
+        `${BASE_URL}/api/auth/token/`,
+        {
+          method: "POST",
+          body: JSON.stringify(data),
+          auth: false,
+        }
     );
-    //  console.log("tokenResult = ",tokenResult)
-    // Step 2: Store tokens (triggers useEffect to save to localStorage)
-    const newTokens = ({
+
+    const newTokens: Tokens = {
       access: tokenResult.access,
       refresh: tokenResult.refresh,
-    });
+    };
 
-     setTokens({
-          access: tokenResult.access,
-          refresh: tokenResult.refresh,
-        });
-   
+      setTokens(newTokens);
 
-    // Step 3: Get user profile (NOW with auth)
-  const me = await apiFetch<User>(
+      const me = await apiFetch<User>(
       `${BASE_URL}/api/users/me/`,
-      { method: "GET", auth: true },
-      () => ({
-        access: tokenResult.access,
-        refresh: tokenResult.refresh,
-      }),
+      {
+        method: "GET",
+        auth: true,
+      },
+      () => newTokens,
       setTokens,
       logout
-   );
+    );
+      
+      setUser(me);
 
+    return {
+          user: me,
+          tokens: newTokens,
+        };
+      },
+      [wrappedFetch, logout]
+    );
 
-    setUser(me);
-  }, [wrappedFetch]);
+ 
 
   const signup = useCallback(
     async (data: SignupData) => {
@@ -121,11 +119,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           auth: false,
         });
 
-        await login({ email: data.email, password: data.password });
+        // await login({ email: data.email, password: data.password });
 
       } catch (err: any) {
-        throw new Error(err.message);
+        throw err;
       }
+      
+       return await login({
+          email: data.email,
+          password: data.password,
+        });
     },
     [wrappedFetch, login]
   );
@@ -162,6 +165,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     <AuthContext.Provider
       value={{
         user,
+        // setUser,
         tokens,
         setTokens,
         isAuthenticated: !!user,
@@ -176,4 +180,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+
+  if (!context) {
+    throw new Error("useAuth must be used within AuthProvider");
+  }
+
+  return context;
+};
 

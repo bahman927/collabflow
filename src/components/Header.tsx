@@ -60,9 +60,7 @@ export default function Header() {
             )}
           </div>
 
-          <Link to="/pricing" className="hover:text-indigo-600 transition">
-            Pricing
-          </Link>
+          
         </nav>
 
         {/* Right Side */}

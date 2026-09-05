@@ -21,27 +21,37 @@ class ProjectViewSet(ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
+
         user = self.request.user
-
-        # If this is a detail route (GET/PUT/PATCH/DELETE /projects/<id>/)
-        if "pk" in self.kwargs:
-            qs = Project.objects.all()
-            if user.is_admin:
-                return qs
-            return qs.filter(workspace__memberships__user=user)
-
-        # Otherwise it's a list route (GET /projects/?workspace=ID)
         workspace_id = self.request.query_params.get("workspace")
+        # workspace_id = self.kwargs.get("workspace_id")
+
+        print("projectViewSet - workspace_id :", workspace_id)
+
+        qs = Project.objects.all()
+
         if not workspace_id:
-                return Project.objects.none()
+            return qs.none()
 
-        if user.is_admin:
-            return Project.objects.filter(workspace_id=workspace_id)
-
-        return Project.objects.filter(
+        membership = WorkspaceMember.objects.filter(
             workspace_id=workspace_id,
-            workspace__memberships__user=user
-        ).distinct()
+            user=user
+        ).first()
+
+        if not membership:
+            return qs.none()
+
+        # if membership.role.lower() == "owner" || :
+        #     return qs.filter(
+        #         workspace_id=workspace_id
+        #     )
+
+        return qs.filter(
+            workspace_id=workspace_id,
+            # project_members__member=membership
+        )
+
+ 
 
     # ---------------------------------------------------------
     # PROJECT CREATED

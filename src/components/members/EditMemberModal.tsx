@@ -34,7 +34,7 @@ export function EditMemberModal({
     setSubmitting(true);
     setError(null);
     try {
-      console.log('in handleSave ', member.id)
+      // console.log('in handleSave ', member.id)
       await updateMember(member.id, { role });
       onClose();
     } catch (err) {
@@ -52,7 +52,7 @@ export function EditMemberModal({
     if (!member) return;
     setSubmitting(true);
     try {
-      console.log('in handleRemove ', member.id)
+      // console.log('in handleRemove ', member.id)
       await removeMember(member.id);
       onClose();
     } catch (err) {
@@ -138,13 +138,13 @@ export function EditMemberModal({
             }
             className="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm bg-white"
           >
-            <option value="admin">Admin</option>
+            {/* <option value="admin">Admin</option> */}
             <option value="member">Member</option>
             <option value="viewer">Viewer</option>
           </select>
           <p className="text-xs text-gray-500 mt-1.5">
-            {role === 'admin' &&
-              'Can manage members, settings, and all content.'}
+            {/* {role === 'admin' &&
+              'Can manage members, settings, and all content.'} */}
             {role === 'member' &&
               'Can create, edit, and assign tasks.'}
             {role === 'viewer' &&

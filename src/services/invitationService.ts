@@ -2,7 +2,10 @@
 
 const BASE_URL = "http://localhost:8000";
 
+
+ 
 export const invitationService = {
+
   // -----------------------------------------
   // LIST PENDING INVITATIONS
   // -----------------------------------------
@@ -35,6 +38,8 @@ export const invitationService = {
     };
   },
 
+ 
+
   // -----------------------------------------
   // GET INVITATION BY TOKEN (no auth needed)
   // -----------------------------------------
@@ -47,4 +52,35 @@ export const invitationService = {
       },
     };
   },
+
+    // -----------------------------------------
+  // ACCEPT INVITATION
+  // -----------------------------------------
+  accept(token: string) {
+    return {
+      url: `${BASE_URL}/api/invitations/accept/`,
+      options: {
+        method: "POST",
+        auth: true,
+        body: JSON.stringify({
+          token,
+        }),
+      },
+    };
+  },
+
+  validate(token:string) {
+    return {
+        url: `${BASE_URL}/api/invitations/validate/${token}/`,
+        options: {
+            method: "GET",
+            auth: false
+        }
+    };
+
+}
+ 
+   
+
+  
 };

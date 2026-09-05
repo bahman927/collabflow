@@ -7,7 +7,9 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.exceptions import ValidationError
 from rest_framework.views import APIView
+from django.shortcuts import get_object_or_404
 from workspaces.activity.logger import ActivityLogger
+from projects.models import Project, ProjectMember
 
 from .models import Task
 from .serializers import TaskSerializer
@@ -17,7 +19,7 @@ from tasks.models import TaskAssignee
 from workspaces.models import WorkspaceMember
 from rest_framework.decorators import action
 from rest_framework import status
-print(">>>before  TaskViewSet")
+
 STATUS_CHOICES = [
     ("todo", "To Do"),
     ("in_progress", "In Progress"),
@@ -28,7 +30,6 @@ STATUS_CHOICES = [
  
 
 class TaskViewSet(ModelViewSet):
-    print(">>>inside  TaskViewSet")
 
     serializer_class = TaskSerializer
     permission_classes = [IsAuthenticated]
@@ -40,11 +41,34 @@ class TaskViewSet(ModelViewSet):
 
         qs = Task.objects.all()
 
+        print("qs -> all tasks:", qs)
+
         if workspace_id:
-            return qs.filter(workspace_id=workspace_id)
+            membership = WorkspaceMember.objects.filter(
+                workspace_id=workspace_id,
+                user=user
+            ).first()
+
+            if not membership:
+                return Task.objects.none()
+
+            # Owner sees everything
+            if membership.role.lower() == "owner":
+                return qs.filter(workspace_id=workspace_id)
+
+            # Members/Viewers see only their assigned tasks
+            print ("qs.filter for user's task :", qs.filter(
+                workspace_id=workspace_id,
+                assignees__member__user=user
+            ).distinct())
+
+            return qs.filter(
+                workspace_id=workspace_id,
+                assignees__member__user=user
+            ).distinct()
 
         return qs.filter(
-            workspace__memberships__user=user
+            assignees__member__user=user
         ).distinct()
 
  
@@ -67,42 +91,139 @@ class TaskViewSet(ModelViewSet):
     # ---------------------------------------------------------
     # TASK CREATED
     # ---------------------------------------------------------
+     
     def perform_create(self, serializer):
-            project_id = self.request.data.get("project_id")
-            if not project_id:
-                raise ValidationError({"project_id": "This field is required."})
 
-            try:
-                project = Project.objects.get(id=project_id)
-            except Project.DoesNotExist:
-                raise ValidationError({"project_id": "Invalid project_id"})
+        # -----------------------------------------
+        # 1. Get project_id from request
+        # -----------------------------------------
+        project_id = self.request.data.get("project_id")
 
-            workspace = project.workspace
-            user = self.request.user
+        if not project_id:
+            raise ValidationError({
+                "project_id": "This field is required."
+            })
 
-        # 🔐 Permission check — only workspace owners can create tasks
-            membership = WorkspaceMember.objects.filter(
+        # -----------------------------------------
+        # 2. Find the project
+        # -----------------------------------------
+        try:
+            project = Project.objects.get(
+                id=project_id
+            )
+        except Project.DoesNotExist:
+            raise ValidationError({
+                "project_id": "Invalid project_id"
+            })
+
+        # -----------------------------------------
+        # 3. Get workspace and logged-in user
+        # -----------------------------------------
+        workspace = project.workspace
+        user = self.request.user
+
+        # -----------------------------------------
+        # 4. Find user's workspace membership
+        # -----------------------------------------
+        membership = WorkspaceMember.objects.filter(
             workspace=workspace,
             user=user
-            ).first()
+        ).first()
 
-            if not membership:
-                raise PermissionDenied("You are not a member of this workspace.")
+        if not membership:
+            raise PermissionDenied(
+                "You are not a member of this workspace."
+            )
 
-            if membership.role != "Owner":
-                raise PermissionDenied("Only workspace owners can create tasks.")
+        # -----------------------------------------
+        # 5. OWNER
+        # -----------------------------------------
+        if membership.role.lower() == "owner":
 
             task = serializer.save(
                 project=project,
                 workspace=workspace
             )
 
-            # CENTRAL LOGGER
-            ActivityLogger.task_created(
-              actor=user,
-              workspace=workspace,
-              task=task
+        # -----------------------------------------
+        # 6. MEMBER
+        # -----------------------------------------
+        elif membership.role.lower() == "member":
+
+            has_project_access = ProjectMember.objects.filter(
+                project=project,
+                member=membership
+            ).exists()
+
+            if not has_project_access:
+                raise PermissionDenied(
+                    "You do not have access to this project."
+                )
+
+            task = serializer.save(
+                project=project,
+                workspace=workspace
             )
+
+            TaskAssignee.objects.get_or_create(
+                task=task,
+                member=membership
+            )
+
+        # -----------------------------------------
+        # 7. VIEWER
+        # -----------------------------------------
+        else:
+
+            raise PermissionDenied(
+                "You do not have permission to create tasks."
+            )
+
+        # -----------------------------------------
+        # 8. Activity log
+        # -----------------------------------------
+        ActivityLogger.task_created(
+            actor=user,
+            workspace=workspace,
+            task=task
+        )
+
+    # def perform_create(self, serializer):
+    #         project_id = self.request.data.get("project_id")
+    #         if not project_id:
+    #             raise ValidationError({"project_id": "This field is required."})
+
+    #         try:
+    #             project = Project.objects.get(id=project_id)
+    #         except Project.DoesNotExist:
+    #             raise ValidationError({"project_id": "Invalid project_id"})
+
+    #         workspace = project.workspace
+    #         user = self.request.user
+
+    #     # 🔐 Permission check — only workspace owners can create tasks
+    #         membership = WorkspaceMember.objects.filter(
+    #         workspace=workspace,
+    #         user=user
+    #         ).first()
+
+    #         if not membership:
+    #             raise PermissionDenied("You are not a member of this workspace.")
+
+    #         if membership.role != "Owner":
+    #             raise PermissionDenied("Only workspace owners can create tasks.")
+
+    #         task = serializer.save(
+    #             project=project,
+    #             workspace=workspace
+    #         )
+
+    #         # CENTRAL LOGGER
+    #         ActivityLogger.task_created(
+    #           actor=user,
+    #           workspace=workspace,
+    #           task=task
+    #         )
 
             
 
@@ -127,52 +248,115 @@ class TaskViewSet(ModelViewSet):
         
 
     def update(self, request, *args, **kwargs):
-        kwargs['partial'] = True
-        task = self.get_object()
 
-        serializer = self.get_serializer(task, data=request.data, partial=True)
-        serializer.is_valid(raise_exception=True)
+        kwargs["partial"] = True
 
-        # Save first — apply workspace_id or project change
-        updated_task = serializer.save()
-
-        # Now it's safe to access workspace
-        workspace = updated_task.workspace
-
-        # Permission checks AFTER save (because workspace now exists)
-        is_assignee = updated_task.assignees.filter(member__user=request.user).exists()
-        membership = workspace.memberships.filter(user=request.user).first()
-        is_workspace_member = membership and membership.role in ("Owner", "Member")
-
-        if not (is_assignee or is_workspace_member):
-            return Response({"detail": "Not allowed"}, status=403)
-        
-         # CENTRAL LOGGER
-        ActivityLogger.task_updated(
-            actor=request.user,
-            workspace=workspace,
-            task=updated_task
+        # --------------------------------
+        # 1. Get task DIRECTLY
+        # --------------------------------
+        task = get_object_or_404(
+            Task,
+            pk=kwargs["pk"]
         )
 
+        # --------------------------------
+        # 2. Get workspace
+        # --------------------------------
+        workspace = task.workspace
+        actor = request.user
+
+        # --------------------------------
+        # 3. Get actor's membership
+        # --------------------------------
+        membership = get_object_or_404(
+            WorkspaceMember,
+            workspace=workspace,
+            user=actor
+        )
+
+        # --------------------------------
+        # 4. Check Model B permission
+        # --------------------------------
+
+        # OWNER → can edit any task
+        if membership.role.lower() == "owner":
+            pass
+
+        # MEMBER → can edit only tasks assigned to himself
+        elif membership.role.lower() == "member":
+
+            is_assignee = task.assignees.filter(
+                member=membership
+            ).exists()
+
+            if not is_assignee:
+                raise PermissionDenied(
+                    "You can only edit tasks assigned to you."
+                )
+
+        # VIEWER → cannot edit
+        else:
+            raise PermissionDenied(
+                "You do not have permission to edit tasks."
+            )
+
+        # --------------------------------
+        # 5. Create serializer
+        # --------------------------------
+        serializer = self.get_serializer(
+            task,
+            data=request.data,
+            partial=True
+        )
+
+        serializer.is_valid(
+            raise_exception=True
+        )
+
+        # --------------------------------
+        # 6. Save through perform_update()
+        # --------------------------------
+        self.perform_update(serializer)
+
+        # --------------------------------
+        # 7. Return updated task
+        # --------------------------------
         return Response(serializer.data)
     
      # ----------------------------------------------------
     # DELETE
     # ----------------------------------------------------
     def destroy(self, request, *args, **kwargs):
-        task = self.get_object()
-        workspace = task.project.workspace
+        task = get_object_or_404(
+            Task,
+            pk=kwargs["pk"]
+        )
+
+        workspace = task.workspace
         actor = request.user
-        task_name = task.name
+
+        # --------------------------------
+        # Owner check
+        # --------------------------------
+        get_object_or_404(
+            WorkspaceMember,
+            workspace=workspace,
+            user=actor,
+            role__iexact="owner"
+        )
 
         # Log BEFORE deleting
         ActivityLogger.task_deleted(
             actor=actor,
             workspace=workspace,
-            task_name=task_name
+            task_name=task.name
         )
 
-        return super().destroy(request, *args, **kwargs)
+        task.delete()
+
+        return Response(
+         status=status.HTTP_204_NO_CONTENT
+        )
 
     def validate_status(self, value):
             valid_values = [choice[0] for choice in Task.STATUS_CHOICES]
@@ -191,8 +375,7 @@ class TaskViewSet(ModelViewSet):
         actor = request.user
 
         assignee = TaskAssignee.objects.get(task_id=pk, member_id=member_id)
-        # logger.debug(f"[ACTIVITY] Unassigned {assignee.member.user_id} from task {task.id}")
-        # LOG BEFORE DELETE
+       
         ActivityLogger.task_unassigned(
             actor=actor,
             workspace=workspace,
@@ -203,107 +386,126 @@ class TaskViewSet(ModelViewSet):
         assignee.delete()
         return Response(status=204)
     
+# ________________________assignee____________________   
 
-    
-    @action(detail=True, methods=["post"], url_path="assignees/(?P<member_id>[^/.]+)")
-    def add_assignee(self, request, pk=None, member_id=None):
-        print("inside add_assignee")  
-              # logger.debug(f"[ADD] Entered add_assignee: task={pk}, member={member_id}, user={request.user.id}")
+    @action(
+    detail=True,
+    methods=["post", "delete"],
+    url_path=r"assignees/(?P<member_id>[^/.]+)"
+    )
+    def assignee(self, request, pk=None, member_id=None):
 
-        task = self.get_object()
-        # logger.debug(f"[ADD] get_object OK: task.workspace={task.workspace_id}")
-
-
-        workspace = task.project.workspace
-        actor = request.user
-
-        member = WorkspaceMember.objects.get(id=member_id)
-        # logger.debug(f"[ADD] WorkspaceMember OK: user={member.user_id}")
-
-        _, created = TaskAssignee.objects.get_or_create(
-            task=task,
-            member=member
+        # --------------------------------
+        # 1. Get the task directly
+        # --------------------------------
+        task = get_object_or_404(
+            Task,
+            pk=pk
         )
 
-        # logger.debug(f"[ADD] get_or_create: created={created}")
+        # --------------------------------
+        # 2. Get the workspace
+        # --------------------------------
+        workspace = task.project.workspace
 
-        if created:
-            
-            ActivityLogger.task_assigned(
-                actor=actor,
-                workspace=workspace,
+        actor = request.user
+
+        # --------------------------------
+        # 3. Verify actor is workspace owner
+        # --------------------------------
+
+        owner_membership = get_object_or_404(
+            WorkspaceMember,
+            workspace=workspace,
+            user=actor,
+            role__iexact="owner"
+        )
+
+        #______________alternative_________________ 
+
+        # is_owner = WorkspaceMember.objects.filter(
+        #      workspace=workspace, 
+        #      user=actor, 
+        #      role__iexact="owner" )
+        #      .exists()  
+        # ----- doesn't retrieve the entire WorkspaceMember object.
+        #     It simply asks:  Does at least one matching membership exist?
+
+
+        
+        # --------------------------------
+        # 4. Get target member
+        # --------------------------------
+        member = get_object_or_404(
+            WorkspaceMember,
+            id=member_id,
+            workspace=workspace
+        )
+
+        # --------------------------------
+        # 5. ASSIGN
+        # --------------------------------
+        if request.method == "POST":
+
+            _, created = TaskAssignee.objects.get_or_create(
                 task=task,
-                assigned_user=member.user
+                member=member
             )
-        # else:    
-            # logger.debug("[ADD] Assignee already exists — no Activity created")
 
-        return Response(status=201)
+            if created:
+                ActivityLogger.task_assigned(
+                    actor=actor,
+                    workspace=workspace,
+                    task=task,
+                    assigned_user=member.user
+                )
+
+            return Response(
+                status=status.HTTP_201_CREATED
+            )
+
+        # --------------------------------
+        # 6. UNASSIGN
+        # --------------------------------
+        if request.method == "DELETE":
+
+            deleted, _ = TaskAssignee.objects.filter(
+                task=task,
+                member=member
+            ).delete()
+
+            if deleted:
+                ActivityLogger.task_unassigned(
+                    actor=actor,
+                    workspace=workspace,
+                    task=task,
+                    unassigned_user=member.user
+                )
+
+            return Response(
+                status=status.HTTP_204_NO_CONTENT
+            )
     
-# ✅ Moved OUTSIDE the class — @api_view is for standalone functions
+     
+    @api_view(["GET"])
+    def my_tasks(request, workspace_id):
+        """All tasks assigned to the current user in this workspace."""
 
-@api_view(["GET"])
-@permission_classes([IsAuthenticated])
-def my_tasks(request, workspace_id):
-    """All tasks assigned to the current user in this workspace."""
+        # 1. Get the workspace member object
+        member = WorkspaceMember.objects.get(
+            workspace_id=workspace_id,
+            user=request.user
+        )
 
-    # 1. Get the workspace member object
-    member = WorkspaceMember.objects.get(
-        workspace_id=workspace_id,
-        user=request.user
-    )
+        # 2. Get tasks assigned to this member
+        tasks = Task.objects.filter(
+            project__workspace_id=workspace_id,
+            assignees__member=member
+        ).select_related("project").distinct().order_by("-updated_at")
 
-    # 2. Get tasks assigned to this member
-    tasks = Task.objects.filter(
-        project__workspace_id=workspace_id,
-        assignees__member=member
-    ).select_related("project").distinct().order_by("-updated_at")
+        serializer = TaskSerializer(tasks, many=True)
+        return Response(serializer.data)
 
-    serializer = TaskSerializer(tasks, many=True)
-    return Response(serializer.data)
+        print(">>>end of  TaskViewSet")
 
-print(">>>end of  TaskViewSet")
-
-# class TaskAssigneeView(APIView):
-#     permission_classes = [IsAuthenticated]
-
-#     def delete(self, request, task_id, member_id):
-#         task = Task.objects.get(id=task_id)
-#         workspace = task.project.workspace
-#         actor = request.user
-
-#         assignee = TaskAssignee.objects.get(task_id=task_id, member_id=member_id)
-#         print("🔥 TaskAssigneeView CALLED", request.method, task_id, member_id)
-
-#         # LOG BEFORE DELETE
-#         ActivityLogger.task_unassigned(
-#             actor=actor,
-#             workspace=workspace,
-#             task=task,
-#             unassigned_user=assignee.member.user
-#         )
-
-#         assignee.delete()
-#         return Response(status=204)
-
-#     def post(self, request, task_id, member_id):
-#         task = Task.objects.get(id=task_id)
-#         workspace = task.project.workspace
-#         actor = request.user
-
-#         member = WorkspaceMember.objects.get(id=member_id)
-
-#         obj, created = TaskAssignee.objects.get_or_create(
-#             task=task,
-#             member=member
-#         )
-
-#         if created:
-#             ActivityLogger.task_assigned(
-#                 actor=actor,
-#                 workspace=workspace,
-#                 task=task,
-#                 assigned_user=member.user
-#             )
-
-#         return Response(status=201)
+ 

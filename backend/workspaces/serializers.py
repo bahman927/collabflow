@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from tasks.models import Task
-from .models import Workspace, WorkspaceMember, Invitation
+from invitations.models import Invitation
+from .models import Workspace, WorkspaceMember
 from tasks.models import TaskAssignee
 
 class WorkspaceSerializer(serializers.ModelSerializer):
@@ -124,10 +125,8 @@ class InvitationSerializer(serializers.ModelSerializer):
             'workspace',
             'role',
             'invited_by',
-            'project_ids',
-            'task_ids',
             'created_at',
-            'accepted',
+            # 'accepted',
         ]
         read_only_fields = ['id', 'workspace', 'invited_by', 'created_at', 'accepted']
 

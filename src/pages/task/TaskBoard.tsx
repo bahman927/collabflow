@@ -64,14 +64,14 @@ export default function TaskBoard() {
   // 3. Sync currentProject with URL
   // -----------------------------
   useEffect(() => {
-    console.log('projectId  in taskBoard : ', projectId)
+    // console.log('projectId  in taskBoard : ', projectId)
     if (!projectId) return;
 
     const id = Number(projectId);
     const match = projects.find((p) => p.id === id);
-    console.log('match in taskBoard : ', match)
+    // console.log('match in taskBoard : ', match)
     setCurrentProject(match || null);
-    console.log('currentProject in taskBoard : ', currentProject)
+    // console.log('currentProject in taskBoard : ', currentProject)
 }, [projectId, projects]);
 
 

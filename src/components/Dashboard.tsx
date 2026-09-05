@@ -251,6 +251,7 @@ function RecentTaskRow({ task }: { task: Task }) {
   );
 }
 
+//********************************************************** */
 function ProjectCard({
   project,
   tasks,
@@ -352,24 +353,19 @@ const IconProjects = () => (
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
   const { currentWorkspace } = useWorkspace();
-  const { getWorkspaceTasks, fetchTasks, tasks, loading} = useTask();
+  const { getCurrentWorkspaceTasks,getWorkspaceTasks, fetchTasks, tasks, loading} = useTask();
   const { projects, setCurrentProject } = useProject();
   const normalize = (s: string) => s.toLowerCase() as TaskStatus;
 
   if (!currentWorkspace) return null;
 
   const wsTasks = getWorkspaceTasks(currentWorkspace.id);
-     
-  useEffect(() => {
-      if (!currentWorkspace?.id) return;
-      fetchTasks(currentWorkspace.id);
-    }, [currentWorkspace?.id]);
-
-
-  const dashboardGrouped = wsTasks.reduce((acc, task) => {
+  
+   const dashboardGrouped = wsTasks.reduce((acc, task) => {
       const key = normalize(task.status);
+
       if (!acc[key]) acc[key] = [];
-      acc[key].push(task);
+         acc[key].push(task);
       return acc;
   }, {} as Record<TaskStatus, Task[]>);
 
@@ -402,7 +398,7 @@ const Dashboard: React.FC = () => {
     
 
   return (
-    <div className="p-6 lg:p-8 bg-gray-50 min-h-screen space-y-6">
+    <div className="p-6 lg:p-8 bg-gray-50 min-h-screen space-y-6 ml-0">
       {/* ── Header ── */}
       <header>
         <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">

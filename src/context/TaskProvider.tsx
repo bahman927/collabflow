@@ -32,14 +32,16 @@ interface TaskContextType {
   loadTasks: (projectId?: number) => Promise<Task[]>;
   loading: boolean;
   error: string | null;
-  fetchTasks: (workspaceId: number) => Promise<void>;
+  fetchTasks: () => Promise<void>;
   createTask: (data: TaskCreateData) => Promise<void>;
   updateTask: (id: string | number, data: TaskUpdateData) => Promise<void>; 
   deleteTask: (id: number) => Promise<void>;                       
   moveTask: (id: number, status: TaskStatus) => Promise<void>; 
   getWorkspaceTasks: (workspaceId: number) => Task[];
+  // fetchWorkspaceTasks: (workspaceId: number) => Task[];
   getCurrentWorkspaceTasks: () => Task[];
-  removeAssignee: (taskId: number, memberId: number) => Promise<void>;
+  assign:   (taskId: number, memberId: number) => Promise<void>;
+  unassign: (taskId: number, memberId: number) => Promise<void>;
   updateTaskInState: (taskId: number, patch: Partial<Task>) => void;
   
 
@@ -63,20 +65,20 @@ export const TaskProvider = ({ children }: { children: React.ReactNode }) => {
  const normalizedRole = role?.toLowerCase();
  const normalizeStatus = (s: string): TaskStatus => {
   if (!s) return "todo"; // fallback
-  switch (s.toUpperCase()) {
-    case "TODO":
-      return "todo";
-    case "IN_PROGRESS":
-    case "IN-PROGRESS":
-    case "IN PROGRESS":
-      return "in_progress";
-    case "DONE":
-      return "done";
-    case "OVERDUE":
-      return "overdue";
-    default:
-      return "todo";
-  }
+    switch (s.toUpperCase()) {
+      case "TODO":
+        return "todo";
+      case "IN_PROGRESS":
+      case "IN-PROGRESS":
+      case "IN PROGRESS":
+        return "in_progress";
+      case "DONE":
+        return "done";
+      case "OVERDUE":
+        return "overdue";
+      default:
+        return "todo";
+    }
 };
 
   const loadTasks = useCallback(
@@ -93,7 +95,7 @@ export const TaskProvider = ({ children }: { children: React.ReactNode }) => {
          
           // 2. Filter by project (if provided)
           let filtered = projectId
-            ? allTasks.filter((t) => t.project === projectId)
+            ? allTasks.filter((t: Task) => t.project === projectId)
             : allTasks;
 
           // 3. Filter by membership (owner sees all, member sees assigned)
@@ -102,7 +104,7 @@ export const TaskProvider = ({ children }: { children: React.ReactNode }) => {
           if (normalizedRole !== "owner") {
             const userId = currentWorkspaceMember?.user?.id;
 
-            filtered = filtered.filter((task) =>
+            filtered = filtered.filter((task:Task) =>
               task.assignees?.some((a) => a.id === userId)
             );
           }
@@ -169,49 +171,82 @@ export const TaskProvider = ({ children }: { children: React.ReactNode }) => {
     );
   }, [tasks, currentWorkspace]);
  
+   
   // -----------------------------
   // Fetch tasks for selected project
   // -----------------------------
   const fetchTasks = useCallback(
-    async (workspaceId: number) => {
-      if (!workspaceId) return;
-
-      try {
-        setLoading(true);
-        setError(null);
-
-        const { url, options } = taskService.list(workspaceId);
-        const data = await apiFetch<Task[]>(url, options);
-
-        setTasks(data);
- 
-      } catch (err: any) {
-        setError(err.message || "Failed to load tasks");
-      } finally {
-        setLoading(false);
+    async () => {
+       
+      if (!currentWorkspace) {
+        return;
       }
-  }, [apiFetch]);
 
-   const fetchWorkspaceTasks = useCallback(async () => {
-      if (!currentWorkspace) return;
 
       try {
         setLoading(true);
         setError(null);
 
-        const { url, options } = taskService.list(
-          currentWorkspace.id
+        const { url, options } =
+          taskService.list(currentWorkspace.id);
+
+
+        const data = await apiFetch<Task[]>(
+          url,
+          options
         );
 
-        const data = await apiFetch<Task[]>(url, options);
+      
+
         setTasks(data);
 
       } catch (err: any) {
-        setError(err.message || "Failed to load workspace tasks");
+        console.error(
+          "FETCH TASKS ERROR:",
+          err
+        );
+
+        setError(
+          err.message ||
+          "Failed to load tasks"
+        );
+
       } finally {
         setLoading(false);
       }
-    }, [apiFetch, currentWorkspace]);
+    },
+    [apiFetch, currentWorkspace]
+  );
+
+
+  const fetchWorkspaceTasks = useCallback(
+   async (workspaceId: number) => {
+
+    if (!workspaceId) return;
+
+    try {
+      setLoading(true);
+
+      const {url, options} =
+        taskService.workspaceTasks(workspaceId);
+
+      const data = await apiFetch<Task[]>(
+        url,
+        options
+      );
+
+      setTasks(data);
+
+    } catch(err:any) {
+      setError(err.message);
+    }
+    finally {
+      setLoading(false);
+    }
+
+  },
+  [apiFetch]
+);
 
   // -----------------------------
   // Create task (optimistic)
@@ -289,35 +324,22 @@ const updateTaskInState = (taskId: number, patch: Partial<Task>) => {
   );
 };
 
-const removeAssignee = async (taskId: number, memberId: number) => {
-  const task = tasks.find(t => t.id === taskId);
-  if (!task) return;
-
-  const { url, options } = taskService.removeAssignee(
-    task.workspace,
-    taskId,
-    memberId
-  );
+const assign = async (taskId: number, memberId: number) => {
+  const { url, options } = taskService.assign(taskId, memberId);
 
   await apiFetch(url, options);
-  const memberEmail = task.assignees.find(a => a.id === memberId)?.email;
 
-  // ⭐ Update UI state
-  setTasks(prev =>
-    prev.map(t =>
-      t.id === taskId
-        ? {
-            ...t,
-            assignees: t.assignees.filter(a => a.id !== memberId),
-             assignee_emails: memberEmail
-              ? t.assignee_emails.filter(e => e !== memberEmail)
-              : t.assignee_emails
-          }
-        : t
-    )
-  );
+  await fetchTasks();
+  await activity.fetchActivity();
+};
 
-  // ⭐ NEW — refresh activity feed
+const unassign = async (taskId: number, memberId: number) => {
+
+  const { url, options } = taskService.unassign(taskId, memberId);
+
+  await apiFetch(url, options);
+
+  await fetchTasks();
   await activity.fetchActivity();
 };
 
@@ -431,7 +453,7 @@ const moveTask = useCallback(
 
     } catch (err) {
       if (currentWorkspace?.id) {
-        await fetchTasks(currentWorkspace.id);
+        await fetchTasks();
       }
       throw err;
     }
@@ -448,11 +470,27 @@ useEffect(() => {
 }, [projects, currentProject]);
 
 
+ useEffect(() => {
+  if (currentWorkspace?.id) {
+    console.log("Calling fetchTasks with", currentWorkspace.id);
+    fetchTasks();
+  }
+}, [currentWorkspace, fetchTasks]);
+
+
   // -----------------------------
   // Reset on logout
   // -----------------------------
   useEffect(() => {
+ console.log(
+    "TASK PROVIDER isAuthenticated changed:",
+    isAuthenticated
+  );
+
     if (!isAuthenticated) {
+      console.log(
+      "⚠️ CLEARING TASKS BECAUSE isAuthenticated IS FALSE"
+    );
       setTasks([]);
       setCurrentTask(null);
       setError(null);
@@ -475,9 +513,11 @@ useEffect(() => {
         deleteTask,
         moveTask,
         getWorkspaceTasks,
+        // fetchWorkspaceTasks,
         getCurrentWorkspaceTasks,
         loadTasks,
-        removeAssignee,
+        assign,
+        unassign,
         updateTaskInState,
 
       }}

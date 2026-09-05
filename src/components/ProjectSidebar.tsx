@@ -18,7 +18,7 @@ export default function ProjectSidebar() {
     setCurrentProject,
     createProject,
   } = useProject();
-
+  console.log("ProjectSidebar - projects : ", projects)
   const handleCreate = async (data: { name: string; description: string }) => {
       await createProject({
         ...data,
@@ -33,7 +33,7 @@ export default function ProjectSidebar() {
   }, {} as Record<number, Task[]>);
 
   return (
-    <aside className="w-64 bg-gray-100 border-r p-4 space-y-4">
+    <aside className="w-50 shrink-0 bg-gray-100 border-r p-7  space-y-4 ml-0.5 ">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold">Projects</h2>
       {role?.toLowerCase() === "owner" && (

@@ -8,27 +8,33 @@ import {ProjectProvider}    from "./context/ProjectProvider";
 import {TaskProvider}       from "./context/TaskProvider";
 import {MemberProvider}     from "./context/MemberProvider";
 import { ActivityProvider } from './context/ActivityProvider';
+import { InvitationProvider} from './context/InvitationProvider';
+import {ThemeProvider}        from './context/ThemeProvider'
 import "./App.css"
 
 function App() {
   return (
 
-   <BrowserRouter>
+<BrowserRouter>
+ <ThemeProvider>
   <AuthProvider>
     <WorkspaceProvider>
-      <ActivityProvider>         
-        <ProjectProvider>       
-          <TaskProvider>        
-            <MemberProvider>    
-              <AppRoutes />
-            </MemberProvider>
-          </TaskProvider>
-        </ProjectProvider>
-      </ActivityProvider>
+      <InvitationProvider>     
+        <ActivityProvider>         
+          <ProjectProvider>       
+            <TaskProvider>        
+              <MemberProvider>    
+                <AppRoutes />
+              </MemberProvider>
+            </TaskProvider>
+          </ProjectProvider>
+        </ActivityProvider>
+      </InvitationProvider>
     </WorkspaceProvider>
   </AuthProvider>
+ </ThemeProvider>
 </BrowserRouter>
-  
+
   );
 }
 

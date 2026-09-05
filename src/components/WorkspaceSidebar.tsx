@@ -29,10 +29,8 @@ export default function WorkspaceSidebar() {
     return acc;
   }, {} as Record<number, number>);
 
-  console.log("role : ", role)
-
   return (
-    <aside className="w-64 bg-gray-100 border-r p-4 space-y-4">
+    <aside className="w-53 ml-1 bg-gray-100 border-r p-6  space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold">Workspaces</h2>
         {role?.toLowerCase() === "owner" && (

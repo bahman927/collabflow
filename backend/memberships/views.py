@@ -63,6 +63,7 @@ class MemberViewSet(viewsets.ModelViewSet):
 
     
     @action(
+            
     detail=False,
     methods=['post'],
     permission_classes=[IsWorkspaceAdminOrOwner],

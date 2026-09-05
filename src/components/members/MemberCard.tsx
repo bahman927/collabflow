@@ -2,7 +2,11 @@ import React from 'react';
 import { AvatarChip } from '../shared/AvatarChip';
 import { Member, MemberTask } from '../../types/member';
 import { Pencil } from 'lucide-react';
+import { useAuth }            from '../../hooks/useAuth';
+import { useMember }          from '../../context/MemberProvider';
 
+ 
+ 
 interface MemberCardProps {
   member: Member;
   onEdit: () => void;
@@ -26,6 +30,9 @@ export function MemberCard({
   onEdit,
   canEdit,
 }: MemberCardProps) {
+  const { user } = useAuth();
+  const {members} = useMember()
+  const currentMembership = members.find((m) => m.userId === user?.id.toString());
 
   // -----------------------------
   // Build assignment rows
@@ -48,17 +55,15 @@ export function MemberCard({
   }
 
   if (member.projects?.length > 0 && member.tasks?.length > 0) {
-  assignmentRows = member.tasks.map(task => {
-    const project = member.projects.find(p => p.id === task.projectId) || null;
-    return {
-      project,
-      task
-    };
-  });
-}
-
-  //console.log("MemberCard -> assignmentRows after ", assignmentRows)
-
+    assignmentRows = member.tasks.map(task => {
+      const project = member.projects.find(p => p.id === task.projectId) || null;
+      return {
+        project,
+        task
+      };
+    });
+  }
+  
   // 3. If no tasks and no projects → empty row
   if (assignmentRows.length === 0) {
     assignmentRows = [{ project: null, task: null }];
@@ -77,7 +82,6 @@ export function MemberCard({
       uniqueRows.push(row);
     }
   });
-  //console.log("uniqueRows : ", uniqueRows)
   // -----------------------------
   // Render
   // -----------------------------
@@ -133,7 +137,7 @@ export function MemberCard({
           {member.role}
         </span>
 
-        {canEdit && member.role !== 'owner' && (
+        { canEdit && (
           <button
             onClick={onEdit}
             className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
@@ -141,6 +145,8 @@ export function MemberCard({
             <Pencil className="w-4 h-4 text-gray-400" />
           </button>
         )}
+
+        
       </div>
     </div>
   );

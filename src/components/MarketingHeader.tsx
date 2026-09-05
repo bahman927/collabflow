@@ -146,9 +146,9 @@ export default function MarketingHeader() {
             </div>
           </div>
 
-          <Link to="/pricing" className="hover:text-indigo-600 transition text-xl">
+          {/* <Link to="/pricing" className="hover:text-indigo-600 transition text-xl">
             Pricing
-          </Link>
+          </Link> */}
         </nav>
 
         {/* Right Side */}

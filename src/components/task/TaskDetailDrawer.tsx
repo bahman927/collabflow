@@ -5,6 +5,8 @@ import { taskService } from "@/services/taskService";
 import { useAuth }           from "../../hooks/useAuth";
 import { useTask }           from "@/context/TaskProvider";
 import { TaskAssignee } from "../../types/task";
+import { useWorkspace }    from "../../context/WorkspaceProvider";
+
 
 
 
@@ -213,6 +215,7 @@ export default function TaskDetailDrawer({
   const [confirmRemoveId, setConfirmRemoveId] = useState<number | null>(null);
   const { apiFetch } = useAuth();
   const { updateTaskInState } = useTask();
+  const { role } = useWorkspace();
 
   // Reset internal UI when task changes
   useEffect(() => {}, [task?.id]);
@@ -234,13 +237,13 @@ export default function TaskDetailDrawer({
 
 
 const handleConfirmRemove = async (memberId: number) => {
-  const { url, options } = taskService.removeAssignee(
-    task.workspace,
+  const { url, options } = taskService.unassign(
     task.id,
     memberId
   );
 
   await apiFetch(url, options);
+ 
 
   // 1️⃣ Compute updated assignees
   const updatedAssignees = task.assignees.filter(
@@ -260,18 +263,12 @@ const handleConfirmRemove = async (memberId: number) => {
   setConfirmRemoveId(null);
 };
 
-
-
-
   const normalizeAssignee = (person: any) => {
       return {
         memberId: person.member_id,     // ✔ correct ID for DELETE
         fullName: person.name || person.email || "Unknown",
       };
     };
-
-
-
 
   const currentPriority =
     PRIORITY_OPTIONS.find((p) => p.value === (task as any).priority) ??
@@ -286,7 +283,7 @@ const handleConfirmRemove = async (memberId: number) => {
       />
 
       {/* Drawer */}
-      <div className="fixed inset-y-0 right-0 w-full max-w-lg bg-white shadow-2xl z-50 flex flex-col animate-slide-in">
+     <div className="fixed top-12 bottom-12 right-0 w-full max-w-lg h-[50vh]  bg-white shadow-2xl z-50 flex flex-col animate-slide-in rounded-l-xl">
 
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
@@ -416,7 +413,6 @@ const handleConfirmRemove = async (memberId: number) => {
                {task.assignees?.length ? (
                   task.assignees.map((person) => {
                     const { memberId, fullName } = normalizeAssignee(person);
-                    console.log("ASSIGNEE RAW:", person);
 
                     return (
                       <div key={memberId}>
@@ -441,23 +437,24 @@ const handleConfirmRemove = async (memberId: number) => {
                         ) : (
                           <span className="inline-flex items-center gap-1.5 text-xs bg-gray-100 text-gray-700 rounded-full px-3 py-1">
                             <span className="w-5 h-5 rounded-full bg-indigo-500 text-white flex items-center justify-center text-[10px] font-bold">
-                              {fullName
-                                .split(" ")
-                                .map((n: string) => n[0])
-                                // .map((part) => part[0])  
-                                .join("")
-                                .slice(0, 2)}
+                                {fullName
+                                  .split(" ")
+                                  .map((n: string) => n[0])
+                                  .join("")
+                                  .slice(0, 2)}
+                              </span>
+
+                              {fullName}
+
+                              {role?.toLowerCase() === "owner" && (
+                                <button
+                                  className="ml-1 text-gray-400 hover:text-red-600"
+                                  onClick={() => setConfirmRemoveId(memberId)}
+                                >
+                                  ✕
+                                </button>
+                              )}    
                             </span>
-
-                            {fullName}
-
-                            <button
-                              className="ml-1 text-gray-400 hover:text-red-600"
-                              onClick={() => setConfirmRemoveId(memberId)}
-                            >
-                              ✕
-                            </button>
-                          </span>
                         )}
                       </div>
                     );
@@ -465,63 +462,9 @@ const handleConfirmRemove = async (memberId: number) => {
                 ) : (
                   <span className="text-xs text-gray-400 italic py-1">No assignees</span>
                 )}
-
-
-                {/* {task.assignees?.length ? (
-                  task.assignees.map((person) => (
-                    <div key={person.id}>
-                      {confirmRemoveId === person.id ? (
-                        // ⭐ Confirmation UI
-                        <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-full px-3 py-1">
-                          <span className="text-xs text-red-700">Remove {person.name}?</span>
-
-                          <button
-                            onClick={() => handleConfirmRemove(person.id)}
-                            className="text-xs bg-red-600 text-white px-2 py-0.5 rounded hover:bg-red-700"
-                          >
-                            Yes
-                          </button>
-
-                          <button
-                            onClick={() => setConfirmRemoveId(null)}
-                            className="text-xs text-gray-500 px-2 py-0.5 rounded hover:bg-gray-200"
-                          >
-                            Cancel
-                          </button>
-                        </div>
-                      ) : (
-                        // ⭐ Normal assignee chip
-                        <span
-                          className="inline-flex items-center gap-1.5 text-xs bg-gray-100 text-gray-700 rounded-full px-3 py-1"
-                        >
-                          <span className="w-5 h-5 rounded-full bg-indigo-500 text-white flex items-center justify-center text-[10px] font-bold">
-                            {person.name
-                              .split(" ")
-                              .map((n: string) => n[0])
-                              .join("")
-                              .slice(0, 2)}
-                          </span>
-
-                          {person.name}
-
-                          <button
-                            className="ml-1 text-gray-400 hover:text-red-600"
-                            onClick={() => setConfirmRemoveId(person.id)}
-                          >
-                            ✕
-                          </button>
-                        </span>
-                      )}
-                    </div>
-                  ))
-                ) : (
-                  <span className="text-xs text-gray-400 italic py-1">
-                    No assignees
-                  </span>
-                )} */}
+               
               </div>
-
-            
+           
             </div>
           </div>
 
@@ -536,18 +479,7 @@ const handleConfirmRemove = async (memberId: number) => {
           </div>
 
         </div>
-
-        {/* Footer — Delete Button */}
-        {onRequestDelete && (
-          <div className="px-6 py-3 border-t border-gray-100">
-            <button
-              onClick={() => onRequestDelete(task)}   // ← correct call
-              className="text-sm text-red-500 hover:text-red-700 hover:bg-red-50 px-3 py-2 rounded-lg transition"
-            >
-              Delete task
-            </button>
-          </div>
-        )}
+ 
       </div>
     </>
   );

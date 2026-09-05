@@ -43,22 +43,25 @@ export const ProjectProvider = ({ children }: { children: React.ReactNode }) => 
 
   try {
     const data = await apiFetch<any>(url, options);
-    // console.log("fetchProjects raw response:", data);
 
     // Handle both paginated and flat responses
     const list: Project[] = Array.isArray(data) ? data : data.results ?? [];
+
+    console.log("fetchProjects API data:", data);
+    console.log("fetchProjects list:", list);
+    console.log("fetchProjects list.length:", list.length);
+
     setProjects(list);
 
-    if (!currentProject && list.length > 0) {
-      setCurrentProject(list[0]);
-    }
+    // if (!currentProject && list.length > 0) {
+    //   setCurrentProject(list[0]);
+    // }
     // Only auto-select AFTER full list is loaded
     if (list.length > 0) {
       setCurrentProject(list[0]);
     } else {
       setCurrentProject(null);
     }
-    // setCurrentProject(null);
 
   } catch (err) {
     console.error("fetchProjects FAILED:", err);

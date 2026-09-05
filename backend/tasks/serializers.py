@@ -171,7 +171,7 @@ class TaskSerializer(serializers.ModelSerializer):
         return data
     
     def create(self, validated_data):
-        print('taskSerializer->valiated_data in update() ->', validated_data)
+        # print('taskSerializer->valiated_data in update() ->', validated_data)
         member_ids = (
             validated_data.pop("assignee_ids", None)
             or validated_data.pop("assigneeIds", None)
@@ -184,13 +184,49 @@ class TaskSerializer(serializers.ModelSerializer):
         return task
 
     def update(self, instance, validated_data):
-        print('taskSerializer->valiated_data in update() ->', validated_data)
+
+        actor = self.context["request"].user
+
+        old_name = instance.name
+        old_description = instance.description
+        old_status = instance.status
+
         member_ids = (
             validated_data.pop("assignee_ids", None)
             or validated_data.pop("assigneeIds", None)
             or validated_data.pop("taskIds", None)
         )
-        # member_ids = validated_data.pop('assignee_ids', None)
+
         task = super().update(instance, validated_data)
-        self._sync_assignees(task, member_ids)
+
+        workspace = task.project.workspace
+
+        if old_status != task.status:
+            ActivityLogger.task_status_changed(
+                actor=actor,
+                workspace=workspace,
+                task=task,
+                old_status=old_status,
+                new_status=task.status,
+            )
+
+        if old_name != task.name:
+            ActivityLogger.task_renamed(
+                actor=actor,
+                workspace=workspace,
+                task=task,
+                old_name=old_name,
+                new_name=task.name,
+            )
+
+        if old_description != task.description:
+            ActivityLogger.task_description_updated(
+                actor=actor,
+                workspace=workspace,
+                task=task,
+            )
+
+        if member_ids is not None:
+            self._sync_assignees(task, member_ids)
+
         return task

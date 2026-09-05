@@ -1,7 +1,7 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Calendar, GripVertical } from "lucide-react";
-import type { Task, TaskPriority } from "../../types/task";
+import type { Task, TaskPriority, Person, TaskAssignee } from "../../types/task";
 import AvatarGroup from "../shared/AvatarGroup";
 
 const PRIORITY_STYLES: Record<TaskPriority, { dot: string; label: string }> = {
@@ -24,6 +24,16 @@ function formatDue(dateStr: string) {
     text: d.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
     color: "text-gray-500",
   };
+}
+
+export function mapTaskAssigneesToPeople(
+  assignees: TaskAssignee[]
+): Person[] {
+  return assignees.map(a => ({
+    id: String(a.id),
+    name: a.name,
+    avatar: a.avatarUrl ?? a.avatar_url ?? undefined,
+  }));
 }
 
 interface Props {
@@ -106,7 +116,7 @@ export default function TaskCard({ task, onClick }: Props) {
           )}
 
           {task.assignees.length > 0 && (
-            <AvatarGroup people={task.assignees} max={3} size="sm" />
+            <AvatarGroup   people={mapTaskAssigneesToPeople(task.assignees)} max={3} size="sm" />
           )}
         </div>
       )}

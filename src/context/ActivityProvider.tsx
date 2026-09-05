@@ -12,18 +12,18 @@ import { useWorkspace } from './WorkspaceProvider';
 import { Activity, CurrentActivityItem, WeeklyMemberSummary, FullActivityItem } from '../types/activity';
 import { useAuth }           from "../hooks/useAuth";
 
+
 export interface ActivityContextType {
   loading: boolean;
   error: string | null;
-
   currentActivity: CurrentActivityItem[];
   weeklySummary: WeeklyMemberSummary[];
   fullActivity: FullActivityItem[]; 
-
   fetchActivity: () => Promise<void>;   
 }
  
 const ActivityContext = createContext<ActivityContextType | null>(null);
+const BASE_URL      = "http://localhost:8000";
 
 export function ActivityProvider({ children }: { children: React.ReactNode }) {
   const { apiFetch } = useAuth();
@@ -34,7 +34,6 @@ export function ActivityProvider({ children }: { children: React.ReactNode }) {
   const [weeklySummary, setWeeklySummary] = useState<WeeklyMemberSummary[]>([]);
   const [fullActivity, setFullActivity] = useState<FullActivityItem[]>([]);
   const {tokens, setTokens, logout} = useAuth()
-  // const activityService = createActivityService(tokens, setTokens, logout);
 
 
   const workspaceId = currentWorkspace?.id;
@@ -45,11 +44,22 @@ export function ActivityProvider({ children }: { children: React.ReactNode }) {
     setError(null);
     try {
       const [currentRes, weeklyRes, fullRes] = await Promise.all([
-        apiFetch(`http://localhost:8000/api/workspaces/${workspaceId}/activity/current/`, { auth: true }),
-        apiFetch(`http://localhost:8000/api/workspaces/${workspaceId}/activity/weekly/`, { auth: true }),
-        apiFetch(`http://localhost:8000/api/workspaces/${workspaceId}/activity/full/`, { auth: true }),
-      ]);
-
+      apiFetch<CurrentActivityItem[]>(
+        `${BASE_URL}/api/workspaces/${workspaceId}/activity/current/`,
+        { auth: true },
+       
+      ),
+      apiFetch<WeeklyMemberSummary[]>(
+        `${BASE_URL}/api/workspaces/${workspaceId}/activity/weekly/`,
+        { auth: true },
+        
+      ),
+      apiFetch<FullActivityItem[]>(
+        `${BASE_URL}/api/workspaces/${workspaceId}/activity/full/`,
+        { auth: true },
+      
+      ),
+    ]);
       setCurrentActivity(currentRes as CurrentActivityItem[]);
       setWeeklySummary(weeklyRes as WeeklyMemberSummary[]);
       setFullActivity(fullRes as FullActivityItem[]);
@@ -62,13 +72,11 @@ export function ActivityProvider({ children }: { children: React.ReactNode }) {
     }
   }, [workspaceId]);
  
-// ⭐ THIS WAS MISSING
-useEffect(() => {
-  fetchActivity();
-}, [fetchActivity]);
-
- 
-  const value: ActivityContextType = {
+    useEffect(() => {
+      fetchActivity();
+    }, [fetchActivity]);
+   
+   const value: ActivityContextType = {
     loading,
     error,
     currentActivity,
@@ -76,8 +84,6 @@ useEffect(() => {
     fullActivity,
     fetchActivity,
   };
-
-  
 
   return (
     <ActivityContext.Provider value={value}>
@@ -91,3 +97,4 @@ export function useActivity(): ActivityContextType {
   if (!ctx) throw new Error('useActivity must be used within ActivityProvider');
   return ctx;
 }
+

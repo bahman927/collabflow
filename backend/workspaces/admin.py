@@ -1,7 +1,8 @@
 # workspaces/admin.py
 
 from django.contrib import admin
-from .models import Workspace, WorkspaceMember, Invitation
+from .models import Workspace, WorkspaceMember
+from invitations.models  import Invitation
 from tasks.models import Task
 
 
@@ -26,7 +27,30 @@ class WorkspaceMemberAdmin(admin.ModelAdmin):
         "user__last_name",
     )
 
+from django.contrib import admin
+
 
 @admin.register(Invitation)
 class InvitationAdmin(admin.ModelAdmin):
-    list_display = ('email', 'workspace', 'role', 'invited_by', 'accepted')
+
+    list_display = (
+        "email",
+        "workspace",
+        "invited_by",
+        "status",
+        "created_at",
+    )
+
+    search_fields = (
+        "email",
+        "workspace__name",
+    )
+
+    list_filter = (
+        "status",
+        "created_at",
+    )
+
+# @admin.register(Invitation)
+# class InvitationAdmin(admin.ModelAdmin):
+#     list_display = ('email', 'workspace', 'role', 'invited_by', 'accepted')

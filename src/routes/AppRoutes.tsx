@@ -17,6 +17,7 @@ import {useAuth}      from "../hooks/useAuth"
 import WorkspacePage  from "../pages/workspace/WorkspacePage";
 import { MembersPage } from "../components/members/MemberPage";
 import ActivityPage   from    "../pages/ActivityPage"
+import AcceptInvitationPage   from    "../pages/invitations/AcceptInvitationPage"
 
  export default function AppRoutes() {
   const {user} = useAuth()
@@ -25,6 +26,9 @@ import ActivityPage   from    "../pages/ActivityPage"
   <Routes>
 
     <Route element={<AppLayout />}>
+      <Route path="/invite/:token"       element={<AcceptInvitationPage />}/>
+
+
        {/* Public routes */}
       <Route element={<PublicRoute isAuthenticated={isAuthenticated} />}>
         <Route path="/" element={<Landing />} />
@@ -34,21 +38,23 @@ import ActivityPage   from    "../pages/ActivityPage"
       <Route element={<ProtectedRoute isAuthenticated={isAuthenticated} />}>
         <Route path="/home"                element={<Home />} />
         <Route path="/dashboard"           element={<Dashboard />} />
+
         <Route path="/workspaces"          element={<WorkspacePage />} />
+        {/* <Route path="/workspaces/:workspaceId" element={<WorkspacePage />} /> */}
+
         <Route path="/projects"            element={<ProjectPage />} />
         <Route path="/workspace/:workspaceId/project/:projectId/board" element={<TaskBoard />} />
 
         <Route path="/tasks"               element={<TaskPanel />} /> 
         <Route path="/members"             element={<MembersPage />} /> 
         <Route path="/activity"            element={<ActivityPage />} />
+        
 
       </Route>
 
     </Route>
  
-      {/* ---------------------- */}
       {/* Auth routes            */}
-      {/* ---------------------- */}
     <Route element={<AuthLayout  />}>
         <Route path="/login"  element={<Login />} />
         <Route path="/signup" element={<Signup />} />

@@ -81,7 +81,7 @@ class CurrentActivityView(APIView):
                 created_at__gte=timezone.now() - timezone.timedelta(days=2)
             )
             serializer = ActivitySerializer(events, many=True)
-            print("🔥 ACTIVITY RESPONSE:", serializer.data)
+            # print("🔥 ACTIVITY RESPONSE:", serializer.data)
             return Response(serializer.data)
         except Exception as e:
             import traceback
@@ -116,20 +116,55 @@ class WeeklyActivitySummaryView(APIView):
             summary.append({
                 "memberId": member.id,
                 "memberName": member.user.full_name,
-                "tasksCompleted": user_events.filter(
+                 "projectsCreated": user_events.filter(
+                    activity_type="PROJECT_CREATED",
+                    action="created"
+                ).count(),
+
+                "projectsDeleted": user_events.filter(
+                    activity_type="PROJECT_DELETED",
+                    action="deleted"
+                ).count(),
+
+                 "tasksCompleted": user_events.filter(
                     activity_type="TASK_UPDATED",
                     action="completed"
                 ).count(),
+
                 "tasksAssigned": user_events.filter(
-                    activity_type="TASK_CREATED"
+                    activity_type="TASK_ASSIGNED",
+                    action="assigned"
                 ).count(),
-                "comments": user_events.filter(
-                    action="commented"
-                ).count(),
-                "statusChanges": user_events.filter(
+
+                "tasksUpdated": user_events.filter(
                     activity_type="TASK_UPDATED",
-                    action="status_changed"
+                    action="updated"
                 ).count(),
+
+                "tasksUnassigned": user_events.filter(
+                    activity_type="TASK_UNASSIGNED",
+                    action="unassigned"
+                ).count(),
+
+                "membersRemoved": user_events.filter(
+                    activity_type="MEMBER_REMOVED",
+                    action="removed"
+                ).count(),
+
+                "membersInvited": user_events.filter(
+                    activity_type="MEMBER_INVITED",
+                    action="invited"
+                ).count(),
+
+                "comments": user_events.filter(
+                     action="commented"
+                ).count(),
+
+                "statusChanges": user_events.filter(
+                     activity_type="TASK_UPDATED",
+                     action="status_changed"
+                ).count(),
+
             })
 
         return Response(summary)

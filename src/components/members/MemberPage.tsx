@@ -3,9 +3,15 @@ import { useMember }          from '../../context/MemberProvider';
 import { useAuth }            from '../../hooks/useAuth';
 import { useWorkspace }       from '../../context/WorkspaceProvider';
 import { MemberCard }         from './MemberCard';
-import  AddMemberModal        from './AddMemberModal';
+import  AssignUserModal        from './AssignUserModal';
+import  InviteMemberModal     from './InviteMemberModal';
+import { useInvitations } from '../../context/InvitationProvider';
+import { PendingInvitation } from './PendingInvitation';
 import { EditMemberModal }    from './EditMemberModal';
-import { Member, MemberRole, MemberFilters } from '../../types/member';
+import { Member, MemberFilters } from '../../types/member';
+ 
+
+
 
  
 export function MembersPage() {
@@ -18,23 +24,28 @@ export function MembersPage() {
     inviteMember,
     fetchMembers,
   } = useMember();
+
+  const {
+  invitations,
+  fetchInvitations,
+  resendInvitation,
+  cancelInvitation,
+} = useInvitations();
+
   const [search, setSearch] = useState("");
   const [email, setEmail] = useState("");
-
   const [filters, setFilters] = useState<MemberFilters>({
   search: '',
   role: 'all',
   status: 'active',
 });
- const uniqueMembers = members.reduce((acc: { [key: number]: Member }, m) => {
-  acc[m.id] = m
-  return acc
-}, {})
 
+const query = search.toLowerCase();
+const normalizedQuery = (query ?? "").toLowerCase();
 const filteredMembers = members.filter((m) =>
-  m.email.toLowerCase().includes(search.toLowerCase()) ||
-  m.firstName.toLowerCase().includes(search.toLowerCase()) ||
-  m.lastName.toLowerCase().includes(search.toLowerCase())
+  (m.email ?? "").toLowerCase().includes(normalizedQuery) ||
+  (m.firstName ?? "").toLowerCase().includes(normalizedQuery) ||
+  (m.lastName ?? "").toLowerCase().includes(normalizedQuery)
 );
 
 const workspaceMembers = members.map((m) => ({
@@ -44,27 +55,44 @@ const workspaceMembers = members.map((m) => ({
   role: m.role
 }));
  
-
   const { currentWorkspace }              = useWorkspace();
   const [showAddModal, setShowAddModal]   = useState(false);
+  const [showInviteModal, setShowInviteModal]   = useState(false);
   const [editingMember, setEditingMember] = useState<Member | null>(null);
-  const userRole = currentWorkspace?.currentUserRole;
+  // const userRole = currentWorkspace?.currentUserRole;
 
 const handleSelectMember = (member: Member) => {
   setEmail(member.email);
   setSearch("");
 };
-
+ 
 useEffect(() => {
+  if (!currentWorkspace?.id) return;
+
   fetchMembers();
- }, []);
+  fetchInvitations(currentWorkspace.id);
+}, [
+    currentWorkspace?.id,
+    fetchMembers,
+    fetchInvitations,
+   ]);
+
 
   // Find current user's membership to get their role
  const currentMembership = members.find((m) => m.userId === user?.id.toString());
 
- const canInvite =
-  currentMembership?.role?.toLowerCase() === 'owner' ||
-  currentMembership?.role?.toLowerCase() === 'admin';
+ const isOwner = currentMembership?.role?.toLowerCase() === "owner";
+
+ const canInvite = currentMembership?.role?.toLowerCase() === 'owner' ||
+                   currentMembership?.role?.toLowerCase() === 'admin';
+
+ const pendingInvitations = invitations.filter(
+  (invitation) =>
+    invitation.workspace === currentWorkspace?.id &&
+    (invitation.status ?? "").toLowerCase() === "pending"
+);
+
+ 
 
   return (
     <div className="max-w-4xl mx-auto px-6 py-8">
@@ -79,13 +107,27 @@ useEffect(() => {
           </p>
         </div>
         {canInvite && (
-          <button
-            onClick={() => setShowAddModal(true)}
-            className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            + Invite Member
-          </button>
+          <div className="flex gap-3">
+
+            {/* Member Assignment */}
+            <button
+              onClick={() => setShowAddModal(true)}
+              className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              + User Assignment
+            </button>
+
+            {/* Invite Member */}
+            <button
+              onClick={() => setShowInviteModal(true)}
+              className="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors"
+            >
+              + Invite Member
+            </button>
+
+          </div>
         )}
+ 
       </div>
 
       {/* Filters Bar */}
@@ -169,26 +211,54 @@ useEffect(() => {
               key={member.id}
               member={member}
               onEdit={() => setEditingMember(member)}
-              canEdit={canInvite}
+              canEdit={isOwner}
             />
           ))}
         </div>
       ) 
       )}
 
-     
+      {canInvite && pendingInvitations.length > 0 && (
+        <div className="mt-10">
 
+          <div className="mb-4">
+            <h2 className="text-xl font-semibold text-gray-900">
+              Pending Invitations
+            </h2>
 
+            <p className="text-sm text-gray-500 mt-1">
+              These users have been invited but have not
+              joined the workspace yet.
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            {pendingInvitations.map((invitation) => (
+              <PendingInvitation
+                key={invitation.id}
+                invitation={invitation}
+                onResend={resendInvitation}
+                onCancel={cancelInvitation}
+              />
+            ))}
+          </div>
+
+        </div>
+      )}
+      
       {/* Modals */}
-      <AddMemberModal
+      <AssignUserModal
         isOpen={showAddModal}
         onClose={() => setShowAddModal(false)}
-        inviteMember={inviteMember}
       />
       <EditMemberModal
         isOpen={!!editingMember}
         member={editingMember}
         onClose={() => setEditingMember(null)}
+      />
+      <InviteMemberModal
+        isOpen={showInviteModal}
+        onClose={() => setShowInviteModal(false)}
       />
     </div>
   );

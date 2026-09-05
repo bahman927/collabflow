@@ -10,3 +10,114 @@ ws = Workspace.objects.get(id=76)
 
 task.workspace = ws
 task.save()
+
+views.py
+from rest_framework import status, viewsets
+from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+
+from .models import Workspace
+from .serializers import (
+    WorkspaceSerializer,
+    InviteMemberSerializer,
+)
+
+class WorkspaceViewSet(viewsets.ModelViewSet):
+    queryset = Workspace.objects.all()
+    serializer_class = WorkspaceSerializer
+    permission_classes = [IsAuthenticated]
+
+    @action(
+        detail=True,
+        methods=["post"],
+        url_path="invite",
+    )
+    def invite(self, request, pk=None):
+
+        workspace = self.get_object()
+
+        serializer = InviteMemberSerializer(
+            data=request.data,
+            context={
+                "workspace": workspace,
+                "request": request,
+            },
+        )
+
+        serializer.is_valid(raise_exception=True)
+
+        member = serializer.save()
+
+        return Response(
+            {
+                "message": "Invitation sent successfully.",
+                "member_id": member.id,
+            },
+            status=status.HTTP_201_CREATED,
+        )
+
+serializers.py
+from django.contrib.auth import get_user_model
+from rest_framework import serializers
+from .models import WorkspaceMember
+
+User = get_user_model()
+
+class InviteMemberSerializer(serializers.Serializer):
+
+    email = serializers.EmailField()
+
+    def validate_email(self, value):
+
+        workspace = self.context["workspace"]
+
+        try:
+            user = User.objects.get(email=value)
+
+        except User.DoesNotExist:
+            raise serializers.ValidationError(
+                "No user with this email exists."
+            )
+
+        if WorkspaceMember.objects.filter(
+            workspace=workspace,
+            user=user,
+        ).exists():
+
+            raise serializers.ValidationError(
+                "This user is already a member of the workspace."
+            )
+
+        self.user = user
+
+        return value
+
+    def validate(self, attrs):
+
+        workspace = self.context["workspace"]
+        request = self.context["request"]
+
+        if not WorkspaceMember.objects.filter(
+            workspace=workspace,
+            user=request.user,
+            role="Owner",
+        ).exists():
+
+            raise serializers.ValidationError(
+                "Only workspace owners can invite members."
+            )
+
+        return attrs
+
+    def save(self):
+
+        workspace = self.context["workspace"]
+
+        member = WorkspaceMember.objects.create(
+            workspace=workspace,
+            user=self.user,
+            role="Member",
+        )
+
+        return member

@@ -1,4 +1,71 @@
+
 @import "tailwindcss";
+
+/*
+ * Tailwind v4:
+ * Use the .dark class on <html> for dark mode.
+ */
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html,
+body,
+#root {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+}
+
+body {
+  min-width: 320px;
+}
+
+/*
+ * Basic link behavior.
+ */
+a {
+  font-weight: 500;
+  text-decoration: inherit;
+}
+
+/*
+ * Don't globally style every button here.
+ *
+ * Your React components should control their own
+ * padding, borders, colors, hover states, etc.
+ */
+
+/*
+ * Animation used by CollabFlow.
+ */
+@keyframes slide-in {
+  from {
+    transform: translateX(100%);
+  }
+
+  to {
+    transform: translateX(0);
+  }
+}
+
+.animate-slide-in {
+  animation: slide-in 0.25s ease-out;
+}
+
+
+
+
+/* @import "tailwindcss";
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
@@ -68,4 +135,4 @@ button:focus-visible {
 }
 .animate-slide-in {
   animation: slide-in 0.25s ease-out;
-}
+} */

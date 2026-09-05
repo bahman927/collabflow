@@ -9,7 +9,7 @@ export type TaskPriority = "low" | "medium" | "high" | "urgent";
 export interface Person {
   id: string;
   name: string;
-  email: string;
+  email?: string;
   avatarUrl?: string;
 }
 

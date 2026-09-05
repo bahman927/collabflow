@@ -13,7 +13,8 @@ export interface CurrentActivityItem {
 export interface WeeklyMemberSummary {
   memberId: number;
   memberName: string;
-  role: string;
+  projectsCreated: number;
+  projectsDeleted: number;
   tasksCompleted: number;
   tasksAssigned: number;
   comments: number;

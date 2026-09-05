@@ -31,6 +31,7 @@ function getInitials(name: string) {
 
 export default function TaskPanel() {
   const { currentTask, moveTask } = useTask();
+  // console.log("TaskPanel - currentTask:", currentTask)
 
   // ── No task selected ──
   if (!currentTask) {

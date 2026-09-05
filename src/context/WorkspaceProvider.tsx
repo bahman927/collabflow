@@ -51,7 +51,8 @@ interface WorkspaceContextType {
 export const WorkspaceContext = createContext<WorkspaceContextType | null>(null);
 
 export const WorkspaceProvider = ({ children }: { children: React.ReactNode }) => {
-  const { apiFetch, user } = useAuth();
+  const { apiFetch, user, tokens } = useAuth();
+  // const { apiFetch, user, tokens, isAuthenticated } = useAuth();
   const isAuthenticated = !!user
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [currentWorkspace, setCurrentWorkspace] = useState<Workspace | null>(null);
@@ -59,31 +60,47 @@ export const WorkspaceProvider = ({ children }: { children: React.ReactNode }) =
     useState<WorkspaceMember | null>(null);
 
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError]     = useState<string | null>(null);
 
   /**
    * Fetch all workspaces
    */
-  const fetchWorkspaces = useCallback(async () => {
-  try {
-    setLoading(true);
-    setError(null);
+  const fetchWorkspaces = useCallback(
+  async (preferredWorkspaceId?: number) => {
+    try {
+      setLoading(true);
+      setError(null);
 
-    const { url, options } = workspaceService.list();
-    const data = await apiFetch<Workspace[]>(url, options);
+      const { url, options } = workspaceService.list();
 
-    setWorkspaces(data);
+      const data = await apiFetch<Workspace[]>(url, options);
 
-    if (!currentWorkspace && data.length > 0) {
-      setCurrentWorkspace(data[0]);
+      setWorkspaces(data);
+
+      if (preferredWorkspaceId) {
+        const invitedWorkspace = data.find(
+          workspace => workspace.id === preferredWorkspaceId
+        );
+
+        if (invitedWorkspace) {
+          setCurrentWorkspace(invitedWorkspace);
+          return;
+        }
+      }
+
+      if (!currentWorkspace && data.length > 0) {
+        setCurrentWorkspace(data[0]);
+      }
+
+    } catch (err: any) {
+      console.error("WORKSPACES ERROR:", err);
+      setError(err.message || "Failed to load workspaces");
+    } finally {
+      setLoading(false);
     }
-  } catch (err: any) {
-    console.error("WORKSPACES ERROR:", err);
-    setError(err.message || "Failed to load workspaces");
-  } finally {
-    setLoading(false);
-  }
-}, [apiFetch, currentWorkspace]);
+  },
+  [apiFetch, currentWorkspace]
+);
 
     /**
    * Select a workspace
@@ -190,15 +207,21 @@ export const WorkspaceProvider = ({ children }: { children: React.ReactNode }) =
   /**
    * Auto-load workspaces when user logs in
    */
-  useEffect(() => {
-    if (isAuthenticated) {
-      fetchWorkspaces();
-    }
-  }, [isAuthenticated, fetchWorkspaces]);
 
-  /**
-   * Reset state on logout
-   */
+  useEffect(() => {
+
+    if (!isAuthenticated || !tokens?.access) {
+        return;
+    }
+
+    fetchWorkspaces();
+
+  }, [
+    isAuthenticated,
+    tokens,
+    fetchWorkspaces
+  ]);
+  
   useEffect(() => {
     if (!isAuthenticated) {
       setWorkspaces([]);
@@ -217,8 +240,19 @@ export const WorkspaceProvider = ({ children }: { children: React.ReactNode }) =
 
       const loadMember = async () => {
         try {
+           console.log(
+            "loadMember currentWorkspace:",
+            currentWorkspace
+          );
+
+          console.log(
+            "loadMember workspace ID:",
+            currentWorkspace?.id
+          );
+
           const { url, options } = workspaceService.getMembership(currentWorkspace.id);
           const member = await apiFetch<WorkspaceMember>(url, options);
+         
 
           setCurrentWorkspaceMember(member);
         } catch (err) {
@@ -228,17 +262,17 @@ export const WorkspaceProvider = ({ children }: { children: React.ReactNode }) =
       };
 
      loadMember();
-   }, [currentWorkspace, apiFetch]);
+     
+    }, [currentWorkspace?.id, apiFetch]);
 
+    const role = currentWorkspaceMember?.role ?? null;
 
-  const role = currentWorkspaceMember?.role ?? null;
+    const canCreateProject = role === "owner";
+    const canCreateTask = role === "owner";
+    const canInvite = role === "owner";
 
-  const canCreateProject = role === "owner";
-  const canCreateTask = role === "owner";
-  const canInvite = role === "owner";
-
-  const canEditTask = (task: Task) =>
-    task.assignees?.some((a) => a.id === user?.id);
+    const canEditTask = (task: Task) =>
+      task.assignees?.some((a) => a.id === user?.id);
 
   return (
     <WorkspaceContext.Provider

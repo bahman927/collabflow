@@ -1,47 +1,36 @@
-from django.urls import path, include
+from django.urls import include, path
 from rest_framework.routers import DefaultRouter
+
+from .views import WorkspaceViewSet, InvitationViewSet
 from memberships.views import MemberViewSet
 from tasks.views import TaskViewSet
-from workspaces.views import InvitationViewSet
 
 router = DefaultRouter()
-router.register(r'tasks', TaskViewSet, basename='workspace-tasks')
-router.register(r'members', MemberViewSet, basename='workspace-members')
-router.register(r'invitations', InvitationViewSet, basename='workspace-invitations')
+
+router.register(
+    "workspaces",
+    WorkspaceViewSet,
+    basename="workspaces",
+)
+
+router.register(
+    "members",
+    MemberViewSet,
+    basename="members",
+)
+
+router.register(
+    "tasks",
+    TaskViewSet,
+    basename="tasks",
+)
+
+router.register(
+    "invitations",
+    InvitationViewSet,
+    basename="invitations",
+)
 
 urlpatterns = [
-    path(
-        'api/workspaces/<int:workspace_id>/',
-        include(router.urls),
-    ),
+    path("api/", include(router.urls)),
 ]
-
-# router = DefaultRouter()
-# router.register(
-#     r'members',
-#     MemberViewSet,
-#     basename='workspace-members',
-    
-# )
-# router.register(
-#     r'invitations',
-#     InvitationViewSet,
-#     basename='workspace-invitations',
-# )
-
-# urlpatterns = [
-#     path(
-#         'api/workspaces/<int:workspace_id>/',
-#         include(router.urls),
-#     ),
-# ]
-
-
-
-# from rest_framework.routers import DefaultRouter
-# from .views import WorkspaceViewSet
-
-# router = DefaultRouter()
-# router.register(r'workspaces', WorkspaceViewSet, basename='workspace')
-
-# urlpatterns = router.urls

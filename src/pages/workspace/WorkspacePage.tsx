@@ -9,6 +9,8 @@ import Modal                 from "../../components/shared/Modal2";
 import EditWorkspaceModal    from "../../components/EditWorkspaceModal";
 import DeleteWorkspaceModal  from "../../components/DeleteWorkspaceModal";
 import ConfirmDeleteModal    from "../../components/ConfirmDeleteModal";
+import AutoScrollModal from "@/components/AutoScrollModal";
+import WorkspaceComment   from  "@/components/WorkspaceComment"
 
 export default function WorkspacePage() {
   const { workspaceId } = useParams();
@@ -20,7 +22,8 @@ export default function WorkspacePage() {
   const [showMenu, setShowMenu] = useState(false);
   const [workspaceName, setWorkspaceName] = useState(currentWorkspace?.name ?? "");
   const { role } = useWorkspace();
-const userRole = role?.toLowerCase();
+  const userRole = role?.toLowerCase();
+ 
 
   // Ensure correct workspace is selected when route changes
   useEffect(() => {
@@ -37,7 +40,6 @@ const userRole = role?.toLowerCase();
           <div className="flex flex-col items-center justify-center h-[calc(100vh-80px)] text-center px-6">
             <img
               src={!currentWorkspace ? "No-workspace.png" : "/empty-state.png"}
-              // alt={!currentWorkspace ? "No-workspace" : "No project selected"}
               className=" object-contain mb-6 opacity-90"
             />
                          
@@ -46,7 +48,7 @@ const userRole = role?.toLowerCase();
       }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-2 space-y-6">
       <header className="flex items-center justify-between">
         <div>
               <h1 className="text-xl font-semibold">{currentWorkspace.name}</h1>
@@ -111,7 +113,7 @@ const userRole = role?.toLowerCase();
  </header>
 
       <section>
-        <h2 className="text-sm font-medium text-gray-500 mb-3">
+        <h2 className="text-sm font-medium text-gray-500 mb-2">
           Projects in this workspace
         </h2>
 
@@ -136,10 +138,15 @@ const userRole = role?.toLowerCase();
           </div>
           
         )}
-        <div>
-          {/* <img src="CollabFlow workspace panel image.jpg"  /> */}
-          <img src="Collab Dashboard.png"  />
-        </div>
+        
+        <div className="relative w-full ml-12 h-137.5">
+          <AutoScrollModal photo="Collab Dashboard.png">
+            <div className="mt-6">
+             <WorkspaceComment />
+            </div>
+
+          </AutoScrollModal>
+        </div>    
                             
       </section>
     </div>

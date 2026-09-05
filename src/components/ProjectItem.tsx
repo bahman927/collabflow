@@ -1,11 +1,13 @@
 import React from "react";
 import { Folder, Palette, Bug, LayoutDashboard } from "lucide-react";
 import { getInitials, getAvatarColor } from "../utils/projectHelpers";
+import { useWorkspace }    from "../context/WorkspaceProvider";
 import { useAuth } from "../hooks/useAuth";
 import { useTask } from "../context/TaskProvider";
 import { Task } from "../types/task";
 import { TaskStatus } from "../types/type";
 import { AvatarChip } from "./shared/AvatarChip";
+import { Pencil, Trash2 } from "lucide-react";
 
 type Status = "To Do" | "In Progress" | "Done" | "Overdue";
 
@@ -17,6 +19,7 @@ interface ProjectItemProps {
   onDelete: (id: number) => void;
   editable?: boolean;
   onClick?: () => void;
+  onRequestDelete?: (task: Task) => void;
 }
 
 // Map known projects to icons
@@ -41,11 +44,14 @@ const ProjectItem: React.FC<ProjectItemProps> = ({
   taskId,
   title,
   status,
-  onDelete,
   editable = false,
   onClick,
+  onDelete,
 }) => {
+
+  // console.log("task :", task)
   const { user } = useAuth();
+  const {role} = useWorkspace()
   const { updateTask } = useTask();
   if (!task) return null;
 
@@ -68,10 +74,10 @@ const ProjectItem: React.FC<ProjectItemProps> = ({
   };
   
   return (
-    <li className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer transition" onClick={onClick}>
+    <li className="flex items-center justify-between p-1 bg-gray-50 rounded-lg hover:bg-gray-100 transition shadow-sm hover:shadow-md"  >
 
       {/* Left: icon + title + assignee avatars */}
-      <div className="flex items-center gap-3 min-w-0">
+      <div className="flex items-center gap-3 min-w-0 ">
         {icon ? (
           <div className="p-2 bg-white rounded-md shadow">{icon}</div>
         ) : (
@@ -83,11 +89,11 @@ const ProjectItem: React.FC<ProjectItemProps> = ({
           </div>
         )}
 
-        <span className="font-medium truncate">{title}</span>
+        <span className="font-semibold truncate">{title}</span>
 
         {/* Assignee avatars */}
         {assignees.length > 0 && (
-          <div className="flex items-center -space-x-2 ml-2">
+          <div className="flex items-center -space-x-2 ml-2 mt-2">
             {visible.map((assignee) => (
               <div
                 key={assignee.id}
@@ -122,7 +128,7 @@ const ProjectItem: React.FC<ProjectItemProps> = ({
             value={task.status}
             onChange={(e) => updateTaskStatus(e.target.value as TaskStatus)}
             onClick={(e) => e.stopPropagation()}
-            className={`text-sm font-medium border rounded-full px-3 py-1 cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-400 ${
+            className={`text-sm font-serif border rounded-full px-1 py-1 cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-400 ${
               {
                 todo:        "bg-gray-200 text-gray-700 border-gray-300",
                 in_progress: "bg-blue-100 text-blue-700 border-blue-200",
@@ -136,6 +142,7 @@ const ProjectItem: React.FC<ProjectItemProps> = ({
             <option value="done">Done</option>
             <option value="overdue">Overdue</option>
           </select>
+
         ) : (
           <span
             className={`px-3 py-1 rounded-full font-medium text-sm ${
@@ -145,16 +152,35 @@ const ProjectItem: React.FC<ProjectItemProps> = ({
             {status}
           </span>
         )}
+        {editable &&
+         <div>
+           <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onClick?.();
+              
+                }}
+                className="text-blue-500 cursor-pointer hover:text-blue-700 ml-4  "
+                title="Edit task"
+              >
+            <Pencil size={18} />
+           </button>
+         </div>  
+        }
 
-
-          {user?.full_name?.toLowerCase().includes("bahman") ? (
-            <button
-              onClick={(e) => { e.stopPropagation(); onDelete(taskId); }}
-              className="text-red-500 hover:text-red-700 text-lg font-bold"
-            >
-              ×
-            </button>
-          ) : null}
+         { role?.toLowerCase() === "owner" && (
+            <div className="px-6 py-3 border-t border-gray-100">
+              <button
+                onClick={(e) => {
+                e.stopPropagation();
+                onDelete?.(task.id);
+              }}
+                className="text-sm font-serif text-red-500 hover:text-red-700 hover:bg-red-50 px-3 py-2 rounded-lg transition"
+              >
+                Delete 
+              </button>
+            </div>
+          )}
       </div>
     </li>
   );

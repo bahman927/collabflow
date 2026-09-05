@@ -3,21 +3,61 @@ import type { Tokens } from "../types/auth";
 //const API_BASE = "http://localhost:8000/api";
 const TOKEN_KEY = "tokens";
 
+
+export interface SignupData {
+  email: string;
+  password: string;
+  first_name?: string;
+  last_name?: string;
+}
+
+
+export interface SignupResponse {
+  user: {
+    id: number;
+    email: string;
+    first_name?: string;
+    last_name?: string;
+  };
+
+  access: string;
+  refresh: string;
+}
+
 // =============================================
 //                  Signup
 // =============================================
-export async function signup(email: string, password: string) {
-  const res = await fetch("/api/users/register/", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, password }),
-  });
+
+export async function signup(
+  data: SignupData
+): Promise<SignupResponse> {
+
+  const res = await fetch(
+    "/api/users/register/",
+    {
+      method: "POST",
+
+      headers: {
+        "Content-Type": "application/json",
+      },
+
+      body: JSON.stringify(data),
+    }
+  );
+  
+  const responseData = await res.json();
+
 
   if (!res.ok) {
-    throw new Error("Signup failed");
+
+        // Send Django validation errors to React
+        throw new Error(
+            JSON.stringify(responseData)
+        );
   }
 
-  return res.json();
+
+    return responseData;
 }
 
 // ========================

@@ -2,7 +2,7 @@
 
 import { useCallback } from 'react';
 import { useAuth } from '../hooks/useAuth';
-import apiFetch, { ApiRequestInit } from '../api/apiFetch2';
+import apiFetch, { ApiRequestInit } from '../api/ApiFetch2';
 
 const BASE_URL = 'http://localhost:8000';
 

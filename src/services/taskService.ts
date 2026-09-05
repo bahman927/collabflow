@@ -9,7 +9,6 @@ const TASKS_BASE      = "http://localhost:8000/api/tasks";
 export  const taskService = {
   list(workspaceId: number) {
     return {
-      // url: `${BASE_URL}/?project=${projectId}`,
        url: `${WORKSPACES_BASE}/${workspaceId}/tasks/`,
       options: { method: "GET", auth: true},
     };
@@ -29,15 +28,15 @@ export  const taskService = {
     };
   },
 
- create(data: {
-  name: string;
-  description?: string;
-  project_id: number;
-  workspace: number;
-  priority?: string;
-  due_date?: string | null;
-  assignee_ids?: number[];
-}) {
+  create(data: {
+    name: string;
+    description?: string;
+    project_id: number;
+    workspace: number;
+    priority?: string;
+    due_date?: string | null;
+    assignee_ids?: number[];
+  }) {
   return {
     url: `${TASKS_BASE}/`,
     options: {
@@ -48,15 +47,32 @@ export  const taskService = {
   };
 },
 
- unassign(taskId: number, memberId: number) {
-  return {
-    url: `${TASKS_BASE}/${taskId}/assignees/${memberId}/`,
-    options: {
-      method: "DELETE",
-      auth: true,
-    },
-  };
-},
+ 
+
+  assign(
+    taskId: number,
+    memberId: number
+  ) {
+      return {
+          url: `${TASKS_BASE}/${taskId}/assignees/${memberId}/`,
+          options: {
+              method: "POST",
+              auth: true
+          },
+          
+      
+      }
+  },
+
+   unassign(taskId: number, memberId: number) {
+    return {
+      url: `${TASKS_BASE}/${taskId}/assignees/${memberId}/`,
+      options: {
+        method: "DELETE",
+        auth: true,
+      },
+    };
+  },
 
 
 
@@ -78,13 +94,15 @@ export  const taskService = {
     };
   },
 
- removeAssignee(workspaceId: number, taskId: number, memberId: number) {
-  return {
-    url: `${WORKSPACES_BASE}/${workspaceId}/tasks/${taskId}/assignees/${memberId}/`,
-    options: {
-      method: "DELETE",
-      auth: true,
-    },
-  };
-}
-}
+
+    workspaceTasks(workspaceId: number) {
+      return {
+        url: `${WORKSPACES_BASE}/${workspaceId}/tasks/`,
+        options: {
+          method: "GET",
+          auth: true,
+        }
+      };
+    }
+
+  }

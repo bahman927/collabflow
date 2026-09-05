@@ -15,7 +15,7 @@ import {
   AuthResponse,
 } from "../types/auth";
 
-import apiFetch      from '../api/apiFetch2' 
+import apiFetch      from "../api/apiFetch2" 
 import {useNavigate} from 'react-router'
 import { LogOut } from "lucide-react";
 export interface ApiRequestInit extends RequestInit {

@@ -43,22 +43,22 @@ interface MemberContextType {
 
   export function MemberProvider({ children }: { children: React.ReactNode
     }) {
-  const {apiFetch, tokens, setTokens, logout } = useAuth();
-  const { currentWorkspace } = useWorkspace();
-  const activity = useActivity();
-  const { fetchProjects, currentProject } = useProject();
-  const { fetchTasks } = useTask();
-  // const { workspaceRefresh } = useWorkspace();
-  const [members, setMembers] = useState<Member[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const { fetchActivity } = useActivity();
-  const [filters, setFiltersState] =
-    useState<MemberFilters>({
-      search: '',
-      role: 'all',
-      status: 'active',
-    });
+      const { user } = useAuth();
+      // const { members } = useMember();
+      const {apiFetch, tokens, setTokens, logout } = useAuth();
+      const { currentWorkspace } = useWorkspace();
+      const activity = useActivity();
+      const { fetchProjects, currentProject } = useProject();
+      const { fetchTasks } = useTask();
+      const [members, setMembers] = useState<Member[]>([]);
+      const [loading, setLoading] = useState(false);
+      const [error, setError] = useState<string | null>(null);
+      const { fetchActivity } = useActivity();
+      const [filters, setFiltersState] = useState<MemberFilters>({
+          search: '',
+          role: 'all',
+          status: 'active',
+        });
 
   // ✅ Create service with auth functions — same pattern as other providers
   const memberService = useMemo(
@@ -68,6 +68,7 @@ interface MemberContextType {
 
   const workspaceId = currentWorkspace?.id;
  
+  
   useEffect(() => {
     if (currentWorkspace?.id) {
       fetchMembers();
@@ -75,7 +76,7 @@ interface MemberContextType {
       setMembers([]);
     }
   }, [currentWorkspace?.id]);
-
+  
 
   const fetchMembers = useCallback(async () => {
     if (!workspaceId) return;
@@ -94,7 +95,7 @@ interface MemberContextType {
     } finally {
       setLoading(false);
     }
-  }, [workspaceId, filters, memberService]);
+  }, [workspaceId]);
 
 
 const inviteMember = useCallback(
@@ -131,7 +132,7 @@ const updateMember = useCallback(
 
     // ⭐ NEW — refresh tasks for the current project
     if (currentProject?.id) {
-      await fetchTasks(currentProject.id);
+      await fetchTasks();
     }
 
     return updated;
@@ -144,7 +145,7 @@ const removeMember = useCallback(
   async (memberId: number): Promise<void> => {
     if (!workspaceId) throw new Error("No workspace selected");
 
-    await memberService.remove(workspaceId, memberId);
+    await memberService.remove(workspaceId, memberId); 
 
     setMembers(prev => prev.filter(m => m.id !== memberId));
 
@@ -155,7 +156,7 @@ const removeMember = useCallback(
 
     // ⭐ NEW — refresh tasks for the current project
     if (currentProject?.id) {
-      await fetchTasks(currentProject.id);
+      await fetchTasks();
     }
   },
   [workspaceId, activity, fetchProjects, fetchTasks, currentProject]

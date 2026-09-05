@@ -26,7 +26,7 @@ class Project(models.Model):
 class ProjectMember(models.Model):
     
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='project_members')
-    member = models.ForeignKey('workspaces.WorkspaceMember', on_delete=models.CASCADE, related_name='project_assignments')
+    member = models.ForeignKey('workspaces.WorkspaceMember', on_delete=models.CASCADE, related_name='project_memberships')
     assigned_at = models.DateTimeField(auto_now_add=True)
     assigned_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
 

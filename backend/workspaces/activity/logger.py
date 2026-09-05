@@ -11,6 +11,16 @@ class ActivityLogger:
             message=message,
         )
 
+    @staticmethod
+    def member_invited(actor, workspace, email):
+        ActivityLogger.log(
+            user=actor,
+            workspace=workspace,
+            activity_type="MEMBER_INVITED",
+            action="invited",
+            message=f"Sent invitation to {email}"
+        )    
+
     # -------------------------
     # MEMBER EVENTS
     # -------------------------
@@ -128,8 +138,66 @@ class ActivityLogger:
             message=f"unassigned '{name}' from task '{task.name}'",
         )
  
+    @staticmethod
+    def task_status_changed(
+        actor,
+        workspace,
+        task,
+        old_status,
+        new_status
+    ):
+
+        Activity.objects.create(
+            user=actor,
+            workspace=workspace,
+            activity_type="TASK_UPDATED",
+            action="status_changed",
+            message=(
+              f"changed the status of task "
+              f"'{task.name}' "
+              f"from '{old_status}' to '{new_status}'"
+            ),
+        )
    
-    
+
+    @staticmethod
+    def task_renamed(
+        actor,
+        workspace,
+        task,
+        old_name,
+        new_name,
+    ):
+        Activity.objects.create(
+            user=actor,
+            workspace=workspace,
+            project=task.project,
+            activity_type="TASK_UPDATED",
+            action="renamed",
+            message=(
+                f"renamed task '{old_name}' "
+                f"to '{new_name}'"
+            ),
+        )
+
+
+    @staticmethod
+    def task_description_updated(
+        actor,
+        workspace,
+        task,
+    ):
+        Activity.objects.create(
+            user=actor,
+            workspace=workspace,
+            project=task.project,
+            activity_type="TASK_UPDATED",
+            action="description_updated",
+            message=(
+                f"updated the description "
+                f"of task '{task.name}'"
+            ),
+        )
 
     # -------------------------
     # PROJECT EVENTS

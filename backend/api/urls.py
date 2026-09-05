@@ -4,17 +4,40 @@ from projects.views   import ProjectViewSet
 from workspaces.views import WorkspaceViewSet
 from tasks.views      import TaskViewSet
 from activities.views import ActivityViewSet
-from django.urls      import path
+from memberships.views import MemberViewSet
+from invitations.views import InvitationViewSet
+
+from django.contrib import admin
+from django.urls import path, include
+from users.views import EmailTokenObtainPairView
+# from django.urls import get_resolver
+from rest_framework_simplejwt.views import (
+    TokenObtainPairView,
+    TokenRefreshView,
+)
+
+ 
 
 router = DefaultRouter()
 
-router.register("projects",   ProjectViewSet,   basename="projects")
+router.register("projects", ProjectViewSet, basename="projects")
 router.register("workspaces", WorkspaceViewSet, basename="workspaces")
-router.register("tasks",      TaskViewSet,      basename="tasks")
-router.register("activities", ActivityViewSet,  basename="activities")
- 
+router.register("tasks", TaskViewSet, basename="tasks")
+router.register("activities", ActivityViewSet, basename="activities")
+router.register("members", MemberViewSet, basename="members")
+router.register("invitations", InvitationViewSet, basename="invitations")
 
-urlpatterns = router.urls 
+urlpatterns = [
+    path("", include(router.urls)),
+     # Custom activity endpoints
+    path("", include("activities.urls")),
+]
+
+ 
+# for url in get_resolver().url_patterns:
+#         print(url.pattern)
+
+ 
 
     
 

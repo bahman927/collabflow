@@ -1,6 +1,6 @@
 // services/memberService.ts
 import { Member, MemberInvite } from "../types/member";
-import apiFetch, { ApiRequestInit } from "../api//apiFetch2";
+import apiFetch, { ApiRequestInit } from "../api/ApiFetch2";
 import { Tokens } from "../types/auth";
 
 
@@ -21,6 +21,43 @@ export function createMemberService(
     );
   }
 
+  async function assign(
+    taskId: number,
+    memberId: number
+) {
+    return apiFetch(
+        `${BASE_URL}/api/tasks/${taskId}/assignees/${memberId}/`,
+        {
+            method: "POST",
+            auth: true
+        },
+        getTokens,
+        setTokens,
+        logout
+    );
+}
+
+  async function assignTask(
+    taskId: number,
+    memberId: number
+) {
+    return apiFetch(
+        `${BASE_URL}/api/tasks/${taskId}/assign/`,
+        {
+            method: "POST",
+            auth: true,
+            body: JSON.stringify({
+                member_id: memberId
+            }),
+        },
+        getTokens,
+        setTokens,
+        logout
+    );
+}
+
+
+
   // ✅ NEW — get a single member by ID
   async function getById(workspaceId: number, memberId: number): Promise<Member> {
     return apiFetch<Member>(
@@ -34,7 +71,7 @@ export function createMemberService(
 
   async function invite(workspaceId: number, data: MemberInvite): Promise<Member> {
     return apiFetch<Member>(
-      `${BASE_URL}/api/workspaces/${workspaceId}/members/invite/`,
+      `${BASE_URL}/api/workspaces/${workspaceId}/invite/`,
       {
         method: "POST",
         auth: true,
@@ -52,7 +89,7 @@ export function createMemberService(
     data: Partial<Member>
   ): Promise<Member> {
     return apiFetch<Member>(
-      `${BASE_URL}/api/workspaces/${workspaceId}/members/${memberId}/`,
+      `${BASE_URL}/api/workspaces/${workspaceId}/${memberId}/`,
       {
         method: "PATCH",
         auth: true,
@@ -63,6 +100,8 @@ export function createMemberService(
       logout
     );
   }
+
+ 
 
   async function remove(workspaceId: number, memberId: number): Promise<void> {
     await apiFetch(

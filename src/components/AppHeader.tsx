@@ -4,23 +4,29 @@ import { Link }          from "react-router-dom";
 import { useState }      from "react";
 import { useAuth }       from "../hooks/useAuth";
 import WorkspaceSwitcher from "./WorkspaceSwitcher";
-import { Bell }          from "lucide-react";
+import { Bell, UserCircle }          from "lucide-react";
 
 export default function AppHeader() {
   const [profileOpen, setProfileOpen] = useState(false);
-  const { user, logout } = useAuth();
-  // console.log("user  : ", user)
+  const { user } = useAuth();
+  const name = user?.email.split("@")[0] ?? "";
+  const capName = name?.charAt(0).toUpperCase() + name.slice(1);
+  const [imageError, setImageError] = useState(false);
+
+  const profileImage = user?.email
+    ? `/${user.email.split("@")[0]}.JPG`
+    : "";
 
   return (
-    <header className="w-full bg-white border-b shadow-sm flex justify-between items-center px-6 h-19">
+    <header className="w-full  bg-white border-b shadow-sm flex justify-between items-center mt-3 mb-4   h-22">
 
       {/* Left Section: Logo + Workspace Switcher */}
-      <div className="flex items-center gap-6">
+      <div className="flex items-center gap-6 ">
 
         {/* Logo */}
         <Link
           to="/home" className="flex items-center gap-3">
-          <img src="/CollabFlow-logo.png" className="h-19" alt="CollabFlow" />
+          <img src="/CollabFlow-logo.png" className="h-22 w-40" alt="CollabFlow" />
           <h1 className="text-3xl font-bold">
             <span className="text-indigo-600">CollabFlow</span>
           </h1>
@@ -32,15 +38,7 @@ export default function AppHeader() {
       <div>
          <WorkspaceSwitcher />
       </div>
-      {/* <div>
-        <Link
-              to="/dashboard"
-              className="block px-4 py-2 hover:bg-gray-100 text-blue-400 text-medium font-medium"
-            >
-              Dashboard
-        </Link>
-      </div> */}
-      {/* Right Section: Notifications + Profile */}
+      
       <div className="flex items-center gap-4">
  
         {/* Profile */}
@@ -50,30 +48,27 @@ export default function AppHeader() {
             className="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100 transition"
           >
             <div className="h-8 w-8 rounded-full bg-indigo-600 text-white flex items-center justify-center text-sm font-semibold">
-            {user?.email?.[0].toUpperCase()}
+            {profileImage && !imageError ? (
+            <img
+                  src={profileImage}
+                  alt="profile"
+                  onError={() => setImageError(true)}
+                  className="w-8 h-8 rounded-full object-cover shrink-0"
+                />
+              ) : (
+                <UserCircle
+                      size={32}
+                  className="text-gray-500 shrink-0"
+                />
+              )}
+            
             </div>
-            <span className="font-medium text-gray-700">
-              Welcome {user?.full_name}
+            <span className="font-medium text-blue-700">
+              Welcome {capName}
             </span>
           </button>
 
-          {profileOpen && (
-            <div className="absolute right-0 mt-2 w-40 bg-white border rounded-lg shadow-lg py-2 animate-fadeIn">
-              <Link to="/profile" className="block px-4 py-2 hover:bg-gray-100">
-                Profile
-              </Link>
-              <Link to="/settings" className="block px-4 py-2 hover:bg-gray-100">
-                Settings
-              </Link>
-              <button
-              onClick={logout}
-              className=" w-full  px-4 py-2  text-red-600 hover:bg-gray-100"
-            >
-              Logout
-            </button>
-             
-            </div>
-          )}
+           
         </div>
       </div>
     </header>

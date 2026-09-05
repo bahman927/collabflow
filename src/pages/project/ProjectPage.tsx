@@ -4,6 +4,7 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import { useWorkspace }    from "../../context/WorkspaceProvider";
 import { useProject }      from "../../context/ProjectProvider";
 import { useTask }         from "../../context/TaskProvider"
+import { useMember }         from "../../context/MemberProvider"
 import { useAuth }         from '../../hooks/useAuth';
 import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import EditProjectModal    from "../../components/EditProjectModal";
@@ -18,24 +19,113 @@ import CreateTaskModal     from "../../components/CreateTaskModal";
 import TaskDetailDrawer    from "../../components/task/TaskDetailDrawer";
 import DeleteTaskModal     from "@/components/DeleteTaskModal"
 
+
 export default function ProjectPage() {
   const { role } = useWorkspace();
 
   const navigate = useNavigate();
   const { currentWorkspace }       = useWorkspace();
-  const { groupedTasks, tasks, currentTask, setCurrentTask, createTask, deleteTask, updateTask, loadTasks } = useTask();
+  const { currentTask, setCurrentTask, createTask, deleteTask, updateTask,fetchTasks,  loadTasks } = useTask();
   const { projects, currentProject, setCurrentProject, updateProject, deleteProject: removeProject } = useProject();
-  const { tokens, setTokens, logout } = useAuth();
+  const { user, tokens, setTokens, logout } = useAuth();
   const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
   const [showModal, setShowModal] = useState(false);
-  const projectTasks = tasks.filter(
-    // (task) => task.project === currentProject?.id
-    (task) => task.workspace === currentWorkspace?.id
+  const {members} = useMember();
+  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
+  const { getWorkspaceTasks} = useTask();
 
+  const wsTasks = currentWorkspace ? getWorkspaceTasks(currentWorkspace.id) : [];
+
+  const projectTasks = currentProject
+      ? wsTasks.filter((task: Task) => task.project === currentProject.id)
+      : [];
+
+  const handleRequestDelete = (task: Task) => {setConfirmDeleteId(task.id)};    
+
+  const canEditTask = (task: Task) => {
+    const currentRole = role?.toLowerCase();
+
+    // Owner can edit every task
+    if (currentRole === "owner") {
+      return true;
+    }
+
+    // Member can edit ONLY tasks assigned to himself
+    if (currentRole === "member") {
+      return task.assignees?.some(
+        (assignee) =>
+          Number(assignee.member_id) ===
+          Number(loggedInWorkspaceMember?.id)
+      ) ?? false;
+    }
+
+    // Viewer cannot edit
+    return false;
+    
+  };
+
+  const loggedInWorkspaceMember = members.find(
+     member => member.userId === String(user?.id)
   );
-  // console.log("ONE TASK:", tasks[0]);
 
-  // console.log('projectTasks :', projectTasks)
+  // console.log( "LOGGED MEMBER:", loggedInWorkspaceMember);
+
+  // console.log("loggedInWorkspaceMember:", loggedInWorkspaceMember)
+  // console.log("currentWorkspace:", currentWorkspace)
+  // console.log("PROJECT TASKS:", projectTasks);
+
+// projectTasks.forEach((task) => {
+//   console.log("ASSIGNEES:", task.assignees);
+
+//   task.assignees?.forEach((assignee) => {
+//     console.log(
+//       "assignee.member_id =",
+//       assignee.member_id
+//     );
+//   });
+// });
+
+  // const visibleProjectTasks = role?.toLowerCase() === "owner"
+  //   ? projectTasks
+  //   : projectTasks.filter((task) =>
+  //       task.assignees?.some(
+  //         (assignee) =>
+  //           assignee.member_id ===
+  //           loggedInWorkspaceMember?.id
+  //       )
+  //     );
+
+ const visibleProjectTasks = projectTasks
+
+  // console.log('visibleProjectTasks :', visibleProjectTasks)
+
+const normalizeStatus = (s: string) =>
+  s.toLowerCase() as TaskStatus;
+
+  const STATUS_LABELS: Record<TaskStatus, Status> = {
+    todo: "To Do",
+    in_progress: "In Progress",
+    done: "Done",
+    overdue: "Overdue",
+};
+    
+
+  const groupedTasks = visibleProjectTasks.reduce((groups, task) => {
+      const status = normalizeStatus(task.status);
+
+      if (!groups[status]) {
+        groups[status] = [];
+      }
+
+      groups[status].push(task);
+
+      return groups;
+    },
+    {} as Record<string, Task[]>
+  );    
+
+
+ 
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
@@ -53,16 +143,6 @@ const handleDeleteProject = async () => {
   // window.location.href = `/workspace/${currentWorkspace?.id}`;
 };
 
-
-  const normalizeStatus = (s: string) =>
-  s.toLowerCase() as TaskStatus;
-
-  const STATUS_LABELS: Record<TaskStatus, Status> = {
-    todo: "To Do",
-    in_progress: "In Progress",
-    done: "Done",
-    overdue: "Overdue",
-};
 
   useEffect(() => {
     setCurrentTask(null);
@@ -90,16 +170,10 @@ const hasTask = () => {
         (groupedTasks.overdue?.length ?? 0) > 0
       );
     }
-// console.log('groupTask.overdue : ', groupedTasks.overdue?.length)
- useEffect(() => {
-  if (currentWorkspace && currentProject) {
-    loadTasks(currentProject.id);
-  }
-}, [currentWorkspace, currentProject?.id]);
- 
+  
  if  (!currentProject) {
     return (
-      <div className="flex flex-col items-center justify-center h-[calc(100vh-80px)] text-center px-6">
+      <div className="flex flex-col items-center justify-center h-[calc(100vh-80px)] text-center  ">
         <img
           src={!currentProject ? "No-Project.png" : "/empty-state.png"}
           alt={!currentProject ? "No-Project" : "No project selected"}
@@ -118,10 +192,10 @@ const hasTask = () => {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-4 space-y-4">
       <header className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold mt-1">
+          <h1 className="text-2xl font-semibold mt-1">
             {currentProject.name} 
           </h1>
           {currentProject.description && (
@@ -137,38 +211,39 @@ const hasTask = () => {
           >
             Open board
           </Link>
-          {role?.toLowerCase() === "owner" && (
+          {(role?.toLowerCase() === "owner" || role?.toLowerCase() ===  'member') &&  (
             <>
               <button className="px-3 py-2 text-sm rounded-md bg-yellow-50 text-black hover:bg-blue-200 p-1 border border-blue-200 " 
                 onClick={() => setShowModal(true)}>
                 New task
               </button>
-           
-              <div className="relative">
-                  <button
-                    onClick={() => setShowMenu(!showMenu)}
-                    className="p-2 rounded-md border border-blue-600 text-blue-600 hover:bg-blue-50 ml-2"
-                  >
-                    <MoreHorizontal size={18} className="text-gray-500" />
-                  </button>
+              {role?.toLowerCase() === "owner"  &&
+                <div className="relative">
+                    <button
+                      onClick={() => setShowMenu(!showMenu)}
+                      className="p-2 rounded-md border border-blue-600 text-blue-600 hover:bg-blue-50 ml-2"
+                    >
+                      <MoreHorizontal size={18} className="text-gray-500" />
+                    </button>
 
-                  {  showMenu && (
-                    <div className="absolute right-0 mt-1 w-44 bg-white rounded-lg shadow-lg border z-50 py-1">
-                      <button
-                        onClick={() => { setShowMenu(false); setShowEditModal(true); }}
-                        className="flex items-center gap-2 w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                      >
-                        <Pencil size={14} /> Edit project
-                      </button>
-                      <button
-                        onClick={() => { setShowMenu(false); setShowDeleteModal(true); }}
-                        className="flex items-center gap-2 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-                      >
-                        <Trash2 size={14} /> Delete project
-                      </button>
-                    </div>
-                  )}
-                </div>
+                    {  showMenu && (
+                      <div className="absolute right-0 mt-1 w-44 bg-white rounded-lg shadow-lg border z-50 py-1">
+                        <button
+                          onClick={() => { setShowMenu(false); setShowEditModal(true); }}
+                          className="flex items-center gap-2 w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                        >
+                          <Pencil size={14} /> Edit project
+                        </button>
+                        <button
+                          onClick={() => { setShowMenu(false); setShowDeleteModal(true); }}
+                          className="flex items-center gap-2 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                        >
+                          <Trash2 size={14} /> Delete project
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                }
              </>
           )} 
         </div>
@@ -194,31 +269,31 @@ const hasTask = () => {
           </div>
         )}
     
- <div className="bg-white rounded-xl shadow p-6">
-  <h2 className="text-2xl font-semibold mb-4">Recent Tasks</h2>
+ <div className="bg-white rounded-xl shadow p-6 ">
+  <h2 className="text-xl font-semibold mb-10">Recent Tasks</h2>
 
-  {projectTasks.length === 0 ? (
+  {/* {projectTasks.length === 0 ? ( */}
+  {visibleProjectTasks.length === 0 ? (
     <>
-    <p className="text-gray-500 italic">No Task has been defined in this project yet</p>
-    <img  src="CollabFlow image.avif" />
+    <p className="text-gray-500 italic">No task assigned to you  in this project yet</p>
+    <img  src="CollabFlow image.avif"  className="w-50" />
     </>
   ) : (
-    <ul className="space-y-3 text-lg">
-      {/* {projectTasks.map((task) => ( */}
-      {tasks
-        .filter((t) => t.project === currentProject.id).map((task) => (
-        <ProjectItem
+     <ul className="space-y-3 text-lg">
+         {visibleProjectTasks.map((task) => (
+          <ProjectItem
             key={task.id}
             task={task}
             taskId={task.id}
             title={task.name}
             status={STATUS_LABELS[normalizeStatus(task.status)]}
             onDelete={(id) => deleteTask(id)}
-            editable={true}
-            onClick={() => setCurrentTask(task)}   
+            editable={canEditTask(task)}
+            onClick={() => setCurrentTask(task)}
+            onRequestDelete={handleRequestDelete}
           />
-      ))}
-    </ul>
+        ))}
+      </ul>
   )}
     {taskToDelete && (
       <Modal
