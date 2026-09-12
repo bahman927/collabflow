@@ -66,8 +66,8 @@ export const WorkspaceProvider = ({ children }: { children: React.ReactNode }) =
    * Fetch all workspaces
    */
   const fetchWorkspaces = useCallback(
-  async (preferredWorkspaceId?: number) => {
-    try {
+   async (preferredWorkspaceId?: number) => {
+     try {
       setLoading(true);
       setError(null);
 
@@ -88,9 +88,26 @@ export const WorkspaceProvider = ({ children }: { children: React.ReactNode }) =
         }
       }
 
-      if (!currentWorkspace && data.length > 0) {
-        setCurrentWorkspace(data[0]);
+      if (data.length > 0) {
+        if (preferredWorkspaceId) {
+          const invitedWorkspace = data.find(
+            workspace => workspace.id === preferredWorkspaceId
+          );
+
+          if (invitedWorkspace) {
+            setCurrentWorkspace(invitedWorkspace);
+            return;
+          }
+        }
+
+        if (!currentWorkspace) {
+          setCurrentWorkspace(data[0]);
+        }
       }
+
+      // if (!currentWorkspace && data.length > 0) {
+      //   setCurrentWorkspace(data[0]);
+      // }
 
     } catch (err: any) {
       console.error("WORKSPACES ERROR:", err);
@@ -240,15 +257,7 @@ export const WorkspaceProvider = ({ children }: { children: React.ReactNode }) =
 
       const loadMember = async () => {
         try {
-           console.log(
-            "loadMember currentWorkspace:",
-            currentWorkspace
-          );
-
-          console.log(
-            "loadMember workspace ID:",
-            currentWorkspace?.id
-          );
+         
 
           const { url, options } = workspaceService.getMembership(currentWorkspace.id);
           const member = await apiFetch<WorkspaceMember>(url, options);
@@ -256,7 +265,6 @@ export const WorkspaceProvider = ({ children }: { children: React.ReactNode }) =
 
           setCurrentWorkspaceMember(member);
         } catch (err) {
-          console.error("Failed to load workspace member", err);
           setCurrentWorkspaceMember(null);
         }
       };

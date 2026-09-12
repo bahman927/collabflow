@@ -33,6 +33,7 @@ export function MemberCard({
   const { user } = useAuth();
   const {members} = useMember()
   const currentMembership = members.find((m) => m.userId === user?.id.toString());
+  
 
   // -----------------------------
   // Build assignment rows
@@ -90,7 +91,12 @@ export function MemberCard({
       <div className="flex items-center gap-3">
         <AvatarChip
           name={member.displayName}
-          avatarUrl={member.avatarUrl}
+          // avatarUrl={member.avatarUrl}
+            avatarUrl={
+              member.email
+                ? `/${member.email.split("@")[0]}.JPG`
+                : null
+            }
           size="md"
           showName={false}
         />
@@ -137,7 +143,7 @@ export function MemberCard({
           {member.role}
         </span>
 
-        { canEdit && (
+        { canEdit && member.role?.toLowerCase() !== "owner" && (
           <button
             onClick={onEdit}
             className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
@@ -145,7 +151,6 @@ export function MemberCard({
             <Pencil className="w-4 h-4 text-gray-400" />
           </button>
         )}
-
         
       </div>
     </div>

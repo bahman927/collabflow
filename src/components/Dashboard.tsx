@@ -212,9 +212,11 @@ function RecentTaskRow({ task }: { task: Task }) {
   const dot = PRIORITY_DOT[(task as any).priority] ?? "bg-gray-300";
 
   const avatarMembers = task.assignees.map((a) => ({
-    name: a.name,
-    avatar: a.avatarUrl ?? undefined
-   }));
+      name: a.name,
+      avatar: a.email
+        ? `/${a.email.split("@")[0]}.JPG`
+        : undefined,
+    }));
 
 
   return (
@@ -352,6 +354,7 @@ const IconProjects = () => (
 
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
+  // console.log("dashboard - user :", user)
   const { currentWorkspace } = useWorkspace();
   const { getCurrentWorkspaceTasks,getWorkspaceTasks, fetchTasks, tasks, loading} = useTask();
   const { projects, setCurrentProject } = useProject();
@@ -391,7 +394,8 @@ const Dashboard: React.FC = () => {
     .slice(0, 7);
 
   const userName =
-    (user as any)?.name ??
+    // (user as any)?.name ??
+    (user as any)?.full_name ??
     (user as any)?.email?.split("@")[0] ??
     "";
 
@@ -401,9 +405,12 @@ const Dashboard: React.FC = () => {
     <div className="p-6 lg:p-8 bg-gray-50 min-h-screen space-y-6 ml-0">
       {/* ── Header ── */}
       <header>
-        <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">
-          {greeting()}
-          {userName ? `, ${userName.charAt(0).toUpperCase() + userName.slice(1)}` : ""} 👋
+        <h1 className="text-2xl lg:text-3xl font-bold text-green-900">
+          {greeting() + " "}
+          <span className="text-2xl  text-blue-600">
+          {/* {userName ? `, ${userName.charAt(0).toUpperCase() + userName.slice(1)}` : ""} 👋 */}
+          {userName ??  ""} 👋
+          </span>
         </h1>
         <p className="text-sm text-gray-500 mt-1">
           {currentWorkspace

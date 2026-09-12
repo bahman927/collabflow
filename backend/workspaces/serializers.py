@@ -37,7 +37,7 @@ def get_member_count(self, obj):
 class InviteMemberSerializer(serializers.Serializer):
     """Used when inviting a member with optional project/task assignments."""
     email = serializers.EmailField()
-    role = serializers.ChoiceField(choices=["owner","admin", "Member", "viewer"], default="Member")
+    role = serializers.ChoiceField(choices=["owner", "member", "viewer"], default="member")
     project_ids = serializers.ListField(
         child=serializers.IntegerField(), required=False, default=[]
     )
@@ -103,8 +103,17 @@ class InvitationListSerializer(serializers.ModelSerializer):
         fields = [
             'id',
             'email',
+            'workspace',
             'role',
-            'accepted',
+            'status',
+            'invited_by_name',
+            'created_at',
+            'token',
+        ]
+        read_only_fields = [
+            'id',
+            'workspace',
+            'status',
             'invited_by_name',
             'created_at',
             'token',

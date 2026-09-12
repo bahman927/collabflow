@@ -78,6 +78,7 @@ export function AvatarChip({
       className={`${sizeClasses.avatar} rounded-full flex items-center justify-center text-white font-medium ${getColorFromName(name)}`}
     >
       {getInitials(name)}
+      
     </div>
   );
 

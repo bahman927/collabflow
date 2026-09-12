@@ -16,22 +16,25 @@ import Home           from "../pages/Home";
 import {useAuth}      from "../hooks/useAuth"
 import WorkspacePage  from "../pages/workspace/WorkspacePage";
 import { MembersPage } from "../components/members/MemberPage";
+import { ProfilePage } from "../components/profile/ProfilePage";
 import ActivityPage   from    "../pages/ActivityPage"
 import AcceptInvitationPage   from    "../pages/invitations/AcceptInvitationPage"
+import ForgotPasswordPage from "../pages/ForgetPasswordPage";
+import ResetPasswordPage  from "../pages/ResetPasswordPage";
 
  export default function AppRoutes() {
   const {user} = useAuth()
   const isAuthenticated = !!user;
   return (
   <Routes>
-
+    <Route path="/invite/:token"       element={<AcceptInvitationPage />}/>
     <Route element={<AppLayout />}>
-      <Route path="/invite/:token"       element={<AcceptInvitationPage />}/>
-
-
+      
+       
        {/* Public routes */}
       <Route element={<PublicRoute isAuthenticated={isAuthenticated} />}>
         <Route path="/" element={<Landing />} />
+       
       </Route>
 
       {/* Protected routes */}
@@ -40,16 +43,15 @@ import AcceptInvitationPage   from    "../pages/invitations/AcceptInvitationPage
         <Route path="/dashboard"           element={<Dashboard />} />
 
         <Route path="/workspaces"          element={<WorkspacePage />} />
-        {/* <Route path="/workspaces/:workspaceId" element={<WorkspacePage />} /> */}
 
         <Route path="/projects"            element={<ProjectPage />} />
         <Route path="/workspace/:workspaceId/project/:projectId/board" element={<TaskBoard />} />
+        
 
         <Route path="/tasks"               element={<TaskPanel />} /> 
         <Route path="/members"             element={<MembersPage />} /> 
+        <Route path="/profile"             element={<ProfilePage />}/>
         <Route path="/activity"            element={<ActivityPage />} />
-        
-
       </Route>
 
     </Route>
@@ -58,9 +60,11 @@ import AcceptInvitationPage   from    "../pages/invitations/AcceptInvitationPage
     <Route element={<AuthLayout  />}>
         <Route path="/login"  element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/forgot-password"  element={<ForgotPasswordPage />} />
+        <Route path="/reset-password/:uid/:token" element={<ResetPasswordPage />} />
+        
     </Route>
-
-      
+  
       {/* ---------------------- */}
       {/* 404 fallback           */}
       {/* ---------------------- */}

@@ -97,7 +97,6 @@ export default function ProjectPage() {
 
  const visibleProjectTasks = projectTasks
 
-  // console.log('visibleProjectTasks :', visibleProjectTasks)
 
 const normalizeStatus = (s: string) =>
   s.toLowerCase() as TaskStatus;

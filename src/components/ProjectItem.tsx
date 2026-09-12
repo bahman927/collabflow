@@ -58,6 +58,10 @@ const ProjectItem: React.FC<ProjectItemProps> = ({
  const assignees = (task.assignees || []).filter(
   (a, i, arr) => arr.findIndex((x) => x.id === a.id) === i
 );
+
+// console.log("TASK ASSIGNEES:", task.assignees);
+// console.log("PROCESSED ASSIGNEES:", assignees);
+
   const visible = assignees.slice(0, MAX_VISIBLE);
   const remaining = assignees.length - MAX_VISIBLE;
 
@@ -102,7 +106,12 @@ const ProjectItem: React.FC<ProjectItemProps> = ({
               >
                 <AvatarChip
                   name={assignee.name}
-                  avatarUrl={assignee.avatarUrl}
+                  // avatarUrl={assignee.avatarUrl}
+                    avatarUrl={
+                      assignee.email
+                        ? `/${assignee.email.split("@")[0]}.JPG`
+                        : null
+                    }
                   size="sm"
                   showName={false}
                 />

@@ -15,7 +15,7 @@ import {
   AuthResponse,
 } from "../types/auth";
 
-import apiFetch      from "../api/apiFetch2" 
+import apiFetch      from "../api/ApiFetch2" 
 import {useNavigate} from 'react-router'
 import { LogOut } from "lucide-react";
 export interface ApiRequestInit extends RequestInit {
@@ -92,11 +92,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           refresh: tokenResult.refresh,
         });
 
+
         const me = await wrappedFetch<User>(`${BASE_URL}/api/users/me/`, {
           method: "GET",
           auth: true,
         });
 
+       
         setUser(me);
       } catch (err: any) {
         throw new Error(err.message);
@@ -129,10 +131,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     const loadUser = async () => {
       try {
+       console.log("AUTH: loading /me");
+       console.log("AUTH: tokens:", tokens);
+
         const me = await wrappedFetch<User>(BASE_URL + "/api/users/me/", {
           method: "GET",
           auth: true,
         });
+
+       console.log("AUTH: /me returned:", me);
         setUser(me);
       } catch {
         logout();

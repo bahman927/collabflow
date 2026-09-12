@@ -47,9 +47,7 @@ export const ProjectProvider = ({ children }: { children: React.ReactNode }) => 
     // Handle both paginated and flat responses
     const list: Project[] = Array.isArray(data) ? data : data.results ?? [];
 
-    console.log("fetchProjects API data:", data);
-    console.log("fetchProjects list:", list);
-    console.log("fetchProjects list.length:", list.length);
+    
 
     setProjects(list);
 

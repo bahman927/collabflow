@@ -27,8 +27,7 @@ export interface Tokens {
 export interface SignupData {
   email: string
   password: string
-  first_name: string
-  last_name: string
+ full_name: string
 }
  
 
@@ -67,6 +66,7 @@ export interface AuthContextType {
           user: User;
           tokens: Tokens;
          }>;
+  updateUser: (data: Partial<User>) => Promise<User>;
 
   signup: (
     data: SignupData

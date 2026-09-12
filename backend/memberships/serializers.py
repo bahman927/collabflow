@@ -92,7 +92,7 @@ class MemberSerializer(serializers.ModelSerializer):
 class InviteMemberSerializer(serializers.Serializer):
     email = serializers.EmailField()
     role = serializers.ChoiceField(
-        choices=['admin', 'member', 'viewer']
+        choices=['member', 'viewer']
     )
     message = serializers.CharField(
         required=False, allow_blank=True
@@ -118,7 +118,7 @@ class InviteMemberSerializer(serializers.Serializer):
 
 class UpdateMemberSerializer(serializers.Serializer):
     role = serializers.ChoiceField(
-        choices=['admin', 'member', 'viewer'],
+        choices=['member', 'viewer'],
         required=False,
     )
     isActive = serializers.BooleanField(

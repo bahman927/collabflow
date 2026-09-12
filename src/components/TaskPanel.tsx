@@ -102,7 +102,7 @@ export default function TaskPanel() {
               >
                 <div
                   className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white
-                    ${AVATAR_COLORS[i % AVATAR_COLORS.length]}
+                     ${AVATAR_COLORS[i % AVATAR_COLORS.length]}
                   `}
                 >
                   {getInitials(person.name)}

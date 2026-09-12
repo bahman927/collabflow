@@ -1,117 +1,153 @@
- 
 from rest_framework.routers import DefaultRouter
-from projects.views   import ProjectViewSet
+from rest_framework_nested.routers import NestedDefaultRouter
+
+from projects.views import ProjectViewSet
 from workspaces.views import WorkspaceViewSet
-from tasks.views      import TaskViewSet
+from tasks.views import TaskViewSet
 from activities.views import ActivityViewSet
 from memberships.views import MemberViewSet
 from invitations.views import InvitationViewSet
 
-from django.contrib import admin
 from django.urls import path, include
-from users.views import EmailTokenObtainPairView
-# from django.urls import get_resolver
-from rest_framework_simplejwt.views import (
-    TokenObtainPairView,
-    TokenRefreshView,
-)
 
- 
+
+# --------------------------------------------------
+# Main router
+# --------------------------------------------------
 
 router = DefaultRouter()
 
-router.register("projects", ProjectViewSet, basename="projects")
-router.register("workspaces", WorkspaceViewSet, basename="workspaces")
-router.register("tasks", TaskViewSet, basename="tasks")
-router.register("activities", ActivityViewSet, basename="activities")
-router.register("members", MemberViewSet, basename="members")
-router.register("invitations", InvitationViewSet, basename="invitations")
+router.register(
+    "projects",
+    ProjectViewSet,
+    basename="projects",
+)
+
+router.register(
+    "workspaces",
+    WorkspaceViewSet,
+    basename="workspaces",
+)
+
+router.register(
+    "tasks",
+    TaskViewSet,
+    basename="tasks",
+)
+
+router.register(
+    "activities",
+    ActivityViewSet,
+    basename="activities",
+)
+
+router.register(
+    "invitations",
+    InvitationViewSet,
+    basename="invitations",
+)
+
+
+# --------------------------------------------------
+# Nested router for workspaces
+# --------------------------------------------------
+
+workspace_router = NestedDefaultRouter(
+    router,
+    "workspaces",
+    lookup="workspace",
+)
+
+# workspace_router.register(
+#     "members",
+#     MemberViewSet,
+#     basename="workspace-members",
+# )
+
+
+# --------------------------------------------------
+# Nested router for workspace invitations
+# --------------------------------------------------
+
+workspace_router.register(
+    "invitations",
+    InvitationViewSet,
+    basename="workspace-invitations",
+)
+
+
+# --------------------------------------------------
+# URLs
+# --------------------------------------------------
 
 urlpatterns = [
-    path("", include(router.urls)),
-     # Custom activity endpoints
-    path("", include("activities.urls")),
-]
+    path(
+        "",
+        include(router.urls),
+    ),
 
- 
-# for url in get_resolver().url_patterns:
-#         print(url.pattern)
+    path(
+        "",
+        include(workspace_router.urls),
+    ),
 
- 
+    path(
+        "",
+        include("activities.urls"),
+    ),
 
-    
-
-
- 
-
-# Final API structure result from above urlpatterns are:
-# /api/projects/
-# /api/workspaces/
-# /api/tasks/
-# /api/activities/
-
- 
-# Why JWT Should NOT Be In Router
-
-# Routers are for:
-
-   # CRUD operations
-
-   # ModelViewSet
-
-   # ReadOnlyModelViewSet
-
-# JWT is:
-
-    # Authentication endpoint
-
-    # Not tied to a model
-
-    # Not CRUD
-
-    # No queryset
-
-# So it does not belong to router.
-
-# 🧠 Mental Model
-
-# Router	          path()
-#----------------------------------
-# ViewSets      	APIViews
-# CRUD models   	Auth / custom logic
-# Resources 	    Actions
+    path(
+        "auth/",
+        include("users.urls"),
+    ),
+] 
 
 
 
 
+# from rest_framework.routers import DefaultRouter
+# from rest_framework_nested.routers import NestedDefaultRouter
 
-
-
-
-
-
-
-
-
-
-
+# from projects.views   import ProjectViewSet
+# from workspaces.views import WorkspaceViewSet
+# from tasks.views      import TaskViewSet
+# from activities.views import ActivityViewSet
+# from memberships.views import MemberViewSet
+# from invitations.views import InvitationViewSet
 
 # from django.contrib import admin
 # from django.urls import path, include
-# from .views import api_root
 
+# from users.views import EmailTokenObtainPairView
 # from rest_framework_simplejwt.views import (
 #     TokenObtainPairView,
 #     TokenRefreshView,
 # )
 
-# urlpatterns = [
-#     path("admin/", admin.site.urls),
-#     path("", api_root),
-#     path("api/users/", include("users.urls")),
-#     path("api/projects/", include("projects.urls")),
-#     path("api/tasks/", include("tasks.urls")),
+ 
 
-#     path("api/token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
-#     path("api/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
+# router = DefaultRouter()
+
+# router.register("projects", ProjectViewSet, basename="projects")
+# router.register("workspaces", WorkspaceViewSet, basename="workspaces")
+# router.register("tasks", TaskViewSet, basename="tasks")
+# router.register("activities", ActivityViewSet, basename="activities")
+# router.register("members", MemberViewSet, basename="members")
+# router.register("invitations", InvitationViewSet, basename="invitations")
+
+# # --------------------------------------------------
+# # Nested router for workspace invitations
+# # --------------------------------------------------
+# router.register(
+#     r"workspaces/(?P<workspace_id>\d+)/invitations",
+#     InvitationViewSet,
+#     basename="workspace-invitations"
+# )
+
+# urlpatterns = [
+#     path("", include(router.urls)),
+#     path("", include("activities.urls")),
+#     path("auth/", include("users.urls")),
 # ]
+
+ 

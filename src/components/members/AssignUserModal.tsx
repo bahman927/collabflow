@@ -5,7 +5,7 @@ import { useAuth }             from '../../hooks/useAuth';
 import { useWorkspace }        from '../../context/WorkspaceProvider';
 import { projectService }      from '../../services/projectService';
 // import { taskService }         from '../../services/taskService';
-import   apiFetch              from '../../api/apiFetch2';
+import   apiFetch              from '../../api/ApiFetch2';
 import {useTask}               from "../../context/TaskProvider"
 // import { useWorkspaceRefresh } from "../../hooks/useWorkspaceRefresh";
 import { useActivity }       from "../../context/ActivityProvider"

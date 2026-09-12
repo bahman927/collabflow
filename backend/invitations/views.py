@@ -18,9 +18,34 @@ from workspaces.models import Workspace, WorkspaceMember
 from activities.utils import log_activity
 from django.conf import settings
 
+# print("🔥 INVITATION SERIALIZER:", InvitationSerializer)
+# print("🔥 SERIALIZER FIELDS:", InvitationSerializer().fields.keys())
+
 class InvitationViewSet(viewsets.ViewSet):
 
+  
+  def list(self, request, workspace_id=None):
 
+        # print("🔥 INVITATION LIST CALLED")
+        # print("WORKSPACE ID:", workspace_id)
+        # print("REQUEST USER:", request.user)
+
+        invitations = Invitation.objects.filter(
+            workspace_id=workspace_id,
+            invited_by=request.user
+        )
+
+        # print("INVITATIONS QUERYSET:", invitations)
+
+        serializer = InvitationSerializer(
+            invitations,
+            many=True
+        )
+
+        # print("RESPONSE INVITATIONS:", serializer.data)
+
+        return Response(serializer.data)
+  
     # -----------------------------------
     # Owner sends invitation
     # -----------------------------------
@@ -91,9 +116,11 @@ class InvitationViewSet(viewsets.ViewSet):
             status=status.HTTP_400_BAD_REQUEST
         )
 
-    # ----------------------------------
-    # 5. Create token
-    # ----------------------------------
+    ## --------------------------------------
+    #    Resend invitation
+    #  --------------------------------------    
+
+
 
     token = secrets.token_hex(32)
 
@@ -102,11 +129,11 @@ class InvitationViewSet(viewsets.ViewSet):
     # ----------------------------------
 
     invitation = Invitation.objects.create(
-        email=email,
-        workspace=workspace,
-        invited_by=request.user,
-        token=token,
-        status="pending",
+    email=email,
+    workspace=workspace,
+    invited_by=request.user,
+    token=token,
+    status="pending",
     )
 
     # ----------------------------------
@@ -120,9 +147,9 @@ class InvitationViewSet(viewsets.ViewSet):
     # ----------------------------------
 
     log_activity(
-        workspace,
-        request.user,
-        f"Sent invitation to {email}"
+    workspace,
+    request.user,
+    f"Sent invitation to {email}"
     )
 
     # ----------------------------------
@@ -134,7 +161,26 @@ class InvitationViewSet(viewsets.ViewSet):
         status=status.HTTP_201_CREATED
     )
 
+  @action(detail=True, methods=["post"], url_path="resend")
+  def resend(self, request, pk=None):
 
+        invitation = get_object_or_404(
+            Invitation,
+            pk=pk
+        )
+
+        if invitation.status != "pending":
+            return Response(
+                {"error": "Only pending invitations can be resent."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        send_invitation_email(invitation)
+
+        return Response(
+            {"message": "Invitation resent successfully."},
+            status=status.HTTP_200_OK
+        )
 
     # -----------------------------------
     # Validate invitation token
@@ -147,7 +193,7 @@ class InvitationViewSet(viewsets.ViewSet):
         url_path=r"validate/(?P<token>[^/.]+)"
     )
   def validate(self, request, token):
-        print("VALIDATION TOKEN RECEIVED:", token)
+        # print("VALIDATION TOKEN RECEIVED:", token)
 
         try:
             invitation = Invitation.objects.get(
@@ -156,7 +202,7 @@ class InvitationViewSet(viewsets.ViewSet):
 
         except Invitation.DoesNotExist:
 
-            print("NO INVITATION FOUND FOR TOKEN:", token)
+            # print("NO INVITATION FOUND FOR TOKEN:", token)
 
             return Response(
                 {
@@ -165,9 +211,9 @@ class InvitationViewSet(viewsets.ViewSet):
                 status=status.HTTP_404_NOT_FOUND
             )
 
-        print("INVITATION FOUND:", invitation.id)
-        print("INVITATION TOKEN:", invitation.token)
-        print("INVITATION STATUS:", invitation.status)
+        # print("INVITATION FOUND:", invitation.id)
+        # print("INVITATION TOKEN:", invitation.token)
+        # print("INVITATION STATUS:", invitation.status)
 
 
         if invitation.status != "pending":
@@ -304,7 +350,7 @@ class InvitationViewSet(viewsets.ViewSet):
                 }
             )
         )
-        print("Membership:", membership, created)
+        # print("Membership:", membership, created)
 
         invitation.status = "accepted"
 
@@ -443,181 +489,32 @@ class InvitationViewSet(viewsets.ViewSet):
     # Owner views sent invitations
     # -----------------------------------
 
-  def list(self, request):
 
-        invitations = Invitation.objects.filter(
-            invited_by=request.user
-        )
+#   def list(self, request):
 
-
-        serializer = InvitationSerializer(
-            invitations,
-            many=True
-        )
-
-
-        return Response(
-            serializer.data
-        )
-
-
-
-
-# # invitations/views.py
-# import secrets
-# from rest_framework import status, viewsets
-# from rest_framework.response import Response
-# from django.core.mail import send_mail
-# from invitations.models import Invitation
-# from .serializers import InvitationSerializer
-# from workspaces.models import Workspace, WorkspaceMember
-# from activities.utils import log_activity
-# from django.contrib.auth import get_user_model
-
-# from rest_framework.decorators import action
-# User = get_user_model()
-
-# class InvitationViewSet(viewsets.ViewSet):
-
-#     def send_invite(self, request):
-#         email = request.data["email"]
-#         workspace_id = request.data["workspace_id"]
-#         workspace = Workspace.objects.get(id=workspace_id)
-
-#         token = secrets.token_hex(32)
-
-#         invitation = Invitation.objects.create(
-#             email=email,
-#             workspace=workspace,
-#             invited_by=request.user,
-#             token=token
-#         )
-
-#         # Send email
-#         invite_link = f"https://collabflow.com/invite/{token}"
-#         send_mail(
-#             subject="Invitation to Join CollabFlow Workspace",
-#             message=f"You have been invited to join {workspace.name}. Click to accept: {invite_link}",
-#             from_email="no-reply@collabflow.com",
-#             recipient_list=[email],
-#         )
-
-#         log_activity(
-#             workspace,
-#             request.user,
-#             f"Sent invitation to {email}"
-#         )
-
-#         return Response(InvitationSerializer(invitation).data, status=status.HTTP_201_CREATED)
-    
-    
-   
-
-
-# class InvitationViewSet(viewsets.ViewSet):
-
-#     @action(
-#         detail=False,
-#         methods=["post"],
-#         url_path="accept"
-#     )
-#     def accept(self, request):
-
-#         token = request.data.get("token")
-
-#         invitation = Invitation.objects.get(
-#             token=token
-#         )
-
-#         if invitation.status != "pending":
-#             return Response(
-#                 {"error": "Invitation already processed"},
-#                 status=400
-#             )
-        
-#         user, created = User.objects.get_or_create(
-#             email=invitation.email,
-#             defaults={
-#                 "first_name": "",
-#                 "last_name": "",
-#             }
-#         )
-
-#         membership, created = WorkspaceMember.objects.get_or_create(
-#             workspace=invitation.workspace,
-#             user=user,
-#             defaults={
-#                 "role": invitation.role
-#             }
-#         )
-
-#         invitation.status = "accepted"
-#         invitation.save()
-
-#         return Response({
-#             "message": "Invitation accepted",
-#             "workspace": {
-#                 "id": invitation.workspace.id,
-#                 "name": invitation.workspace.name,
-#                 "created_at": invitation.workspace.created_at,
-#                 "currentUserRole": membership.role
-#             }
-#         })
-    
-#     @action(
-#         detail=False,
-#         methods=["post"],
-#         url_path="deny"
-#     )
-
-#     def deny(self, request):
-
-#         token = request.data.get("token")
-
-#         if not token:
-#             return Response(
-#                 {"error": "Token is required"},
-#                 status=status.HTTP_400_BAD_REQUEST
-#             )
-
-#         try:
-#             invitation = Invitation.objects.get(
-#                 token=token
-#             )
-#         except Invitation.DoesNotExist:
-#             return Response(
-#                 {"error": "Invalid invitation"},
-#                 status=status.HTTP_404_NOT_FOUND
-#             )
-
-#         if invitation.status != "pending":
-#             return Response(
-#                 {"error": "Invitation already processed"},
-#                 status=status.HTTP_400_BAD_REQUEST
-#             )
-
-#         invitation.status = "denied"
-#         invitation.save()
-
-#         log_activity(
-#             invitation.workspace,
-#             None,
-#             f"{invitation.email} denied the invitation"
-#         )
-
-#         return Response({
-#             "message": "Invitation denied"
-#         })
-
-     
-#     def list(self, request):
 #         invitations = Invitation.objects.filter(
 #             invited_by=request.user
 #         )
+#         print("INVITATIONS QUERYSET:", invitations)
+
+#         for invitation in invitations:
+#             print(
+#                 "INVITATION:",
+#                 invitation.id,
+#                 invitation.email,
+#                 invitation.status
+#             )
 
 #         serializer = InvitationSerializer(
 #             invitations,
 #             many=True
 #         )
 
-#         return Response(serializer.data)
+#         print("response invitations : ", serializer.data)
+#         return Response(
+#             serializer.data
+#         )
+
+
+
+ 

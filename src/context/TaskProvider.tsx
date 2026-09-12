@@ -472,7 +472,7 @@ useEffect(() => {
 
  useEffect(() => {
   if (currentWorkspace?.id) {
-    console.log("Calling fetchTasks with", currentWorkspace.id);
+    // console.log("Calling fetchTasks with", currentWorkspace.id);
     fetchTasks();
   }
 }, [currentWorkspace, fetchTasks]);
@@ -482,15 +482,15 @@ useEffect(() => {
   // Reset on logout
   // -----------------------------
   useEffect(() => {
- console.log(
-    "TASK PROVIDER isAuthenticated changed:",
-    isAuthenticated
-  );
+//  console.log(
+//     "TASK PROVIDER isAuthenticated changed:",
+//     isAuthenticated
+//   );
 
     if (!isAuthenticated) {
-      console.log(
-      "⚠️ CLEARING TASKS BECAUSE isAuthenticated IS FALSE"
-    );
+    //   console.log(
+    //   "⚠️ CLEARING TASKS BECAUSE isAuthenticated IS FALSE"
+    // );
       setTasks([]);
       setCurrentTask(null);
       setError(null);

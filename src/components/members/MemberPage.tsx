@@ -59,7 +59,6 @@ const workspaceMembers = members.map((m) => ({
   const [showAddModal, setShowAddModal]   = useState(false);
   const [showInviteModal, setShowInviteModal]   = useState(false);
   const [editingMember, setEditingMember] = useState<Member | null>(null);
-  // const userRole = currentWorkspace?.currentUserRole;
 
 const handleSelectMember = (member: Member) => {
   setEmail(member.email);
@@ -80,6 +79,7 @@ useEffect(() => {
 
   // Find current user's membership to get their role
  const currentMembership = members.find((m) => m.userId === user?.id.toString());
+ 
 
  const isOwner = currentMembership?.role?.toLowerCase() === "owner";
 
@@ -91,9 +91,7 @@ useEffect(() => {
     invitation.workspace === currentWorkspace?.id &&
     (invitation.status ?? "").toLowerCase() === "pending"
 );
-
  
-
   return (
     <div className="max-w-4xl mx-auto px-6 py-8">
       {/* Header */}
@@ -122,7 +120,7 @@ useEffect(() => {
               onClick={() => setShowInviteModal(true)}
               className="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors"
             >
-              + Invite Member
+              + Invite User
             </button>
 
           </div>

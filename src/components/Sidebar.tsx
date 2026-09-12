@@ -1,10 +1,9 @@
- import { NavLink } from "react-router-dom";
+ import { Navigate, NavLink, useNavigate } from "react-router-dom";
  import { useState } from "react";
  import { useAuth } from "../context/AuthProvider2";
  import {useWorkspace} from "../context/WorkspaceProvider";
  import { UserCircle } from "lucide-react";
  import { useTheme } from "../context/ThemeProvider";
-
 
 import {
   Home,
@@ -29,13 +28,13 @@ export default function Sidebar({
   const [imageError, setImageError] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const { role } = useWorkspace();
-  // const { theme, setTheme } = useTheme();
-
-  const capName =
-    user?.email
-      ? user.email.charAt(0).toUpperCase() +
-        user.email.slice(1)
-      : "User";
+  const { theme, setTheme } = useTheme();
+  const navigate = useNavigate();
+  // console.log(" sidebar - user :", user)
+  const capName = user?.email
+                  ? user.email.charAt(0).toUpperCase() +
+                    user.email.slice(1)
+                  : "User";
 
   const navItems: Array<{
     label: string;
@@ -44,7 +43,7 @@ export default function Sidebar({
     iconColor: string;
     onClick?: () => void;
     showFor?: ("Owner" | "Member" | "Viewer")[];
-  }> = [
+   }> = [
     {
       label: "Dashboard",
       path: "/dashboard",
@@ -96,9 +95,7 @@ export default function Sidebar({
        </p>
       <nav className="flex-1 px-3 py-6 space-y-1">
      
-        {navItems
-          .filter(
-            item =>
+        {navItems.filter( item =>
               !item.showFor ||
               (userRole && item.showFor.includes(userRole))
           )
@@ -251,8 +248,7 @@ export default function Sidebar({
             <button
               onClick={() => {
                 setShowUserMenu(false);
-
-                // Navigate to profile later
+                navigate("/profile")
               }}
               className="
                 w-full
@@ -269,7 +265,7 @@ export default function Sidebar({
 
             {/* THEME */}
 
-            {/* <button
+            <button
               onClick={() => {
                 setShowUserMenu(false);
                 setTheme(theme === "dark" ? "light" : "dark");
@@ -284,7 +280,7 @@ export default function Sidebar({
               "
             >
                Theme: {theme}
-            </button> */}
+            </button>
 
 
             {/* LOGOUT */}

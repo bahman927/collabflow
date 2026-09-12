@@ -83,23 +83,45 @@ export function createMemberService(
     );
   }
 
+
+
   async function update(
-    workspaceId: number,
-    memberId: number,
-    data: Partial<Member>
-  ): Promise<Member> {
-    return apiFetch<Member>(
-      `${BASE_URL}/api/workspaces/${workspaceId}/${memberId}/`,
-      {
-        method: "PATCH",
-        auth: true,
-        body: JSON.stringify(data),
-      },
-      getTokens,
-      setTokens,
-      logout
-    );
-  }
+  workspaceId: number,
+  memberId: number,
+  data: Partial<Member>
+): Promise<Member> {
+  return apiFetch<Member>(
+    `${BASE_URL}/api/workspaces/${workspaceId}/members/${memberId}/`,
+    {
+      method: "PATCH",
+      auth: true,
+      body: JSON.stringify(data),
+    },
+    getTokens,
+    setTokens,
+    logout
+  );
+}
+
+// async function update(
+//   workspaceId: number,
+//   memberId: number,
+//   data: Partial<Member>
+// ): Promise<Member> {
+//   return apiFetch<Member>(
+//     `${BASE_URL}/api/members/${memberId}/`,
+//     {
+//       method: "PATCH",
+//       auth: true,
+//       body: JSON.stringify(data),
+//     },
+//     getTokens,
+//     setTokens,
+//     logout
+//   );
+// }
+
+
 
  
 

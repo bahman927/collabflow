@@ -23,9 +23,12 @@ from rest_framework.viewsets import ModelViewSet
 from .permissions import IsWorkspaceOwner
 from workspaces.activity.logger import ActivityLogger
 from .models import Workspace, WorkspaceMember
+from users.models   import User
 from invitations.services import send_invitation_email
+from memberships.serializers import UpdateMemberSerializer
 from .serializers import (
     WorkspaceSerializer,
+    WorkspaceMemberSerializer,
     InviteMemberSerializer,
     InvitationListSerializer,
 )
@@ -90,54 +93,97 @@ class WorkspaceViewSet(ModelViewSet):
     
 
 
-    @action(detail=True, methods=['post'])
+    @action(detail=True, methods=["post"])
     def invite(self, request, pk=None):
         workspace = self.get_object()
-        email = request.data.get("email")
 
+        email = request.data.get("email", "").strip().lower()
+        role = request.data.get("role", "").strip().lower()
+
+        # 1. Validate email
         if not email:
-            return Response({"error": "Email is required"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "Email is required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
-        # 1️⃣ Create token
+        if "@" not in email:
+            return Response(
+                {"error": "Invalid email"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # 2. Validate role
+        if role not in ["member", "viewer"]:
+            return Response(
+                {"error": "Role must be either member or viewer."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # 3. Do not allow an existing CollabFlow user to be invited
+        if User.objects.filter(email__iexact=email).exists():
+            return Response(
+                {
+                    "error": (
+                        "This email already belongs to a CollabFlow account."
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # 4. Do not allow another pending invitation
+        pending_invitation = Invitation.objects.filter(
+            workspace=workspace,
+            email__iexact=email,
+            status="pending",
+        ).exists()
+
+        if pending_invitation:
+            return Response(
+                {
+                    "error": (
+                        "A pending invitation already exists "
+                        "for this email."
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # 5. Create invitation
         token = get_random_string(32)
 
-        # 2️⃣ Create invitation record
         invitation = Invitation.objects.create(
             email=email,
             workspace=workspace,
             invited_by=request.user,
             token=token,
             status="pending",
+            role=role,
         )
+
+        # 6. Send invitation email
         send_invitation_email(invitation)
 
-        # 3️⃣ Build acceptance URL
+        # 7. Build acceptance URL
         accept_url = f"http://localhost:5173/invite/{token}"
         print("accept_url =", accept_url)
 
-        # 4️⃣ Send email
-        send_mail(
-            subject="You have been invited to join a workspace",
-            message=f"You have been invited to join {workspace.name}. Click here to accept: {accept_url}",
-            from_email="no-reply@collabflow.com",
-            recipient_list=[email],
-            fail_silently=False,
-        )
-
-        from workspaces.activity.logger import ActivityLogger
-
+        # 8. Log activity
         ActivityLogger.member_invited(
             request.user,
             workspace,
-            email
+            email,
         )
-        
 
-        # 6️⃣ Return success
+        # 9. Return response
         return Response(
-            {"message": "Invitation sent", "token": token},
-            status=status.HTTP_200_OK
-        )  
+            {
+                "message": "Invitation sent",
+                "token": token,
+                "role": role,
+            },
+            status=status.HTTP_200_OK,
+        )
 
 
     @action(
@@ -149,20 +195,21 @@ class WorkspaceViewSet(ModelViewSet):
 
         workspace = self.get_object()
 
+
+        # print("🔥 WORKSPACE:", workspace.id, workspace.name)
+
         invitations = Invitation.objects.filter(
             workspace=workspace,
             status="pending"
         )
+ 
 
-        serializer = InvitationSerializer(
+        serializer = InvitationListSerializer(
             invitations,
             many=True
         )
 
         
-        # print("SERIALIZER:", serializer)
-        # print("DATA:", serializer.data)
-
         return Response(serializer.data)
 
     @action(
@@ -184,90 +231,14 @@ class WorkspaceViewSet(ModelViewSet):
 
         return Response(serializer.data)    
 
-    # @action(
-    # detail=True,
-    # methods=["get"]
-    # )
-    # def members(self, request, pk=None):
-
-    #     workspace = self.get_object()
-
-    #     current_member = WorkspaceMember.objects.filter(
-    #         workspace=workspace,
-    #         user=request.user
-    #     ).first()
-
-    #     if not current_member:
-    #         return Response(
-    #             {"error": "You are not a member of this workspace."},
-    #             status=status.HTTP_403_FORBIDDEN
-    #         )
-
-    #     # Owner sees everyone
-    #     if current_member.role.lower() == "owner":
-
-    #         members = WorkspaceMember.objects.filter(
-    #             workspace=workspace
-    #         )
-
-    #     else:
-
-    #         # IDs of members assigned to tasks
-    #         # that the logged-in user is also assigned to.
-    #         related_member_ids = Task.objects.filter(
-    #             workspace=workspace,
-    #             assignees__member=current_member
-    #         ).values_list(
-    #             "assignees__member_id",
-    #             flat=True
-    #         )
-
-    #         members = WorkspaceMember.objects.filter(
-    #             workspace=workspace,
-    #             id__in=related_member_ids
-    #         )
-
-    #         # Always include the logged-in user.
-    #         members = members | WorkspaceMember.objects.filter(
-    #             id=current_member.id
-    #         )
-
-    #     members = members.select_related("user").distinct()
-
-    #     serializer = MemberSerializer(
-    #         members,
-    #         many=True
-    #     )
-
-    #     return Response(serializer.data)
     
 
-    # @action(
-    #     detail=True,
-    #     methods=["get"]
-    # )
-    # def members(self, request, pk=None):
-
-    #     workspace = self.get_object()
-
-    #     members = WorkspaceMember.objects.filter(
-    #         workspace=workspace
-    #     )
-
-    #     serializer = MemberSerializer(
-    #         members,
-    #         many=True
-    #     )
-
-    #     return Response(serializer.data)
-   
-
     @action(
-        detail=True,
-        methods=["delete"],
-        url_path=r"members/(?P<member_id>[^/.]+)"
+    detail=True,
+    methods=["patch", "delete"],
+    url_path=r"members/(?P<member_id>[^/.]+)"
     )
-    def remove_member(self, request, pk=None, member_id=None):
+    def member_detail(self, request, pk=None, member_id=None):
 
         workspace = self.get_object()
 
@@ -276,18 +247,89 @@ class WorkspaceViewSet(ModelViewSet):
             id=member_id,
             workspace=workspace,
         )
-        removed_user = member.user   # save before delete
 
-        ActivityLogger.member_removed(
-            actor=request.user,
-            workspace=workspace,
-            removed_user=removed_user
-        )
+        # -------------------------
+        # PATCH — update member
+        # -------------------------
 
-        member.delete()
+        if request.method == "PATCH":
 
-        return Response(status=status.HTTP_204_NO_CONTENT)
-    
+            if member.role == "owner":
+                return Response(
+                    {"error": "Cannot modify workspace owner"},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+
+            serializer = UpdateMemberSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+
+            # Remember the values before changing them
+            old_role = member.role
+            old_status = member.is_active
+
+            # Apply the requested changes
+            if "role" in serializer.validated_data:
+                member.role = serializer.validated_data["role"]
+
+            if "isActive" in serializer.validated_data:
+                member.is_active = serializer.validated_data["isActive"]
+
+            member.save()
+
+            # ---------------------------------
+            # Log role change
+            # ---------------------------------
+            if old_role != member.role:
+                ActivityLogger.member_role_changed(
+                    actor=request.user,
+                    workspace=workspace,
+                    target_user=member.user,
+                    old_role=old_role,
+                    new_role=member.role,
+                )
+
+            # ---------------------------------
+            # Log status change
+            # ---------------------------------
+            if old_status != member.is_active:
+                ActivityLogger.member_status_changed(
+                    actor=request.user,
+                    workspace=workspace,
+                    target_user=member.user,
+                    new_status=member.is_active,
+                )
+
+            return Response(
+                MemberSerializer(member).data,
+                status=status.HTTP_200_OK,
+    )
+
+ 
+        # -------------------------
+        # DELETE — remove member
+        # -------------------------
+        if request.method == "DELETE":
+
+            if member.role == "owner":
+                return Response(
+                    {"error": "Cannot remove workspace owner"},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+
+            removed_user = member.user
+
+            ActivityLogger.member_removed(
+                actor=request.user,
+                workspace=workspace,
+                removed_user=removed_user,
+            )
+
+            member.delete()
+
+            return Response(
+                status=status.HTTP_204_NO_CONTENT
+            )
+        
     @action(
     detail=True,
     methods=["get"],
@@ -309,124 +351,45 @@ class WorkspaceViewSet(ModelViewSet):
    
 
 class WorkspaceMemberViewSet(viewsets.ModelViewSet):
+    serializer_class = WorkspaceMemberSerializer
 
-
-#   @action(detail=False, methods=["get"])
-#   def list_members(self, request, workspace_id=None):
-#     print(' **** you have reached WorkspaceMemberViewSet')
-#     workspace = get_object_or_404(
-#         Workspace,
-#         id=workspace_id
-#     )
-
-#     # Find the logged-in user's membership
-#     current_member = WorkspaceMember.objects.filter(
-#         workspace=workspace,
-#         user=request.user
-#     ).first()
-
-#     if not current_member:
-#         return Response(
-#             {"error": "You are not a member of this workspace."},
-#             status=status.HTTP_403_FORBIDDEN
-#         )
-
-#     # ------------------------------------------------
-#     # OWNER
-#     # ------------------------------------------------
-#     # Owner can see every member in the workspace.
-#     # ------------------------------------------------
-
-#     if current_member.role.lower() == "owner":
-
-#         members = WorkspaceMember.objects.filter(
-#             workspace=workspace
-#         ).select_related("user")
-
-#     # ------------------------------------------------
-#     # MEMBER / VIEWER
-#     # ------------------------------------------------
-#     # Show:
-#     #   1. The logged-in user
-#     #   2. Other members assigned to the same tasks
-#     #      as the logged-in user
-#     # ------------------------------------------------
-
-#     else:
-
-#         # Find tasks assigned to the logged-in member
-#         user_task_ids = Task.objects.filter(
-#             workspace=workspace,
-#             assignees__member=current_member
-#         ).values_list(
-#             "id",
-#             flat=True
-#         )
-
-#         # Find members assigned to those tasks
-#         related_member_ids = Task.objects.filter(
-#             id__in=user_task_ids
-#         ).values_list(
-#             "assignees__member_id",
-#             flat=True
-#         )
-
-#         # Include the logged-in member as well
-#         related_member_ids = list(related_member_ids)
-
-#         if current_member.id not in related_member_ids:
-#             related_member_ids.append(current_member.id)
-
-#         members = WorkspaceMember.objects.filter(
-#             workspace=workspace,
-#             id__in=related_member_ids
-#         ).select_related("user")
-
-#     # ------------------------------------------------
-#     # Serialize
-#     # ------------------------------------------------
-
-#     serializer = WorkspaceMemberDetailSerializer(
-#         members.distinct(),
-#         many=True
-#     )
-
-#     return Response(serializer.data)
-
-
-    
-  @action(detail=False, methods=['get'])
-  def list_members(self, request, workspace_id=None):
-
+    @action(detail=False, methods=["get"])
+    def list_members(self, request, workspace_id=None):
 
         members = WorkspaceMember.objects.filter(
             workspace_id=workspace_id
-        ).select_related('user')
-     
-        serializer = WorkspaceMemberDetailSerializer(members, many=True)
+        ).select_related("user")
+
+        serializer = WorkspaceMemberDetailSerializer(
+            members,
+            many=True
+        )
+
         return Response(serializer.data)
-    
-    
-  def destroy(self, request, workspace_id=None, pk=None):
+
+    def destroy(self, request, workspace_id=None, pk=None):
         member = self.get_object()
 
-        if member.role == 'owner':
+        if member.role == "owner":
             return Response(
-                {'error': 'Cannot remove workspace owner'},
+                {"error": "Cannot remove workspace owner"},
                 status=status.HTTP_403_FORBIDDEN,
             )
+
         actor = request.user
         removed_user = member.user
         workspace = member.workspace
-        # Delete the member
+
         member.delete()
-            
-        # Log activity
-        ActivityLogger.member_removed(actor, workspace, removed_user)
-        
+
+        ActivityLogger.member_removed(
+            actor,
+            workspace,
+            removed_user
+        )
+
         return Response(status=status.HTTP_204_NO_CONTENT)
-
-
+    
 
 class InvitationViewSet(viewsets.ModelViewSet):
     serializer_class = InvitationSerializer

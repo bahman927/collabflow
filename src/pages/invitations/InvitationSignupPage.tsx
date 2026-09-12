@@ -2,8 +2,6 @@
 
 import { useState, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { User, Mail, Lock, Users } from "lucide-react";
-import {invitationService} from "../../services/invitationService";
 import  {useAuth }         from  "../../hooks/useAuth"
 import { ApiError } from "../../api/apiError";
 import {useWorkspace}      from  "../../hooks/useWorkspace"
@@ -23,11 +21,11 @@ const InvitationSignupPage = ({onSignupSuccess,}: InvitationSignupPageProps) => 
   const [confirmPassword, setConfirmPassword] = useState("");
   const navigate = useNavigate();
   const {setCurrentWorkspace} = useWorkspace()
-  const { apiFetch, user, login, logout } = useAuth();
+  // const { apiFetch, user, login, logout } = useAuth();
   const [email, setEmail] = useState("");
   const [first_name, setFirstName] = useState("");
   const [last_name, setLastName] = useState("");
-  const { signup, setTokens } = useAuth();
+  const { signup, setTokens, user } = useAuth();
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
 
@@ -58,12 +56,17 @@ const handleSignup = async () => {
     // 2. Register the new user
     // -----------------------------------------
 
-    const result = await signup({
-      email,
-      password,
-      first_name,
-      last_name,
-    });
+    const full_name = `${first_name} ${last_name}`.trim();
+
+      console.log("FIRST NAME:", first_name);
+      console.log("LAST NAME:", last_name);
+      console.log("FULL NAME BEING SENT:", full_name);
+
+      const result = await signup({
+        email,
+        password,
+        full_name,
+      });
     
     console.log("SIGNUP SUCCESS:", result);
 
@@ -94,7 +97,7 @@ const handleSignup = async () => {
     // 4. Invitation accepted
     // -----------------------------------------
 
-    navigate("/members");
+    // navigate("/members");
 
   } catch (err) {
 

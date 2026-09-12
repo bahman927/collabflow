@@ -22,9 +22,9 @@ export default function AppLayout() {
     contextualSidebar = <WorkspaceSidebar />;
   } else if (pathname.startsWith("/projects")) {
     contextualSidebar = <ProjectSidebar />;
-  } else if (pathname.startsWith("/tasks")) {
-    contextualSidebar = <TaskSidebar />;
-  }
+    } else if (pathname.startsWith("/tasks")) {
+      contextualSidebar = <TaskSidebar />;
+    }
 
   const handleAssignProjectClick = () => {
   };

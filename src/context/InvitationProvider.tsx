@@ -12,7 +12,10 @@ interface Invitation {
 interface InvitationContextType {
   invitations: Invitation[];
 
-  sendInvite: (email: string, workspaceId: number) => Promise<any>;
+  sendInvite: (email: string,
+               workspaceId: number,
+               role: MemberRole
+              ) => Promise<any>;
   fetchInvitations: (workspaceId: number) => Promise<void>;
   resendInvitation: (invitationId: number) => Promise<void>;
   cancelInvitation: (invitationId: number) => Promise<void>;
@@ -20,6 +23,8 @@ interface InvitationContextType {
   acceptInvite: (token: string) => Promise<void>;
   denyInvite: (token: string) => Promise<void>;
 }
+
+type MemberRole = "member" | "viewer";
 
 const BASE_URL = "http://localhost:8000/api";
 
@@ -38,7 +43,8 @@ export const InvitationProvider = ({ children }: { children: ReactNode }) => {
 
   const sendInvite = async (
     email: string,
-    workspaceId: number
+    workspaceId: number,
+    role: MemberRole
   ) => {
 
     const result = await apiFetch(
@@ -49,6 +55,7 @@ export const InvitationProvider = ({ children }: { children: ReactNode }) => {
         body: JSON.stringify({
           email,
           workspace_id: workspaceId,
+          role,
         }),
       }
     );
@@ -72,10 +79,7 @@ export const InvitationProvider = ({ children }: { children: ReactNode }) => {
         auth: true,
       }
     );
-  //   console.log("INVITATIONS API:", data);
-  //   console.log("INVITATION:", data[0]);
-  //  console.log("STATUS:", data[0]?.status);
-  //  console.log("KEYS:", Object.keys(data[0] ?? {}));
+  
 
     setInvitations(data);
   },

@@ -16,7 +16,7 @@ import {
   AuthContextType
 } from "../types/auth";
 
-import apiFetch      from "../api/apiFetch2"
+import apiFetch      from "../api/ApiFetch2"
 import {useNavigate} from 'react-router'
 
 export interface ApiRequestInit extends RequestInit { auth?: boolean;}
@@ -106,6 +106,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       },
       [wrappedFetch, logout]
     );
+   
+  const updateUser = useCallback(
+    async (data: Partial<User>): Promise<User> => {
+      const updatedUser = await wrappedFetch<User>(
+        `${BASE_URL}/api/users/me/`,
+        {
+          method: "PATCH",
+          body: JSON.stringify(data),
+          auth: true,
+        }
+      );
+
+      setUser(updatedUser);
+
+      return updatedUser;
+    },
+    [wrappedFetch]
+  );
 
  
 
@@ -173,6 +191,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         signup,
         logout,
         apiFetch: wrappedFetch,
+        updateUser,
       }}
     >
       {children}

@@ -18,7 +18,7 @@ export default function ProjectSidebar() {
     setCurrentProject,
     createProject,
   } = useProject();
-  console.log("ProjectSidebar - projects : ", projects)
+  // console.log("ProjectSidebar - projects : ", projects)
   const handleCreate = async (data: { name: string; description: string }) => {
       await createProject({
         ...data,

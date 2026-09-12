@@ -10,7 +10,8 @@ export default function AppHeader() {
   const [profileOpen, setProfileOpen] = useState(false);
   const { user } = useAuth();
   const name = user?.email.split("@")[0] ?? "";
-  const capName = name?.charAt(0).toUpperCase() + name.slice(1);
+  // const capName = name?.charAt(0).toUpperCase() + name.slice(1);
+   const capName = user?.full_name
   const [imageError, setImageError] = useState(false);
 
   const profileImage = user?.email

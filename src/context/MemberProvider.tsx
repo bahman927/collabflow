@@ -67,6 +67,8 @@ interface MemberContextType {
   );
 
   const workspaceId = currentWorkspace?.id;
+  //  console.log("currentWorkspace:", currentWorkspace);
+  //   console.log("workspaceId:", workspaceId);
  
   
   useEffect(() => {
@@ -76,6 +78,8 @@ interface MemberContextType {
       setMembers([]);
     }
   }, [currentWorkspace?.id]);
+
+  
   
 
   const fetchMembers = useCallback(async () => {
@@ -117,6 +121,11 @@ const inviteMember = useCallback(
 
 const updateMember = useCallback(
   async (memberId: number, update: MemberUpdate): Promise<Member> => {
+
+    // console.log("updateMember workspaceId:", workspaceId);
+    // console.log("updateMember memberId:", memberId);
+    // console.log("updateMember update:", update);
+
     if (!workspaceId) throw new Error("No workspace selected");
 
     const updated = await memberService.update(workspaceId, memberId, update);
