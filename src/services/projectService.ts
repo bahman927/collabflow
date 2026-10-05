@@ -66,6 +66,17 @@ export const projectService = {
     };
   },
 
+  assignMember: (projectId: number, memberId: number) => ({
+    url: `${BASE_URL}/api/projects/${projectId}/assign_member/`,
+    options: {
+      method: "POST",
+      body: JSON.stringify({
+        member_id: memberId,
+      }),
+      auth: true,
+    },
+  }),
+
   // -----------------------------------------
   // DELETE PROJECT (requires auth)
   // -----------------------------------------

@@ -105,9 +105,9 @@ export default function TaskPanel() {
                      ${AVATAR_COLORS[i % AVATAR_COLORS.length]}
                   `}
                 >
-                  {getInitials(person.name)}
+                  {/* {getInitials(person.name)} */}
                 </div>
-                <span className="text-sm text-gray-700">{person.name}</span>
+                {/* <span className="text-sm text-gray-700">{person.name}</span> */}
               </div>
             ))}
           </div>

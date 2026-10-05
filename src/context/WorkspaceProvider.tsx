@@ -252,28 +252,48 @@ export const WorkspaceProvider = ({ children }: { children: React.ReactNode }) =
   // ---------------------------------------------------------
   // Load current user's membership for selected workspace
   // ---------------------------------------------------------
+
+//   console.log(
+//   "BEFORE MEMBERSHIP EFFECT:",
+//   currentWorkspace
+// );
    useEffect(() => {
-      if (!currentWorkspace) return;
+  // console.log("MEMBERSHIP EFFECT STARTED");
 
-      const loadMember = async () => {
-        try {
-         
+  if (!currentWorkspace) {
+    // console.log("No current workspace");
+    return;
+  }
 
-          const { url, options } = workspaceService.getMembership(currentWorkspace.id);
-          const member = await apiFetch<WorkspaceMember>(url, options);
-         
+  // console.log(
+  //   "Loading membership for workspace:",
+  //   currentWorkspace.id
+  // );
 
-          setCurrentWorkspaceMember(member);
-        } catch (err) {
-          setCurrentWorkspaceMember(null);
-        }
-      };
+  const loadMember = async () => {
+    try {
+      const { url, options } =
+        workspaceService.getMembership(currentWorkspace.id);
 
-     loadMember();
-     
-    }, [currentWorkspace?.id, apiFetch]);
+      // console.log("Membership URL:", url);
+
+      const member =
+        await apiFetch<WorkspaceMember>(url, options);
+
+      // console.log("Membership API returned:", member);
+
+      setCurrentWorkspaceMember(member);
+    } catch (err) {
+      console.error("Membership API ERROR:", err);
+      setCurrentWorkspaceMember(null);
+    }
+  };
+
+  loadMember();
+}, [currentWorkspace?.id, apiFetch]);
 
     const role = currentWorkspaceMember?.role ?? null;
+    // console.log('workspaceProvider role :', role)
 
     const canCreateProject = role === "owner";
     const canCreateTask = role === "owner";

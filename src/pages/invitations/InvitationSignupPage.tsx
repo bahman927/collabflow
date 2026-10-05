@@ -58,29 +58,12 @@ const handleSignup = async () => {
 
     const full_name = `${first_name} ${last_name}`.trim();
 
-      console.log("FIRST NAME:", first_name);
-      console.log("LAST NAME:", last_name);
-      console.log("FULL NAME BEING SENT:", full_name);
-
       const result = await signup({
         email,
         password,
         full_name,
       });
     
-    console.log("SIGNUP SUCCESS:", result);
-
-    console.log(
-      "NEWLY LOGGED-IN USER:",
-      result.user
-    );
-
-    console.log(
-      "NEW ACCESS TOKEN:",
-      result.tokens.access
-    );
-
-
     // -----------------------------------------
     // 3. Accept invitation
     // -----------------------------------------
@@ -97,7 +80,6 @@ const handleSignup = async () => {
     // 4. Invitation accepted
     // -----------------------------------------
 
-    // navigate("/members");
 
   } catch (err) {
 

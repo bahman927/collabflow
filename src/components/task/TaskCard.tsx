@@ -1,6 +1,6 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Calendar, GripVertical } from "lucide-react";
+import { Calendar, GripVertical, UserCircle } from "lucide-react";
 import type { Task, TaskPriority, Person, TaskAssignee } from "../../types/task";
 import AvatarGroup from "../shared/AvatarGroup";
 
@@ -78,29 +78,46 @@ export default function TaskCard({ task, onClick }: Props) {
           <GripVertical size={14} />
         </button>
 
-        <div className="flex-1 min-w-0">
-          {/* Priority badge */}
-          {priority && (
-            <div className="flex items-center gap-1 mb-1.5">
-              <span className={`w-2 h-2 rounded-full ${priority.dot}`} />
-              <span className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">
-                {priority.label}
-              </span>
+         <div className="flex-1 min-w-0">
+            {/* Priority badge */}
+            {priority && (
+              <div className="flex items-center gap-1 mb-1.5">
+                <span className={`w-2 h-2 rounded-full ${priority.dot}`} />
+                <span className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">
+                  {priority.label}
+                </span>
+              </div>
+            )}
+
+            {/* Creator avatar + Task name */}
+            <div className="flex items-center gap-2">
+              {task.created_by?.avatar ? (
+                <img
+                  src={task.created_by.avatar}
+                  alt={task.created_by.name}
+                  className="w-7 h-7 rounded-full object-cover flex-shrink-0"
+                />
+              ) : (
+                <UserCircle className="w-7 h-7 text-gray-400 flex-shrink-0" />
+              )}
+
+              <h3 className="text-sm font-semibold text-gray-800 leading-snug truncate">
+                {task.name}
+              </h3>
             </div>
-          )}
 
-          {/* Task name */}
-          <h3 className="text-sm font-semibold text-gray-800 leading-snug">
-            task: {task.name}
-          </h3>
+            {/* Description */}
+            {task.description && (
+              <p className="mt-1 text-xs text-gray-500 line-clamp-2 leading-relaxed">
+                {task.description}
+              </p>
+            )}
+          </div>
 
-          {/* Description */}
-          {task.description && (
-            <p className="mt-1 text-xs text-gray-500 line-clamp-2 leading-relaxed">
-              {task.description}
-            </p>
-          )}
-        </div>
+
+
+
+ 
       </div>
 
       {/* Bottom row: due date + assignees */}

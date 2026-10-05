@@ -488,9 +488,6 @@ useEffect(() => {
 //   );
 
     if (!isAuthenticated) {
-    //   console.log(
-    //   "⚠️ CLEARING TASKS BECAUSE isAuthenticated IS FALSE"
-    // );
       setTasks([]);
       setCurrentTask(null);
       setError(null);

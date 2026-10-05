@@ -1,13 +1,11 @@
 // src/components/AddMemberModal.tsx
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth }             from '../../hooks/useAuth';
 import { useWorkspace }        from '../../context/WorkspaceProvider';
 import { projectService }      from '../../services/projectService';
-// import { taskService }         from '../../services/taskService';
 import   apiFetch              from '../../api/ApiFetch2';
 import {useTask}               from "../../context/TaskProvider"
-// import { useWorkspaceRefresh } from "../../hooks/useWorkspaceRefresh";
 import { useActivity }       from "../../context/ActivityProvider"
 import { useMember } from "../../context/MemberProvider";
 
@@ -39,7 +37,6 @@ export default function AssignUserModal({ isOpen, onClose }: Props) {
   const [loading, setLoading]         = useState(false);
   const [error, setError]             = useState('');
   const { fetchTasks, loadTasks, assign }     = useTask();   
-  // const workspaceRefresh              = useWorkspaceRefresh();
   const [filteredTasks, setFilteredTasks] = useState<TaskOption[]>([]);
   const [projectTasksMap, setProjectTasksMap] = useState<Record<number, TaskOption[]>>({});
   const [selectedMemberId, setSelectedMemberId] = useState<number | null>(null);
@@ -144,17 +141,71 @@ useEffect(() => {
 
 const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
+
+  //  console.log("=== HANDLE SUBMIT START ===");
+  // console.log("selectedMemberId:", selectedMemberId);
+  // console.log("selectedProjects:", selectedProjects);
+  // console.log("selectedTasks:", selectedTasks);
+  // console.log("BEFORE MEMBER CHECK");
+
   if (!selectedMemberId){
+    //  console.log("STOP: no selected member");
+  setError("Please select a member.");
     return;
   }
 
-    if (selectedTasks.length === 0) {
+  // console.log("PASSED MEMBER CHECK");
+
+  //   if (selectedTasks.length === 0) {
+  //   return;
+  // }
+
+  if (selectedProjects.length === 0 && selectedTasks.length === 0) {
+      // console.log("STOP: no project or task selected");
+    setError("Please select at least one project or task.");
     return;
   }
+
+  // console.log("PASSED PROJECT/TASK CHECK");
 
   setLoading(true);
+  setError('');
+
+console.log("LOADING SET");
 
   try {
+  // -----------------------------------------
+    // 1. Assign member to selected projects
+    // -----------------------------------------
+    for (const projectId of selectedProjects) {
+      //  console.log("ABOUT TO ASSIGN PROJECT:", projectId);
+      const config = projectService.assignMember(
+        projectId,
+        selectedMemberId
+      );
+
+  //      console.log("ASSIGN PROJECT");
+  // console.log("projectId:", projectId);
+  // console.log("selectedMemberId:", selectedMemberId);
+  // console.log("url:", config.url);
+  // console.log("options:", config.options);
+
+
+      const result = await apiFetch(
+        config.url,
+        config.options,
+        () => tokens,
+        setTokens,
+        logout
+      );
+
+      // console.log("PROJECT ASSIGN RESPONSE:", result);
+
+    }
+
+
+    
+
     for (const taskId of selectedTasks) {
       await assign(taskId, selectedMemberId);
     }
@@ -163,6 +214,11 @@ const handleSubmit = async (e: React.FormEvent) => {
     await fetchActivity();
 
     onClose();
+
+  } catch (err) {
+    console.error("Assignment failed:", err);
+    setError("Failed to assign member.");
+
   } finally {
     setLoading(false);
   }
@@ -194,7 +250,12 @@ const handleSubmit = async (e: React.FormEvent) => {
               Select member
             </option>
 
-            {members.map((member) => (
+            {/* {members.map((member) => ( */}
+            {members
+              .filter(
+                (member) => member.role?.toLowerCase() !== "viewer"
+              )
+              .map((member) => (
               <option
                 key={member.id}
                 value={member.id}

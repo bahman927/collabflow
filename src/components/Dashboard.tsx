@@ -7,6 +7,7 @@ import { useProject } from "../context/ProjectProvider";
 import { useTask } from "../context/TaskProvider";
 import { useAuth } from "../hooks/useAuth";
 import type { Task, TaskStatus } from "../types/task";
+import { UserCircle } from "lucide-react";
 import { ActivityPanel } from '../components/ActivityPanel';
 import { useMember } from "@/context/MemberProvider";
 
@@ -217,12 +218,26 @@ function RecentTaskRow({ task }: { task: Task }) {
         ? `/${a.email.split("@")[0]}.JPG`
         : undefined,
     }));
-
+    
+      // console.log("CREATED BY:", task.created_by)
+      // console.log("AVATAR:", task.created_by?.avatar)
 
   return (
-    <li className="flex items-center justify-between py-3 border-b border-gray-50 last:border-0 group">
-      <div className="flex items-center gap-3 min-w-0">
-        <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${dot}`} />
+    <li className="flex  py-3 border-b border-gray-50 last:border-0 group">
+      <div className=" mr-3 gap-2">
+       
+        {task.created_by?.avatar ? (
+          <img
+            src={task.created_by.avatar}
+            alt={task.created_by.name}
+            className="w-7 h-7 rounded-full object-cover"
+          />
+        ) : (
+          <UserCircle className="w-7 h-7 text-gray-400" />
+        )}
+
+      </div>
+      <div className="flex items-center gap-2 min-w-0">
         <div className="min-w-0">
           <p className="text-sm font-medium text-gray-800 truncate group-hover:text-indigo-600 transition-colors">
             {task.name}
@@ -394,13 +409,10 @@ const Dashboard: React.FC = () => {
     .slice(0, 7);
 
   const userName =
-    // (user as any)?.name ??
     (user as any)?.full_name ??
-    (user as any)?.email?.split("@")[0] ??
-    "";
+    (user as any)?.email?.split("@")[0] ?? ""
 
-    
-
+   const email = user?.email.split("a")[0]
   return (
     <div className="p-6 lg:p-8 bg-gray-50 min-h-screen space-y-6 ml-0">
       {/* ── Header ── */}

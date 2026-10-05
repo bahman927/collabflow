@@ -1,5 +1,5 @@
 import React from "react";
-import { Folder, Palette, Bug, LayoutDashboard } from "lucide-react";
+import { Folder, Palette, Bug, LayoutDashboard, UserCircle} from "lucide-react";
 import { getInitials, getAvatarColor } from "../utils/projectHelpers";
 import { useWorkspace }    from "../context/WorkspaceProvider";
 import { useAuth } from "../hooks/useAuth";
@@ -11,13 +11,16 @@ import { Pencil, Trash2 } from "lucide-react";
 
 type Status = "To Do" | "In Progress" | "Done" | "Overdue";
 
+
+
 interface ProjectItemProps {
   task: Task;
   taskId: number;
   title: string;
   status: Status;
-  onDelete: (id: number) => void;
+  onDelete?: (id: number) => void;
   editable?: boolean;
+  deletable: boolean;
   onClick?: () => void;
   onRequestDelete?: (task: Task) => void;
 }
@@ -45,11 +48,12 @@ const ProjectItem: React.FC<ProjectItemProps> = ({
   title,
   status,
   editable = false,
+  deletable,
   onClick,
   onDelete,
-}) => {
+  onRequestDelete,
+} : ProjectItemProps) => {
 
-  // console.log("task :", task)
   const { user } = useAuth();
   const {role} = useWorkspace()
   const { updateTask } = useTask();
@@ -59,8 +63,6 @@ const ProjectItem: React.FC<ProjectItemProps> = ({
   (a, i, arr) => arr.findIndex((x) => x.id === a.id) === i
 );
 
-// console.log("TASK ASSIGNEES:", task.assignees);
-// console.log("PROCESSED ASSIGNEES:", assignees);
 
   const visible = assignees.slice(0, MAX_VISIBLE);
   const remaining = assignees.length - MAX_VISIBLE;
@@ -82,16 +84,20 @@ const ProjectItem: React.FC<ProjectItemProps> = ({
 
       {/* Left: icon + title + assignee avatars */}
       <div className="flex items-center gap-3 min-w-0 ">
-        {icon ? (
-          <div className="p-2 bg-white rounded-md shadow">{icon}</div>
+      
+        <div className=" mr-3 gap-2">
+       
+        {task.created_by?.avatar ? (
+          <img
+            src={task.created_by.avatar}
+            alt={task.created_by.name}
+            className="w-7 h-7 rounded-full object-cover"
+          />
         ) : (
-          <div
-            className={`w-9 h-9 rounded-full flex items-center justify-center
-            font-semibold text-sm ${avatarColor}`}
-          >
-            {initials}
-          </div>
+          <UserCircle className="w-7 h-7 text-gray-400" />
         )}
+
+      </div>
 
         <span className="font-semibold truncate">{title}</span>
 
@@ -106,7 +112,6 @@ const ProjectItem: React.FC<ProjectItemProps> = ({
               >
                 <AvatarChip
                   name={assignee.name}
-                  // avatarUrl={assignee.avatarUrl}
                     avatarUrl={
                       assignee.email
                         ? `/${assignee.email.split("@")[0]}.JPG`
@@ -161,7 +166,7 @@ const ProjectItem: React.FC<ProjectItemProps> = ({
             {status}
           </span>
         )}
-        {editable &&
+        { editable && (
          <div>
            <button
             onClick={(e) => {
@@ -175,18 +180,18 @@ const ProjectItem: React.FC<ProjectItemProps> = ({
             <Pencil size={18} />
            </button>
          </div>  
-        }
+        )}
 
-         { role?.toLowerCase() === "owner" && (
+         {  deletable  && (
             <div className="px-6 py-3 border-t border-gray-100">
               <button
                 onClick={(e) => {
-                e.stopPropagation();
-                onDelete?.(task.id);
-              }}
-                className="text-sm font-serif text-red-500 hover:text-red-700 hover:bg-red-50 px-3 py-2 rounded-lg transition"
+                  e.stopPropagation();
+                  onRequestDelete?.(task);
+                }}
+                className="text-sm font-serif cursor-pointer  text-red-500 hover:text-red-700 hover:bg-red-50 px-3 py-2 rounded-lg transition"
               >
-                Delete 
+                 <Trash2 className="w-4 h-4" />
               </button>
             </div>
           )}

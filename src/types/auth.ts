@@ -6,11 +6,32 @@ export interface ApiRequestInit extends RequestInit { auth?: boolean;}
 // User
 // --------------------
 export interface User {
-  id: number
-  email: string
+  id: number;
+  email: string;
   full_name: string;
-  created_at: string;
+
+  workspace?: {
+    id: number;
+    name: string;
+  };
+
+  avatar?: string | null;
 }
+
+export interface UpdateUserData {
+  full_name?: string;
+  email?: string;
+  avatar?: File | null;
+}
+
+
+// export interface User {
+//   id: number
+//   email: string
+//   full_name: string;
+//   avatar?: string | null;
+//   created_at: string;
+// }
 
 // --------------------
 // Tokens
@@ -37,11 +58,20 @@ export interface LoginData {
 }
 
 // What backend returns after signup
-export interface SignupResponse {
-  user: User
-  access: string
-  refresh: string
-}
+// export interface SignupResponse {
+//   user: User
+//   access: string
+//   refresh: string
+// }
+// type SignupResponse = {
+//   user: {
+//     id: number;
+//     email: string;
+//     full_name: string;
+//     avatar: string | null;
+//   };
+//   tokens: Tokens;
+// };
 
 // --------------------
 // Login
@@ -66,7 +96,7 @@ export interface AuthContextType {
           user: User;
           tokens: Tokens;
          }>;
-  updateUser: (data: Partial<User>) => Promise<User>;
+  updateUser: (data: UpdateUserData) => Promise<User>;
 
   signup: (
     data: SignupData

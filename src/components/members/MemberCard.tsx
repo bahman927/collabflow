@@ -38,32 +38,46 @@ export function MemberCard({
   // -----------------------------
   // Build assignment rows
   // -----------------------------
-  let assignmentRows: AssignmentRow[] = [];
+let assignmentRows: AssignmentRow[] = [];
 
-  // 1. One row per task (task already includes project)
-  if (member.tasks?.length > 0) {
-    assignmentRows = member.tasks.map(task => ({
-      project: task.project,
-      task
-    }));
-  }
-  
-  if (assignmentRows.length === 0 && member.projects?.length > 0) {
-    assignmentRows = member.projects.map(project => ({
-      project,
-      task:null
-    }));
-  }
+if (member.projects?.length > 0) {
 
-  if (member.projects?.length > 0 && member.tasks?.length > 0) {
-    assignmentRows = member.tasks.map(task => {
-      const project = member.projects.find(p => p.id === task.projectId) || null;
-      return {
+  member.projects.forEach(project => {
+    member.projects?.forEach(project => {
+ 
+  const projectTasks =
+    member.tasks?.filter(task => task.projectId === project.id) || [];
+
+  // ...
+});
+    const projectTasks =
+      member.tasks?.filter(task => task.projectId === project.id) || [];
+
+    if (projectTasks.length > 0) {
+      // Project has tasks → one row for each task
+      projectTasks.forEach(task => {
+        assignmentRows.push({
+          project,
+          task,
+        });
+      });
+    } else {
+      // Project has no tasks → show project once
+      assignmentRows.push({
         project,
-        task
-      };
-    });
-  }
+        task: null,
+      });
+    }
+  });
+} else {
+  assignmentRows = [
+    {
+      project: null,
+      task: null,
+    },
+  ];
+}
+ 
   
   // 3. If no tasks and no projects → empty row
   if (assignmentRows.length === 0) {

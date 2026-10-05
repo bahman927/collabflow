@@ -13,6 +13,24 @@ import { useWorkspace }    from "../../context/WorkspaceProvider";
 
 import type { Task, TaskStatus, TaskPriority, TaskUpdateData } from "../../types/task";
 
+const AVATAR_COLORS = [
+  "bg-blue-500",
+  "bg-green-500",
+  "bg-purple-500",
+  "bg-pink-500",
+  "bg-orange-500",
+  "bg-teal-500",
+];
+
+const getInitials = (name: string) => {
+  return name
+    .split(" ")
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+};
+
 /* ───────────────────────────── constants ─────────────────────────── */
 
 const STATUS_OPTIONS: { value: TaskStatus; label: string; color: string }[] = [
@@ -213,16 +231,23 @@ export default function TaskDetailDrawer({
   // Reset delete confirm UI (no longer used)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [confirmRemoveId, setConfirmRemoveId] = useState<number | null>(null);
-  const { apiFetch } = useAuth();
-  const { updateTaskInState } = useTask();
+  const { apiFetch, user } = useAuth();
+  const { updateTaskInState, unassign } = useTask();
   const { role } = useWorkspace();
+  const [assigneeToRemove, setAssigneeToRemove] = useState<number | null>(null);
+  const [assignees, setAssignees] = useState(task?.assignees ?? []);
 
+useEffect(() => {
+  setAssignees(task?.assignees ?? []);
+}, [task]);
   // Reset internal UI when task changes
   useEffect(() => {}, [task?.id]);
 
   useEffect(() => {
     setShowDeleteConfirm(false);
   }, [task?.id]);
+
+   
 
   // Close on ESC
   useEffect(() => {
@@ -403,70 +428,115 @@ const handleConfirmRemove = async (memberId: number) => {
               </div>
             </div>
 
-            {/* Assignees */}
-            <div className="flex items-start gap-3">
-              <div className="flex items-center gap-2 w-28 text-sm text-gray-500 mt-1">
-                <IconUser />
-                Assignees
-              </div>
-              <div className="flex flex-wrap gap-2">
-               {task.assignees?.length ? (
-                  task.assignees.map((person) => {
-                    const { memberId, fullName } = normalizeAssignee(person);
+          {/* Assignees */}
+          <div className="flex items-start gap-3">
+            <div className="flex items-center gap-2 w-28 text-sm text-gray-500 mt-1">
+              <IconUser />
+              Assignees
+            </div>
 
-                    return (
-                      <div key={memberId}>
-                        {confirmRemoveId === memberId ? (
-                          <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-full px-3 py-1">
-                            <span className="text-xs text-red-700">Remove {fullName}?</span>
+            <div className="flex flex-wrap gap-2">
+              {assignees?.length ? (
+                
+                assignees.map((person, i) => {
+                  const { memberId, fullName } = normalizeAssignee(person);
+                  console.log("TaskDetailDrawer memberId", memberId)
+                  return (
+                    <div
+                      key={person.id}
+                      className="flex items-center gap-2 bg-gray-100 rounded-full pl-1 pr-2 py-1"
+                    >
+                      {/* Avatar */}
+                      {person.email ? (
+                        <img
+                          src={`/${person.email.split("@")[0]}.JPG`}
+                          alt={fullName}
+                          className="w-7 h-7 rounded-full object-cover"
+                          onError={(e) => {
+                            e.currentTarget.style.display = "none";
+                          }}
+                        />
+                      ) : (
+                        <div
+                          className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white ${
+                            AVATAR_COLORS[i % AVATAR_COLORS.length]
+                          }`}
+                        >
+                          {getInitials(fullName)}
+                        </div>
+                      )}
 
-                            <button
-                              onClick={() => handleConfirmRemove(memberId)}
-                              className="text-xs bg-red-600 text-white px-2 py-0.5 rounded hover:bg-red-700"
-                            >
-                              Yes
-                            </button>
+                      {/* Name */}
+                      <span className="text-sm text-gray-700">
+                        {fullName}
+                      </span>
 
-                            <button
-                              onClick={() => setConfirmRemoveId(null)}
-                              className="text-xs text-gray-500 px-2 py-0.5 rounded hover:bg-gray-200"
-                            >
-                              Cancel
-                            </button>
-                          </div>
-                        ) : (
-                          <span className="inline-flex items-center gap-1.5 text-xs bg-gray-100 text-gray-700 rounded-full px-3 py-1">
-                            <span className="w-5 h-5 rounded-full bg-indigo-500 text-white flex items-center justify-center text-[10px] font-bold">
-                                {fullName
-                                  .split(" ")
-                                  .map((n: string) => n[0])
-                                  .join("")
-                                  .slice(0, 2)}
-                              </span>
-
-                              {fullName}
-
-                              {role?.toLowerCase() === "owner" && (
-                                <button
-                                  className="ml-1 text-gray-400 hover:text-red-600"
-                                  onClick={() => setConfirmRemoveId(memberId)}
-                                >
-                                  ✕
-                                </button>
-                              )}    
-                            </span>
-                        )}
-                      </div>
-                    );
-                  })
-                ) : (
-                  <span className="text-xs text-gray-400 italic py-1">No assignees</span>
-                )}
-               
-              </div>
-           
+                      {/* Remove button - Owner only */}
+                      {role?.toLowerCase() === "owner" && (
+                        <button
+                          type="button"
+                          className="ml-1 text-gray-400 hover:text-red-600"
+                          onClick={() => setAssigneeToRemove(memberId)}
+                          title="Remove assignee"
+                        >
+                          ✕
+                        </button>
+                      )}
+                    </div>
+                  );
+                })
+              ) : (
+                <span className="text-xs text-gray-400 italic py-1">
+                  No assignees
+                </span>
+              )}
             </div>
           </div>
+          </div>
+          {assigneeToRemove !== null && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+              <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
+                <h2 className="text-lg font-semibold text-gray-900">
+                  Remove assignee?
+                </h2>
+
+                <p className="mt-2 text-sm text-gray-600">
+                  Are you sure you want to remove this person from the task?
+                </p>
+
+                <div className="mt-6 flex justify-end gap-3">
+                  <button
+                    onClick={() => setAssigneeToRemove(null)}
+                    className="rounded-md border px-4 py-2 text-sm"
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                        onClick={async () => {
+                          try {
+                            await unassign(task.id, assigneeToRemove);
+
+                            setAssignees((prev) =>
+                              prev.filter((person) => {
+                                const { memberId } = normalizeAssignee(person);
+                                return memberId !== assigneeToRemove;
+                              })
+                            );
+
+                            setAssigneeToRemove(null);
+                          } catch (error) {
+                            console.error("Failed to remove assignee:", error);
+                          }
+                        }}
+                        className="rounded-md bg-red-600 px-4 py-2 text-sm text-white hover:bg-red-700"
+                      >
+                        Remove
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Timestamps */}
           <div className="border-t border-gray-100 pt-4 space-y-1">
@@ -484,6 +554,4 @@ const handleConfirmRemove = async (memberId: number) => {
     </>
   );
 }
-
-
  

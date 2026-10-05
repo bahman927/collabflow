@@ -23,6 +23,8 @@ import ForgotPasswordPage from "../pages/ForgetPasswordPage";
 import ResetPasswordPage  from "../pages/ResetPasswordPage";
 
  export default function AppRoutes() {
+  //   console.log("🔥 AppRoutes rendered");
+  // console.log("🔥 pathname:", window.location.pathname);
   const {user} = useAuth()
   const isAuthenticated = !!user;
   return (

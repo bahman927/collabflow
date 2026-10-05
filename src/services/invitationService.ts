@@ -62,6 +62,9 @@ export const invitationService = {
       options: {
         method: "POST",
         auth: true,
+        headers: {
+         "Content-Type": "application/json",
+        },
         body: JSON.stringify({
           token,
         }),
@@ -80,7 +83,4 @@ export const invitationService = {
 
 }
  
-   
-
-  
-};
+ };

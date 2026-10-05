@@ -21,7 +21,7 @@ import { useAuth }              from "../hooks/useAuth";
 import { useWorkspace }         from "./WorkspaceProvider";
 import { useProject }           from "../context/ProjectProvider";
 import { useTask }              from "../context/TaskProvider";
-import { getTokens }            from '../services/authService';
+// import { getTokens }            from '../services/authService';
 import { useActivity }          from "../context/ActivityProvider";
 
 
@@ -60,34 +60,40 @@ interface MemberContextType {
           status: 'active',
         });
 
-  // ✅ Create service with auth functions — same pattern as other providers
   const memberService = useMemo(
-    () => createMemberService(getTokens, setTokens, logout),
-    [tokens, setTokens, logout]
-  );
+      () => createMemberService(
+        () => tokens,
+        setTokens,
+        logout
+      ),
+      [tokens, setTokens, logout]
+    );
 
   const workspaceId = currentWorkspace?.id;
-  //  console.log("currentWorkspace:", currentWorkspace);
-  //   console.log("workspaceId:", workspaceId);
  
-  
-  useEffect(() => {
-    if (currentWorkspace?.id) {
-      fetchMembers();
-    } else {
-      setMembers([]);
-    }
-  }, [currentWorkspace?.id]);
-
-  
-  
-
   const fetchMembers = useCallback(async () => {
     if (!workspaceId) return;
     setLoading(true);
     setError(null);
     try {
       const data = await memberService.getAll( workspaceId);
+
+      // console.log("FETCH MEMBERS RESPONSE:", data);
+      // const member229 = data.find(
+      //   (member) => member.id === 229
+      // );
+
+      // console.log("MEMBER 229:", member229);
+      // console.log(
+      //   "MEMBER 229 PROJECTS:",
+      //   JSON.stringify(member229?.projects, null, 2)
+      // );
+
+      // console.log(
+      //   "MEMBER 229 TASKS:",
+      //   JSON.stringify(member229?.tasks, null, 2)
+      // );
+
       setMembers(data);
     } catch (err) {
        console.error('fetchMembers error:', err);  
@@ -99,7 +105,16 @@ interface MemberContextType {
     } finally {
       setLoading(false);
     }
-  }, [workspaceId]);
+  }, [workspaceId, memberService]);
+
+   useEffect(() => {
+    if (currentWorkspace?.id) {
+      fetchMembers();
+    } else {
+      setMembers([]);
+    }
+  }, [currentWorkspace?.id, fetchMembers]);
+
 
 
 const inviteMember = useCallback(
@@ -113,18 +128,13 @@ const inviteMember = useCallback(
 
     return member;
   },
-  [workspaceId]
+  [workspaceId, memberService]
 );
-
-
 
 
 const updateMember = useCallback(
   async (memberId: number, update: MemberUpdate): Promise<Member> => {
-
-    // console.log("updateMember workspaceId:", workspaceId);
-    // console.log("updateMember memberId:", memberId);
-    // console.log("updateMember update:", update);
+ 
 
     if (!workspaceId) throw new Error("No workspace selected");
 

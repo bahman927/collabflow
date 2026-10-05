@@ -10,8 +10,10 @@ import { useWorkspace } from "../../hooks/useWorkspace";
 
 import type { Workspace } from "../../types/workspace";
 import type { Tokens}     from "../../types/auth.ts"
-import InvitationSignupPage from "./InvitationSignupPage";
+// import InvitationSignupPage from "./InvitationSignupPage";
 import { ApiError } from "../../api/apiError";
+import {InvitationUser} from "./invitationUser";
+ 
 
 
 // --------------------------------------------------
@@ -59,6 +61,7 @@ const AcceptInvitationPage = () => {
   // ------------------------------------------------
 
   const [showSignup, setShowSignup] = useState(false);
+  const { setTokens } = useAuth();
 
   const [invitationData, setInvitationData] =
     useState<InvitationValidationResponse | null>(null);
@@ -73,10 +76,9 @@ const AcceptInvitationPage = () => {
     useState("");
 
 
-  console.log(
-    "AcceptInvitationPage mounted. Token:",
-    token
-  );
+//   console.log("🔥 AcceptInvitationPage mounted");
+// console.log("🔥 token:", token);
+// console.log("🔥 user:", user);
 
   // ------------------------------------------------
   // Validate invitation
@@ -84,7 +86,6 @@ const AcceptInvitationPage = () => {
 
   const validateInvitation = useCallback(async () => {
 
-    console.log("validateInvitation called");
 
     if (!token) {
       setError("Invalid invitation token.");;
@@ -109,14 +110,7 @@ const AcceptInvitationPage = () => {
           url,
           options
         );
-
-
-      console.log(
-        "validated invitation:",
-        result
-      );
-
-
+ 
       if (!result.valid) {
         setError("This invitation is no longer valid.");
         return;
@@ -155,7 +149,7 @@ const AcceptInvitationPage = () => {
 
     validateInvitation();
 
-  }, [validateInvitation]);
+  }, []);
 
 
   // ------------------------------------------------
@@ -173,6 +167,11 @@ const AcceptInvitationPage = () => {
   
   const acceptInvitation = useCallback(
     async (newTokens: Tokens) => {
+
+    //  console.log("=== ACCEPT INVITATION START ===");
+    // console.log("Invitation token:", token);
+    // console.log("New access token exists:", !!newTokens.access);
+    // console.log("New refresh token exists:", !!newTokens.refresh);  
 
     if (!token) {
         // console.log("NO INVITATION TOKEN");
@@ -219,13 +218,28 @@ const AcceptInvitationPage = () => {
         "Invitation accepted successfully."
       );
 
+     setTokens(newTokens);
+     console.log("Invitation accepted:", result);
+     console.log("About to navigate to /members");
+     console.log("Current access token:", newTokens.access);
 
       setCurrentWorkspace(
         result.workspace
       );
 
+      console.log(
+        "Stored access token:",
+        localStorage.getItem("access")
+      );
 
-      navigate("/members");
+      console.log(
+        "Stored refresh token:",
+        localStorage.getItem("refresh")
+      );
+
+      setTimeout(() => {
+        navigate("/members");
+      }, 4000);
 
     } catch (err) {
 
@@ -284,7 +298,8 @@ const AcceptInvitationPage = () => {
     return (
       <div className="min-h-screen bg-slate-100 flex items-center justify-center p-6">
 
-        <InvitationSignupPage
+        {/* <InvitationSignupPage */}
+        <InvitationUser
           onSignupSuccess={acceptInvitation}
         />
 

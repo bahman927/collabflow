@@ -22,7 +22,12 @@ export interface TaskAssignee {
   avatarUrl?: string | null;    
 }
 
-
+export interface TaskOwner {
+  id: number;
+  name: string;
+  email: string;
+  avatar?: string | null;
+}
 
 export interface Task {
   id: number;
@@ -33,7 +38,8 @@ export interface Task {
   due_date: string | null;
   project_id: number;
   project: number;
-  workspace: number;      // ⭐ CORRECT
+  created_by: TaskOwner,
+  workspace: number;      
   assignees: TaskAssignee[];
   assignee_emails: string[];
   created_at: string;

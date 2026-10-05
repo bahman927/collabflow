@@ -36,24 +36,18 @@ async function safeJson<T>(
 // --------------------------------------------------
 // Refresh access token
 // --------------------------------------------------
-
 async function refreshAccessToken(
   refreshToken: string,
   setTokens: (t: Tokens | null) => void,
-  logout: () => void
 ): Promise<string | null> {
-
   try {
-
     const response = await fetch(
       `${BASE_URL}/api/auth/token/refresh/`,
       {
         method: "POST",
-
         headers: {
           "Content-Type": "application/json",
         },
-
         body: JSON.stringify({
           refresh: refreshToken,
         }),
@@ -61,32 +55,85 @@ async function refreshAccessToken(
     );
 
     if (!response.ok) {
-      logout();
+      const errorBody = await response.text();
+
+      console.error("❌ TOKEN REFRESH FAILED:", {
+        status: response.status,
+        statusText: response.statusText,
+        body: errorBody,
+      });
+
       return null;
     }
 
     const newTokens = await response.json();
 
+    
+
     setTokens({
       access: newTokens.access,
-      refresh:
-        newTokens.refresh ?? refreshToken,
+      refresh: newTokens.refresh ?? refreshToken,
     });
 
     return newTokens.access;
 
   } catch (error) {
-
-    console.error(
-      "Token refresh error:",
-      error
-    );
-
-    logout();
-
+    console.error("❌ Token refresh network error:", error);
     return null;
   }
 }
+
+
+// async function refreshAccessToken(
+//   refreshToken: string,
+//   setTokens: (t: Tokens | null) => void,
+//   logout: () => void
+// ): Promise<string | null> {
+
+//   try {
+
+//     const response = await fetch(
+//       `${BASE_URL}/api/auth/token/refresh/`,
+//       {
+//         method: "POST",
+
+//         headers: {
+//           "Content-Type": "application/json",
+//         },
+
+//         body: JSON.stringify({
+//           refresh: refreshToken,
+//         }),
+//       }
+//     );
+
+//     if (!response.ok) {
+//       logout();
+//       return null;
+//     }
+
+//     const newTokens = await response.json();
+
+//     setTokens({
+//       access: newTokens.access,
+//       refresh:
+//         newTokens.refresh ?? refreshToken,
+//     });
+
+//     return newTokens.access;
+
+//   } catch (error) {
+
+//     console.error(
+//       "Token refresh error:",
+//       error
+//     );
+
+//     logout();
+
+//     return null;
+//   }
+// }
 
 
 // ==================================================
@@ -160,24 +207,36 @@ export default async function apiFetch<T = any>(
         await refreshAccessToken(
           tokens.refresh,
           setTokens,
-          logout
+        
         );
 
-      if (!newAccessToken) {
+        if (!newAccessToken) {
+          toast.error("Session expired — please log in again.");
 
-        toast.error(
-          "Session expired — please log in again."
-        );
+          console.error("❌ REFRESH FAILED");
+          console.error("newAccessToken:", newAccessToken);
+          console.error("tokens before logout:", getTokens());
 
-        logout();
+          logout();
 
-        window.location.href =
-          "/login";
+          throw new Error("SESSION_EXPIRED");
+        }
 
-        throw new Error(
-          "SESSION_EXPIRED"
-        );
-      }
+      // if (!newAccessToken) {
+
+      //   toast.error(
+      //     "Session expired — please log in again."
+      //   );
+
+      //   logout();
+
+      //   window.location.href =
+      //     "/login";
+
+      //   throw new Error(
+      //     "SESSION_EXPIRED"
+      //   );
+      // }
 
       headers.set(
         "Authorization",
@@ -255,7 +314,7 @@ export default async function apiFetch<T = any>(
       await refreshAccessToken(
         tokens.refresh,
         setTokens,
-        logout
+      
       );
 
     if (!newAccessToken) {

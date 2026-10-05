@@ -6,7 +6,7 @@ import { Eye, EyeOff, LogIn, Mail, Lock } from "lucide-react";
 
 const LoginPage = () => {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, setTokens } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -20,7 +20,14 @@ const LoginPage = () => {
     setLoading(true);
 
     try {
-      await login({ email, password });
+      const data = await login({ email, password });
+      console.log("LOGIN RESPONSE:", data);
+      setTokens(data.tokens);
+
+      console.log(
+        "TOKENS AFTER LOGIN:",
+        localStorage.getItem("tokens")
+      );
       navigate("/");
     } catch (err: any) {
       setError(err.message || "Invalid email or password");

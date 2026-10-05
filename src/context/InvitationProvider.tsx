@@ -83,7 +83,7 @@ export const InvitationProvider = ({ children }: { children: ReactNode }) => {
 
     setInvitations(data);
   },
-  []
+  [apiFetch]
 );
   // --------------------------------------------------
   // RESEND INVITATION

@@ -93,7 +93,7 @@ const handleCreate = async (
                         ${AVATAR_COLORS[i % AVATAR_COLORS.length]}
                       `}
                     >
-                      {getInitials(person.name)}
+                      {/* {getInitials(person.name)} */}
                     </div>
                   ))}
                   {task.assignees.length > 3 && (

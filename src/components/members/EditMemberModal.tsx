@@ -31,10 +31,13 @@ export function EditMemberModal({
 
   const handleSave = async () => {
     if (!member) return;
+
+
+  // console.log("SAVING ROLE:", role);
+
     setSubmitting(true);
     setError(null);
     try {
-      // console.log('in handleSave ', member.id)
       await updateMember(member.id, { role });
       onClose();
     } catch (err) {
@@ -47,6 +50,22 @@ export function EditMemberModal({
       setSubmitting(false);
     }
   };
+
+
+//   console.log("EDIT MODAL member:", member);
+// console.log("EDIT MODAL member.role:", member?.role);
+// console.log("EDIT MODAL role state:", role);
+// useEffect(() => {
+//   if (member) {
+//     console.log("EDITING:", member.email);
+//     console.log("MEMBER ROLE:", member.role);
+
+//     setRole(member.role.toLowerCase() as MemberRole);
+//     setShowRemoveConfirm(false);
+//     setError(null);
+//   }
+// }, [member]);
+
 
   const handleRemove = async () => {
     if (!member) return;
@@ -119,10 +138,10 @@ export function EditMemberModal({
             <div className="text-sm text-gray-500">
               {member.email}
             </div>
-            <div className="text-xs text-gray-400 mt-0.5">
+            {/* <div className="text-xs text-gray-400 mt-0.5">
               Joined{' '}
               {new Date(member.joinedAt).toLocaleDateString()}
-            </div>
+            </div> */}
           </div>
         </div>
 

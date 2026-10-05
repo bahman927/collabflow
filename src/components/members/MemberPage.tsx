@@ -42,11 +42,20 @@ export function MembersPage() {
 
 const query = search.toLowerCase();
 const normalizedQuery = (query ?? "").toLowerCase();
-const filteredMembers = members.filter((m) =>
-  (m.email ?? "").toLowerCase().includes(normalizedQuery) ||
-  (m.firstName ?? "").toLowerCase().includes(normalizedQuery) ||
-  (m.lastName ?? "").toLowerCase().includes(normalizedQuery)
-);
+
+const filteredMembers = members.filter((m) => {
+  const matchesSearch =
+    (m.email ?? "").toLowerCase().includes(normalizedQuery) ||
+    (m.firstName ?? "").toLowerCase().includes(normalizedQuery) ||
+    (m.lastName ?? "").toLowerCase().includes(normalizedQuery);
+
+  const matchesRole =
+    filters.role=== "all" ||
+    m.role?.toLowerCase() === filters.role.toLowerCase();
+
+  return matchesSearch && matchesRole;
+});
+ 
 
 const workspaceMembers = members.map((m) => ({
   id: m.id,
@@ -146,7 +155,6 @@ useEffect(() => {
         >
           <option value="all">All Roles</option>
           <option value="owner">Owner</option>
-          <option value="admin">Admin</option>
           <option value="member">Member</option>
           <option value="viewer">Viewer</option>
         </select>
