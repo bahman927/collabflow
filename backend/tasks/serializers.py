@@ -7,6 +7,7 @@ from workspaces.utils import ensure_member_role
 from activities.models import Activity
 from workspaces.activity.logger import ActivityLogger
 
+
 class TaskAssigneeSerializer(serializers.ModelSerializer):
     name = serializers.SerializerMethodField()
 
@@ -27,6 +28,8 @@ class TaskSerializer(serializers.ModelSerializer):
         queryset=Project.objects.all(),
         source='project',
     )
+
+    created_by = serializers.SerializerMethodField()
     assignees = serializers.SerializerMethodField()
     assignee_ids = serializers.ListField(
         child=serializers.IntegerField(),
@@ -48,6 +51,7 @@ class TaskSerializer(serializers.ModelSerializer):
             "project_id",
             "project",
             "workspace",
+            "created_by",
             "assignees",
             "assignee_ids",
             "assignee_emails",
@@ -55,6 +59,30 @@ class TaskSerializer(serializers.ModelSerializer):
             "updated_at",
         ]
         read_only_fields = ["project"]
+
+    def get_created_by(self, task):
+        user = task.created_by
+
+        if not user:
+            return None
+
+        avatar = None
+
+        try:
+            avatar_name = user.avatar.name
+
+            if avatar_name:
+                avatar = user.avatar.storage.url(avatar_name)
+
+        except (ValueError, AttributeError):
+            avatar = None
+
+        return {
+            "id": user.id,
+            "name": user.get_full_name().strip() or user.email,
+            "email": user.email,
+            "avatar": avatar,
+        }
 
     # -----------------------------
     # READ: return list of assignees
@@ -171,15 +199,18 @@ class TaskSerializer(serializers.ModelSerializer):
         return data
     
     def create(self, validated_data):
-        # print('taskSerializer->valiated_data in update() ->', validated_data)
         member_ids = (
             validated_data.pop("assignee_ids", None)
             or validated_data.pop("assigneeIds", None)
             or validated_data.pop("taskIds", None)
         )
 
-        # member_ids = validated_data.pop('assignee_ids', None)
-        task = super().create(validated_data)
+        actor = self.context["request"].user
+
+        task = Task.objects.create(
+            **validated_data,
+            created_by=actor,
+        )
         self._sync_assignees(task, member_ids)
         return task
 

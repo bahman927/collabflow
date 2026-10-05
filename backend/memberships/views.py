@@ -50,33 +50,7 @@ class MemberViewSet(viewsets.ModelViewSet):
             qs = qs.filter(is_active=False)
 
         return qs.order_by("role", "user__first_name")
-
-    # def get_queryset(self):
-    #     workspace_id = self.kwargs['workspace_id']
-    #     qs = WorkspaceMember.objects.filter(
-    #         workspace_id=workspace_id
-    #     ).select_related('user')
-
-    #     search = self.request.query_params.get('search', '')
-    #     role = self.request.query_params.get('role', '')
-    #     member_status = self.request.query_params.get('status', '')
-
-    #     if search:
-    #         qs = qs.filter(
-    #             Q(user__email__icontains=search)
-    #             | Q(user__first_name__icontains=search)
-    #             | Q(user__last_name__icontains=search)
-    #         )
-    #     if role:
-    #         qs = qs.filter(role=role)
-    #     if member_status == 'active':
-    #         qs = qs.filter(is_active=True)
-    #     elif member_status == 'inactive':
-    #         qs = qs.filter(is_active=False)
-
-    #     return qs.order_by('role', 'user__first_name')
-    
-    
+   
     @action(
     detail=False,
     methods=["get"],
@@ -98,20 +72,6 @@ class MemberViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(membership)
 
         return Response(serializer.data)
-
-    # @action(detail=False, methods=["get"], url_path="me")
-    # def me(self, request, workspace_id=None):
-    #     membership = WorkspaceMember.objects.filter(
-    #         workspace_id=workspace_id,
-    #         user=request.user
-    #     ).first()
-
-    #     if not membership:
-    #         return Response({"detail": "Not a member"}, status=status.HTTP_404_NOT_FOUND)
-
-    #     serializer = self.get_serializer(membership)
-    #     return Response(serializer.data)
-
     
     @action(       
     detail=False,
@@ -146,12 +106,7 @@ class MemberViewSet(viewsets.ModelViewSet):
 
          # ⭐ Log activity
         ActivityLogger.member_added(request.user, workspace, user)
-
-        # print("DEBUG request.data =", request.data)
-        # print("DEBUG validated =", serializer.validated_data)
-        # print("DEBUG task_ids =", serializer.validated_data.get("task_ids"))
         
-
         # ───────────────────────────────────────────────
         # CASE A — EXISTING MEMBER → only assign tasks
         # ───────────────────────────────────────────────
@@ -173,9 +128,9 @@ class MemberViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_200_OK,
             )
 
-    # ───────────────────────────────────────────────
-    # CASE B — NEW MEMBER → create + assign tasks
-    # ───────────────────────────────────────────────
+        # ───────────────────────────────────────────────
+        # CASE B — NEW MEMBER → create + assign tasks
+        # ───────────────────────────────────────────────
         new_member = WorkspaceMember.objects.create(
             workspace=workspace,
             user=user,
@@ -202,17 +157,7 @@ class MemberViewSet(viewsets.ModelViewSet):
 
     def partial_update(self, request, workspace_pk=None, pk=None):
         member = self.get_object()
-
-
-        print("🔥 PARTIAL UPDATE REACHED")
-        print("workspace_pk:", workspace_pk)
-        print("pk:", pk)
-        print("data:", request.data)
-
-        member = self.get_object()
-
-    
-
+ 
         if member.role == "owner":
             return Response(
                 {"error": "Cannot modify workspace owner"},
@@ -239,28 +184,7 @@ class MemberViewSet(viewsets.ModelViewSet):
             MemberSerializer(member).data
         ) 
     
-    # def partial_update(self, request, workspace_id=None, pk=None):
-    #     member = self.get_object()
-
-    #     if member.role == 'owner':
-    #         return Response(
-    #             {'error': 'Cannot modify workspace owner'},
-    #             status=status.HTTP_403_FORBIDDEN,
-    #         )
-
-    #     serializer = UpdateMemberSerializer(data=request.data)
-    #     serializer.is_valid(raise_exception=True)
-
-    #     if 'role' in serializer.validated_data:
-    #         member.role = serializer.validated_data['role']
-    #     if 'isActive' in serializer.validated_data:
-    #         member.is_active = serializer.validated_data['isActive']
-    #     member.save()
-
-    #     return Response(MemberSerializer(member).data)
     
-
-    # def destroy(self, request, workspace_id=None, pk=None):
     def destroy(self, request, workspace_pk=None, pk=None):
         member = self.get_object()
 

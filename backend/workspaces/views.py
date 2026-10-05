@@ -232,11 +232,37 @@ class WorkspaceViewSet(ModelViewSet):
         return Response(serializer.data)    
 
     
+    @action(
+    detail=True,
+    methods=["get"],
+    url_path="members/me",
+    )
+    def current_member(self, request, pk=None):
+        workspace = self.get_object()
+
+        membership = WorkspaceMember.objects.filter(
+            workspace=workspace,
+            user=request.user,
+        ).first()
+
+        if not membership:
+            return Response(
+                {"detail": "Not a member of this workspace."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        serializer = WorkspaceMemberSerializer(membership)
+
+        return Response(
+            serializer.data,
+            status=status.HTTP_200_OK,
+        )
+
 
     @action(
     detail=True,
     methods=["patch", "delete"],
-    url_path=r"members/(?P<member_id>[^/.]+)"
+    url_path=r"members/(?P<member_id>\d+)"
     )
     def member_detail(self, request, pk=None, member_id=None):
 
@@ -330,23 +356,23 @@ class WorkspaceViewSet(ModelViewSet):
                 status=status.HTTP_204_NO_CONTENT
             )
         
-    @action(
-    detail=True,
-    methods=["get"],
-    url_path="members/me"
-)
-    def my_membership(self, request, pk=None):
+#     @action(
+#     detail=True,
+#     methods=["get"],
+#     url_path="members/me"
+# )
+#     def my_membership(self, request, pk=None):
 
-        workspace = self.get_object()
+#         workspace = self.get_object()
 
-        membership = WorkspaceMember.objects.get(
-            workspace=workspace,
-            user=request.user
-        )
+#         membership = WorkspaceMember.objects.get(
+#             workspace=workspace,
+#             user=request.user
+#         )
 
-        serializer = MemberSerializer(membership)
+#         serializer = MemberSerializer(membership)
 
-        return Response(serializer.data)
+#         return Response(serializer.data)
         
    
 

@@ -2,8 +2,10 @@
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import PermissionDenied
-from workspaces.activity.logger import ActivityLogger
+from django.shortcuts import get_object_or_404
 
+from workspaces.activity.logger import ActivityLogger
+from rest_framework.decorators import action
 from .models import Project
 from .serializers import ProjectSerializer
 from workspaces.models import Workspace
@@ -24,9 +26,6 @@ class ProjectViewSet(ModelViewSet):
 
         user = self.request.user
         workspace_id = self.request.query_params.get("workspace")
-        # workspace_id = self.kwargs.get("workspace_id")
-
-        print("projectViewSet - workspace_id :", workspace_id)
 
         qs = Project.objects.all()
 
@@ -41,18 +40,56 @@ class ProjectViewSet(ModelViewSet):
         if not membership:
             return qs.none()
 
-        # if membership.role.lower() == "owner" || :
-        #     return qs.filter(
-        #         workspace_id=workspace_id
-        #     )
-
         return qs.filter(
             workspace_id=workspace_id,
-            # project_members__member=membership
         )
 
- 
+    @action(detail=True, methods=['post'])
+    def assign_member(self, request, pk=None):
+        # project = self.get_object()
+        project = get_object_or_404(Project, pk=pk)
 
+        member_id = request.data.get("member_id")
+
+        if not member_id:
+            return Response(
+                {"error": "member_id is required."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            member = WorkspaceMember.objects.get(
+                id=member_id,
+                workspace=project.workspace
+            )
+        except WorkspaceMember.DoesNotExist:
+            return Response(
+                {"error": "Member does not belong to this workspace."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        project_member, created = ProjectMember.objects.get_or_create(
+            project=project,
+            member=member,
+            defaults={
+                "assigned_by": request.user
+            }
+        )
+
+        print("PROJECT MEMBER ID:", project_member.id)
+        print("PROJECT ID:", project_member.project_id)
+        print("MEMBER ID:", project_member.member_id)
+        print("CREATED:", created)
+
+        return Response(
+            {
+                "message": "Member assigned to project.",
+                "project_id": project.id,
+                "member_id": member.id,
+                "created": created,
+            },
+            status=status.HTTP_201_CREATED if created else status.HTTP_200_OK
+        )
     # ---------------------------------------------------------
     # PROJECT CREATED
     # ---------------------------------------------------------

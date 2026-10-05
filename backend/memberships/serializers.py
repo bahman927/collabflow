@@ -2,6 +2,7 @@ from rest_framework import serializers
 from workspaces.models import WorkspaceMember
 from django.contrib.auth import get_user_model
 from tasks.models import Task, TaskAssignee
+from projects.models import ProjectMember
 
 
 User = get_user_model()
@@ -22,11 +23,8 @@ class MemberSerializer(serializers.ModelSerializer):
         source='user.last_name', read_only=True
     )
     displayName = serializers.SerializerMethodField()
-    avatarUrl = serializers.CharField(
-        source='avatar_url',
-        read_only=True,
-        default=None,
-    )
+    avatarUrl = serializers.SerializerMethodField()
+   
     joinedAt = serializers.DateTimeField(
         source='created_at', read_only=True
     )
@@ -51,26 +49,23 @@ class MemberSerializer(serializers.ModelSerializer):
     def get_displayName(self, obj):
         full = f"{obj.user.first_name} {obj.user.last_name}".strip()
         return full or obj.user.email
-    
+
     def get_projects(self, obj):
-       
+
         assignments = (
-            TaskAssignee.objects
+            ProjectMember.objects
             .filter(member=obj)
-            .select_related("task", "task__project")
+            .select_related("project")
         )
-       
-        seen = set()
-        projects = []
-        for a in assignments:
-         p = a.task.project
-         if p.id not in seen:
-            seen.add(p.id)
-            projects.append({
-                "id": p.id,
-                "name": p.name,
-            })
-        return projects
+
+        return [
+            {
+                "id": assignment.project.id,
+                "name": assignment.project.name,
+            }
+            for assignment in assignments
+        ]
+    
     
     def get_tasks(self, obj):
         tasks = Task.objects.filter(
@@ -87,7 +82,17 @@ class MemberSerializer(serializers.ModelSerializer):
             }
             for t in tasks
         ]
- 
+
+    def get_avatarUrl(self, obj):
+        user = obj.user
+
+        if not user.avatar:
+            return None
+
+        try:
+            return user.avatar.url
+        except ValueError:
+            return None
 
 class InviteMemberSerializer(serializers.Serializer):
     email = serializers.EmailField()

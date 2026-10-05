@@ -5,10 +5,15 @@ from .managers import UserManager
 
 class User(AbstractUser):
     username  = None  
-    is_admin  = models.BooleanField(default=False)
     email     = models.EmailField(unique=True,null=False,blank=False)
     full_name = models.CharField(max_length=255, blank=True)
     is_admin  = models.BooleanField(default=False)
+    avatar = models.ImageField(
+        upload_to="avatars/",
+        blank=True,
+        null=True,
+    )
+
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
     objects = UserManager()

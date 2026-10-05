@@ -125,11 +125,15 @@ class TaskViewSet(ModelViewSet):
         # -----------------------------------------
         # 4. Find user's workspace membership
         # -----------------------------------------
+
+        
+
         membership = WorkspaceMember.objects.filter(
             workspace=workspace,
             user=user
         ).first()
 
+       
         if not membership:
             raise PermissionDenied(
                 "You are not a member of this workspace."
@@ -142,7 +146,7 @@ class TaskViewSet(ModelViewSet):
 
             task = serializer.save(
                 project=project,
-                workspace=workspace
+                workspace=workspace,
             )
 
         # -----------------------------------------
@@ -162,13 +166,10 @@ class TaskViewSet(ModelViewSet):
 
             task = serializer.save(
                 project=project,
-                workspace=workspace
+                workspace=workspace,
             )
 
-            TaskAssignee.objects.get_or_create(
-                task=task,
-                member=membership
-            )
+           
 
         # -----------------------------------------
         # 7. VIEWER
@@ -187,43 +188,6 @@ class TaskViewSet(ModelViewSet):
             workspace=workspace,
             task=task
         )
-
-    # def perform_create(self, serializer):
-    #         project_id = self.request.data.get("project_id")
-    #         if not project_id:
-    #             raise ValidationError({"project_id": "This field is required."})
-
-    #         try:
-    #             project = Project.objects.get(id=project_id)
-    #         except Project.DoesNotExist:
-    #             raise ValidationError({"project_id": "Invalid project_id"})
-
-    #         workspace = project.workspace
-    #         user = self.request.user
-
-    #     # 🔐 Permission check — only workspace owners can create tasks
-    #         membership = WorkspaceMember.objects.filter(
-    #         workspace=workspace,
-    #         user=user
-    #         ).first()
-
-    #         if not membership:
-    #             raise PermissionDenied("You are not a member of this workspace.")
-
-    #         if membership.role != "Owner":
-    #             raise PermissionDenied("Only workspace owners can create tasks.")
-
-    #         task = serializer.save(
-    #             project=project,
-    #             workspace=workspace
-    #         )
-
-    #         # CENTRAL LOGGER
-    #         ActivityLogger.task_created(
-    #           actor=user,
-    #           workspace=workspace,
-    #           task=task
-    #         )
 
             
 
@@ -326,6 +290,7 @@ class TaskViewSet(ModelViewSet):
      # ----------------------------------------------------
     # DELETE
     # ----------------------------------------------------
+
     def destroy(self, request, *args, **kwargs):
         task = get_object_or_404(
             Task,
@@ -335,28 +300,89 @@ class TaskViewSet(ModelViewSet):
         workspace = task.workspace
         actor = request.user
 
-        # --------------------------------
-        # Owner check
-        # --------------------------------
-        get_object_or_404(
+    # --------------------------------
+    # Find actor's workspace membership
+    # --------------------------------
+        membership = get_object_or_404(
             WorkspaceMember,
             workspace=workspace,
             user=actor,
-            role__iexact="owner"
         )
 
+        # --------------------------------
+        # Owner can delete any task
+        # --------------------------------
+        if membership.role.lower() == "owner":
+            pass
+
+        # --------------------------------
+        # Member can delete only tasks
+        # created by himself
+        # --------------------------------
+        elif membership.role.lower() == "member":
+
+            if task.created_by_id != actor.id:
+                raise PermissionDenied(
+                    "You can only delete tasks you created."
+                )
+
+        # --------------------------------
+        # Viewer cannot delete
+        # --------------------------------
+        else:
+            raise PermissionDenied(
+                "You do not have permission to delete tasks."
+            )
+
+        # --------------------------------
         # Log BEFORE deleting
+        # --------------------------------
         ActivityLogger.task_deleted(
             actor=actor,
             workspace=workspace,
             task_name=task.name
         )
 
+        # --------------------------------
+        # Delete task
+        # --------------------------------
         task.delete()
 
         return Response(
-         status=status.HTTP_204_NO_CONTENT
+            status=status.HTTP_204_NO_CONTENT
         )
+
+    # def destroy(self, request, *args, **kwargs):
+    #     task = get_object_or_404(
+    #         Task,
+    #         pk=kwargs["pk"]
+    #     )
+
+    #     workspace = task.workspace
+    #     actor = request.user
+
+    #     # --------------------------------
+    #     # Owner check
+    #     # --------------------------------
+    #     get_object_or_404(
+    #         WorkspaceMember,
+    #         workspace=workspace,
+    #         user=actor,
+    #         # role__iexact="owner"
+    #     )
+
+    #     # Log BEFORE deleting
+    #     ActivityLogger.task_deleted(
+    #         actor=actor,
+    #         workspace=workspace,
+    #         task_name=task.name
+    #     )
+
+    #     task.delete()
+
+    #     return Response(
+    #      status=status.HTTP_204_NO_CONTENT
+    #     )
 
     def validate_status(self, value):
             valid_values = [choice[0] for choice in Task.STATUS_CHOICES]

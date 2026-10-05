@@ -5,44 +5,45 @@ import secrets
 from rest_framework import status, viewsets
 from rest_framework.response import Response
 from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated
-from django.shortcuts import get_object_or_404
+from rest_framework.permissions import  IsAuthenticated
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 
+from django.shortcuts import get_object_or_404
+from django.contrib.auth import get_user_model
 from django.core.mail import send_mail
+from django.db import transaction
+
 from invitations.services import send_invitation_email
 from invitations.models import Invitation
 from .serializers import InvitationSerializer
+from users.serializers import UserSerializer
 
 from workspaces.models import Workspace, WorkspaceMember
+
 
 from activities.utils import log_activity
 from django.conf import settings
 
-# print("🔥 INVITATION SERIALIZER:", InvitationSerializer)
-# print("🔥 SERIALIZER FIELDS:", InvitationSerializer().fields.keys())
+User = get_user_model()
 
 class InvitationViewSet(viewsets.ViewSet):
+  parser_classes = [MultiPartParser, FormParser, JSONParser]
 
-  
   def list(self, request, workspace_id=None):
 
-        # print("🔥 INVITATION LIST CALLED")
-        # print("WORKSPACE ID:", workspace_id)
-        # print("REQUEST USER:", request.user)
+      
 
         invitations = Invitation.objects.filter(
             workspace_id=workspace_id,
             invited_by=request.user
         )
 
-        # print("INVITATIONS QUERYSET:", invitations)
 
         serializer = InvitationSerializer(
             invitations,
             many=True
         )
 
-        # print("RESPONSE INVITATIONS:", serializer.data)
 
         return Response(serializer.data)
   
@@ -58,14 +59,25 @@ class InvitationViewSet(viewsets.ViewSet):
 
     email = request.data.get("email")
     workspace_id = request.data.get("workspace_id")
+    role = request.data.get("role")
+
+   
 
     # ----------------------------------
-    # 1. Validate email
+    # 1. Validate email and role
     # ----------------------------------
 
     if not email:
         return Response(
             {"error": "Email is required"},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    role = request.data.get("role")
+
+    if role not in ["member", "viewer"]:
+        return Response(
+            {"error": "Role must be Member or Viewer."},
             status=status.HTTP_400_BAD_REQUEST
         )
 
@@ -134,6 +146,7 @@ class InvitationViewSet(viewsets.ViewSet):
     invited_by=request.user,
     token=token,
     status="pending",
+    role=role,
     )
 
     # ----------------------------------
@@ -256,155 +269,173 @@ class InvitationViewSet(viewsets.ViewSet):
         detail=False,
         methods=["post"],
         url_path="accept",
-        permission_classes=[IsAuthenticated]
+        permission_classes=[IsAuthenticated],
     )
   def accept(self, request):
-        # print("invitatatons.views -> ENTERED ACCEPT VIEW")
-        # print("Authenticated user:", request.user)
-        # print("Authenticated:", request.user.is_authenticated)
 
-        token = request.data.get("token")
+    # -----------------------------------
+    # 1. Get invitation token
+    # -----------------------------------
 
+    token = request.data.get("token")
 
-        if not token:
-
-            return Response(
-                {
-                    "error": "Token is required"
-                },
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-
-        try:
-
-            invitation = Invitation.objects.get(
-                token=token
-            )
-            
-
-        except Invitation.DoesNotExist:
-
-            return Response(
-                {
-                    "error":
-                    "Invalid token invitation accept"
-                },
-                status=status.HTTP_404_NOT_FOUND
-            )
-
-        
-
-        if invitation.status != "pending":
-
-            return Response(
-                {
-                    "error":
-                    "Invitation already processed"
-                },
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-
-
-        # Security check
-        # Logged user must match invitation email
-        email = request.user.email
-
-        # print("invitation.email: ", invitation.email )  
-        # print("logged in email: ", email ) 
-        # print("request.user:", request.user)
-        # print("request.user.id:", request.user.id)
-        # print("request.user.is_authenticated:", request.user.is_authenticated)
-        # print("request.user.email:", request.user.email) 
-
-        if not email:
-            return Response(
-                {"error": "Authenticated user has no email"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-        
-
-        # invitation = get_object_or_404(
-        #     Invitation,
-        #     token=token,
-        # )
-     
-
-        if email.lower() != invitation.email.lower():
-         return Response(
-           {"error": "This invitation belongs to another email"},
-            status=403
+    if not token:
+        return Response(
+            {"error": "Token is required"},
+            status=status.HTTP_400_BAD_REQUEST
         )
-             
 
-        membership, created = (
-            WorkspaceMember.objects.get_or_create(
+    # -----------------------------------
+    # 2. Find invitation
+    # -----------------------------------
 
-                workspace=invitation.workspace,
-
-                user=request.user,
-
-                defaults={
-                    "role": invitation.role
-                }
-            )
+    try:
+        invitation = Invitation.objects.get(
+            token=token
         )
-        # print("Membership:", membership, created)
+
+    except Invitation.DoesNotExist:
+        return Response(
+            {"error": "Invalid invitation token."},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    # -----------------------------------
+    # 3. Invitation must still be pending
+    # -----------------------------------
+
+    if invitation.status != "pending":
+        return Response(
+            {"error": "Invitation already processed."},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    # -----------------------------------
+    # 4. Get signup information
+    # -----------------------------------
+
+    user = request.user
+
+    # full_name = request.data.get("full_name")
+    # password = request.data.get("password")
+    # avatar = request.FILES.get("avatar")
+
+    # if not full_name:
+    #     return Response(
+    #         {"error": "Full name is required."},
+    #         status=status.HTTP_400_BAD_REQUEST
+    #     )
+
+    # if not password:
+    #     return Response(
+    #         {"error": "Password is required."},
+    #         status=status.HTTP_400_BAD_REQUEST
+    #     )
+
+    # -----------------------------------
+    # 5. The email comes from invitation
+    # -----------------------------------
+    if user.email.lower() != invitation.email.lower():
+        return Response(
+            {
+                "error":
+                "This invitation belongs to a different email address."
+            },
+            status=status.HTTP_403_FORBIDDEN,
+        )
+
+
+    # email = invitation.email
+
+    # -----------------------------------
+    # 6. Make sure a User doesn't already
+    #    exist for this invitation
+    # -----------------------------------
+
+    if WorkspaceMember.objects.filter(
+        workspace=invitation.workspace,
+        user=user,
+    ).exists():
+
+        return Response(
+            {
+                "error":
+                "You are already a member of this workspace."
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+
+    # if User.objects.filter(
+    #     email__iexact=email
+    # ).exists():
+
+    #     return Response(
+    #         {
+    #             "error":
+    #             "An account already exists for this email. "
+    #             "Please log in and accept the invitation."
+    #         },
+    #         status=status.HTTP_400_BAD_REQUEST
+    #     )
+
+    # -----------------------------------
+    # 7. Create User + membership +
+    #    accept invitation atomically
+    # -----------------------------------
+
+    with transaction.atomic():
+
+        membership = WorkspaceMember.objects.create(
+            workspace=invitation.workspace,
+            user=user,
+            role=invitation.role,
+        )
 
         invitation.status = "accepted"
 
         invitation.save(
-            update_fields=[
-                "status"
-            ]
+            update_fields=["status"]
         )
 
 
+    # -----------------------------------
+    # 8. Log activity
+    # -----------------------------------
 
-        log_activity(
-            invitation.workspace,
+    log_activity(
+        invitation.workspace,
+        user,
+        f"{user.full_name} accepted invitation"
+    )
 
-            request.user,
+    # -----------------------------------
+    # 9. Return response
+    # -----------------------------------
 
-            (
-                f"{request.user.full_name} "
-                f"accepted invitation"
-            )
-        )
+    return Response(
+        {
+            "message": "Account created and invitation accepted.",
 
+            "user": UserSerializer(user).data,
 
-        return Response(
-
-            {
-                "message":
-                    "Invitation accepted successfully",
-
-                "workspace": {
-
-                    "id":
-                    invitation.workspace.id,
-
-                    "name":
-                    invitation.workspace.name,
-
-                    "created_at":
-                    invitation.workspace.created_at,
-
-                    "currentUserRole":
-                    membership.role
-                },
-                "membership": {
-                    "id": membership.id,
-                    "role": membership.role,
-
-                }
+            "workspace": {
+                "id": invitation.workspace.id,
+                "name": invitation.workspace.name,
+                "created_at": invitation.workspace.created_at,
+                "currentUserRole": membership.role,
             },
 
-            status=status.HTTP_200_OK
-        )
+            "membership": {
+                "id": membership.id,
+                "role": membership.role,
+            },
+        },
+        status=status.HTTP_201_CREATED
+    )
 
 
+ 
 
     # -----------------------------------
     # Deny invitation

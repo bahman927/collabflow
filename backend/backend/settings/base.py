@@ -15,6 +15,9 @@ from datetime import timedelta
 import os
 
 from decouple import config
+from dotenv import load_dotenv
+
+load_dotenv()
 
 SECRET_KEY = config("SECRET_KEY")
 
@@ -51,6 +54,38 @@ AUTH_USER_MODEL = "users.User"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
+R2_ACCOUNT_ID = os.environ.get("R2_ACCOUNT_ID")
+
+R2_ACCESS_KEY_ID = os.environ.get("R2_ACCESS_KEY_ID")
+
+R2_SECRET_ACCESS_KEY = os.environ.get("R2_SECRET_ACCESS_KEY")
+
+R2_BUCKET_NAME = os.environ.get(
+    "R2_BUCKET_NAME",
+    "collabflow-media",
+)
+
+STORAGES = {
+    "default": {
+        "BACKEND": "storages.backends.s3.S3Storage",
+        "OPTIONS": {
+            "access_key": R2_ACCESS_KEY_ID,
+            "secret_key": R2_SECRET_ACCESS_KEY,
+            "bucket_name": R2_BUCKET_NAME,
+            "endpoint_url": (
+                f"https://{R2_ACCOUNT_ID}.r2.cloudflarestorage.com"
+            ),
+            "region_name": "auto",
+            "default_acl": None,
+            "querystring_auth": True,
+        },
+    },
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
+}
+
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -66,6 +101,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework_simplejwt.token_blacklist",
     "decouple",
+    "storages",
     # 'django_extensions',
      
     # local apps

@@ -6,14 +6,16 @@ from django.core.mail import send_mail
 from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-
-from django.contrib.auth.tokens import default_token_generator
-from django.utils.encoding import force_bytes
-from django.utils.http import urlsafe_base64_encode
-
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
+
+# from django.contrib.auth.tokens import default_token_generator
+# from django.utils.encoding import force_bytes
+# from django.utils.http import urlsafe_base64_encode
+
+
 
 from .serializers import (
     RegisterSerializer,
@@ -23,13 +25,13 @@ from .serializers import (
     PasswordResetConfirmSerializer,
 )
 
-from rest_framework_simplejwt.views import TokenObtainPairView
+
 from .serializers        import EmailTokenObtainPairSerializer
-from projects.models     import ProjectMember
-from tasks.models        import TaskAssignee
-from workspaces.models   import Workspace, WorkspaceMember
-from projects.models     import Project
-from tasks.models        import Task
+# from projects.models     import ProjectMember
+# from tasks.models        import TaskAssignee
+# from workspaces.models   import Workspace, WorkspaceMember
+# from projects.models     import Project
+# from tasks.models        import Task
 
 class EmailTokenObtainPairView(TokenObtainPairView):
     serializer_class = EmailTokenObtainPairSerializer
@@ -40,6 +42,7 @@ class EmailTokenObtainPairView(TokenObtainPairView):
 class RegisterView(generics.CreateAPIView):
     serializer_class = RegisterSerializer
     permission_classes = [AllowAny]
+    parser_classes = [MultiPartParser, FormParser]
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -49,59 +52,20 @@ class RegisterView(generics.CreateAPIView):
             return Response(serializer.errors, status=400)
 
         user = serializer.save()
+        refresh = RefreshToken.for_user(user)
 
-        # If registering via invitation, accept it (no workspace creation)
-        invite_token = request.data.get("invite_token")
-        if invite_token:
-            try:
-                invitation = Invitation.objects.get(token=invite_token, accepted=False)
-                if invitation.email != user.email:
-                    return Response({'error': 'Email mismatch.'}, status=400)
+        return Response(
+            {
+                "user": UserSerializer(user).data,
+                "tokens": {
+                    "access": str(refresh.access_token),
+                    "refresh": str(refresh),
+                },
+            },
+            status=201,
+        )
 
-                accept_invitation(invitation, user)
-            except Invitation.DoesNotExist:
-                return Response({'error': 'Invalid invitation.'}, status=400)
-
-        # No invite → just a bare user, no workspace
-        return Response(UserSerializer(user).data, status=201)
     
-    def accept_invitation(invitation, user):
-
-    # 1. Create workspace membership
-     workspace_member = WorkspaceMember.objects.create(
-        user=user,
-        workspace=invitation.workspace,
-        role=invitation.role,
-    )
-
-    # 2. Assign to projects
-     for project_id in invitation.project_ids:
-        try:
-            project = Project.objects.get(id=project_id, workspace=invitation.workspace)
-            ProjectMember.objects.get_or_create(
-                project=project,
-                member=workspace_member,
-                defaults={'assigned_by': invitation.invited_by}
-            )
-        except Project.DoesNotExist:
-            pass  # project may have been deleted since invitation
-
-    # 3. Assign to tasks
-     for task_id in invitation.task_ids:
-        try:
-            task = Task.objects.get(id=task_id, project__workspace=invitation.workspace)
-            TaskAssignee.objects.get_or_create(
-                task=task,
-                member=workspace_member,
-            )
-        except Task.DoesNotExist:
-            pass  # task may have been deleted since invitation
-
-    # 4. Mark invitation accepted
-     invitation.accepted = True
-     invitation.save()
-
-     return workspace_member
 
 
 # ----------------------------------------
@@ -138,6 +102,7 @@ class LogoutView(APIView):
 # ----------------------------------------
 class MeView(APIView):
     permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
 
     def get(self, request):
         serializer = UserSerializer(request.user)

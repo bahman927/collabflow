@@ -58,11 +58,11 @@ workspace_router = NestedDefaultRouter(
     lookup="workspace",
 )
 
-# workspace_router.register(
-#     "members",
-#     MemberViewSet,
-#     basename="workspace-members",
-# )
+workspace_router.register(
+    "members",
+    MemberViewSet,
+    basename="workspace-members",
+)
 
 
 # --------------------------------------------------

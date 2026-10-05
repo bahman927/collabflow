@@ -12,6 +12,7 @@ from django.utils.http import urlsafe_base64_encode
 from rest_framework import serializers
 
 from .models import User
+from invitations.models import Invitation
 
 
 User = get_user_model()
@@ -32,6 +33,7 @@ class UserSerializer(serializers.ModelSerializer):
             "id",
             "email",
             "full_name",
+            "avatar",
             "is_active",
             "date_joined",
         ]
@@ -44,14 +46,35 @@ class UserSerializer(serializers.ModelSerializer):
 class RegisterSerializer(serializers.ModelSerializer):
 
     password = serializers.CharField(write_only=True)
+    token = serializers.CharField(write_only=True)
 
     class Meta:
         model = User
-        fields = ["email", "full_name", "password"]
+        fields = [
+            "token",
+            "full_name",
+            "password",
+            "avatar",
+        ]
 
-    def validate_email(self, value):
-        if User.objects.filter(email=value).exists():
-            raise serializers.ValidationError("Email already registered.")
+    def validate_token(self, value):
+        try:
+            invitation = Invitation.objects.get(
+                token=value,
+                status="pending",
+            )
+        except Invitation.DoesNotExist:
+            raise serializers.ValidationError(
+                "Invalid or expired invitation."
+            )
+
+        if User.objects.filter(email=invitation.email).exists():
+            raise serializers.ValidationError(
+                "This email is already registered."
+            )
+
+        self.invitation = invitation
+
         return value
 
     def validate_password(self, value):
@@ -60,15 +83,19 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
 
-        # print("REGISTER VALIDATED DATA:", validated_data)
+        # Token was only needed to find the invitation.
+        validated_data.pop("token")
+
+        # Get the invited email from the invitation.
+        email = self.invitation.email
 
         user = User.objects.create_user(
-            email=validated_data["email"],
+            email=email,
             full_name=validated_data.get("full_name", ""),
             password=validated_data["password"],
+            avatar=validated_data.get("avatar"),
         )
 
-        # print("CREATED USER FULL NAME:", user.full_name)
         return user
 
 

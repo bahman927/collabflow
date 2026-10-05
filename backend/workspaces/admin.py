@@ -36,6 +36,7 @@ class InvitationAdmin(admin.ModelAdmin):
     list_display = (
         "email",
         "workspace",
+        "role",
         "invited_by",
         "status",
         "created_at",
