@@ -41,7 +41,7 @@ class TaskViewSet(ModelViewSet):
 
         qs = Task.objects.all()
 
-        print("qs -> all tasks:", qs)
+        # print("qs -> all tasks:", qs)
 
         if workspace_id:
             membership = WorkspaceMember.objects.filter(
@@ -57,10 +57,10 @@ class TaskViewSet(ModelViewSet):
                 return qs.filter(workspace_id=workspace_id)
 
             # Members/Viewers see only their assigned tasks
-            print ("qs.filter for user's task :", qs.filter(
-                workspace_id=workspace_id,
-                assignees__member__user=user
-            ).distinct())
+            # print ("qs.filter for user's task :", qs.filter(
+            #     workspace_id=workspace_id,
+            #     assignees__member__user=user
+            # ).distinct())
 
             return qs.filter(
                 workspace_id=workspace_id,
@@ -89,7 +89,7 @@ class TaskViewSet(ModelViewSet):
   
     
     # ---------------------------------------------------------
-    # TASK CREATED
+    # TASK CREATED Because of using TaskViewSet, serializer looks for perform_create
     # ---------------------------------------------------------
      
     def perform_create(self, serializer):
