@@ -122,6 +122,7 @@ MIDDLEWARE = [
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
 ROOT_URLCONF = "backend.urls"
@@ -140,8 +141,10 @@ SIMPLE_JWT = {
     "AUTH_HEADER_TYPES": ("Bearer",),
     "ROTATE_REFRESH_TOKENS": False,
     "BLACKLIST_AFTER_ROTATION": False,
-    "SIGNING_KEY": "p9$F3!a8@Lk29#sD7qP0vB1zX4mN6rT", 
-    # "SIGNING_KEY": os.environ["JWT_SIGNING_KEY"],
+    # "SIGNING_KEY": "p9$F3!a8@Lk29#sD7qP0vB1zX4mN6rT", 
+    
+    "SIGNING_KEY": os.environ.get("JWT_SIGNING_KEY", SECRET_KEY),
+
 }
 
     
