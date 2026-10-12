@@ -112,11 +112,12 @@ const ProjectItem: React.FC<ProjectItemProps> = ({
               >
                 <AvatarChip
                   name={assignee.name}
-                    avatarUrl={
-                      assignee.email
-                        ? `/${assignee.email.split("@")[0]}.JPG`
-                        : null
-                    }
+                  avatarUrl={assignee.avatar ?? null}
+                    // avatarUrl={
+                    //   assignee.email
+                    //     ? `/${assignee.email.split("@")[0]}.JPG`
+                    //     : null
+                    // }
                   size="sm"
                   showName={false}
                 />

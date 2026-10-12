@@ -99,6 +99,7 @@ class TaskSerializer(serializers.ModelSerializer):
                 "member_id": a.member.id,
                 "name": full_name or user.email,
                 "email": user.email,
+                "avatar": user.avatar.url if user.avatar else None,
             })
 
         return result

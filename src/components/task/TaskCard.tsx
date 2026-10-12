@@ -32,7 +32,7 @@ export function mapTaskAssigneesToPeople(
   return assignees.map(a => ({
     id: String(a.id),
     name: a.name,
-    avatar: a.avatarUrl ?? a.avatar_url ?? undefined,
+    avatarUrl: a.avatar  ?? undefined,
   }));
 }
 

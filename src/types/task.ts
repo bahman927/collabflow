@@ -18,8 +18,7 @@ export interface TaskAssignee {
   member_id: number;   // WorkspaceMember ID
   name: string;
   email: string;
-  avatar_url?: string | null;    
-  avatarUrl?: string | null;    
+  avatar?: string | null;    
 }
 
 export interface TaskOwner {

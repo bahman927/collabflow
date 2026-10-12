@@ -30,6 +30,15 @@ export default function AvatarGroup({ people, max = 3, size = "sm" }: Props) {
 
   const px = size === "sm" ? "w-6 h-6 text-[10px]" : "w-8 h-8 text-xs";
 
+  console.log(
+  "Assignee photos:",
+  visible.map((p) => ({
+    id: p.id,
+    name: p.name,
+    avatarUrl: p.avatarUrl,
+  }))
+);
+
   return (
     <div className="flex -space-x-1.5">
       {visible.map((p, i) => (
