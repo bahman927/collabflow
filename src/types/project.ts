@@ -21,30 +21,4 @@ export interface ProjectUpdateData {
 
 
 
-///////////////////////////////////////////////////////////
-// Example Project JSON From Django
-
-// Your API might return something like:
-
-// {
-//   "id": 12,
-//   "name": "CollabFlow Frontend",
-//   "description": "React frontend for CollabFlow",
-//   "workspace": 3,
-//   "owner": 7,
-//   "created_at": "2026-03-14T10:22:11Z",
-//   "updated_at": "2026-03-14T10:22:11Z"
-// }
-
-// TypeScript will map that to:
-
-// const project: Project = {
-//   id: 12,
-//   name: "CollabFlow Frontend",
-//   description: "React frontend for CollabFlow",
-//   workspace: 3,
-//   owner: 7,
-//   created_at: "2026-03-14T10:22:11Z",
-//   updated_at: "2026-03-14T10:22:11Z"
-// };
-////////////////////////////////////////////////////////////
+ 

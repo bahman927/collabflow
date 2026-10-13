@@ -13,6 +13,7 @@ import {
   TaskStatus,
   TaskCreateData,
   TaskUpdateData,
+  
 } from "../types/task";
 
 import { taskService }  from "../services/taskService";
@@ -52,7 +53,7 @@ const TaskContext = createContext<TaskContextType | null>(null);
 
 export const TaskProvider = ({ children }: { children: React.ReactNode }) => {
 
-  const { apiFetch, isAuthenticated } = useAuth();
+  const { apiFetch, isAuthenticated, user } = useAuth();
   const { currentProject, projects, setCurrentProject } = useProject();
   const { role, currentWorkspace, currentWorkspaceMember } = useWorkspace();
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -271,6 +272,12 @@ const createTask = useCallback(
       assignee_emails: [],
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
+      created_by: {
+          id: Number(user!.id),
+          name: user!.full_name || user!.email,
+          email: user!.email,
+          avatar: user!.avatar ?? null,
+        },
     };
 
     setTasks((prev) => [...prev, optimistic]);

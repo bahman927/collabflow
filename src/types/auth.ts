@@ -25,14 +25,6 @@ export interface UpdateUserData {
 }
 
 
-// export interface User {
-//   id: number
-//   email: string
-//   full_name: string;
-//   avatar?: string | null;
-//   created_at: string;
-// }
-
 // --------------------
 // Tokens
 // --------------------
@@ -57,21 +49,6 @@ export interface LoginData {
   password: string
 }
 
-// What backend returns after signup
-// export interface SignupResponse {
-//   user: User
-//   access: string
-//   refresh: string
-// }
-// type SignupResponse = {
-//   user: {
-//     id: number;
-//     email: string;
-//     full_name: string;
-//     avatar: string | null;
-//   };
-//   tokens: Tokens;
-// };
 
 // --------------------
 // Login
