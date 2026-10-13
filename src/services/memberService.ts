@@ -1,6 +1,6 @@
 // services/memberService.ts
 import { Member, MemberInvite } from "../types/member";
-import apiFetch, { ApiRequestInit } from "../api/ApiFetch2";
+import apiFetch, { ApiRequestInit } from "../api/apiFetch2";
 import { Tokens } from "../types/auth";
 
 

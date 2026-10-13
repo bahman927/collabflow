@@ -17,7 +17,7 @@ import {
   UpdateUserData
 } from "../types/auth";
 
-import apiFetch      from "../api/ApiFetch2"
+import apiFetch     from '../api/apiFetch2'
 import {useNavigate} from 'react-router'
 
 export interface ApiRequestInit extends RequestInit { auth?: boolean;}

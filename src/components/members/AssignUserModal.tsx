@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useAuth }             from '../../hooks/useAuth';
 import { useWorkspace }        from '../../context/WorkspaceProvider';
 import { projectService }      from '../../services/projectService';
-import   apiFetch              from '../../api/ApiFetch2';
+import   apiFetch              from '../../api/apiFetch2';
 import {useTask}               from "../../context/TaskProvider"
 import { useActivity }       from "../../context/ActivityProvider"
 import { useMember } from "../../context/MemberProvider";
