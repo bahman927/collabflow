@@ -1,4 +1,4 @@
-export const BASE_URL = "http://localhost:8000"; // your backend
+// export const BASE_URL = "http://localhost:8000"; 
 import {
   createContext,
   useContext,
@@ -17,7 +17,8 @@ import {
 
 import apiFetch      from "../api/apiFetch2" 
 import {useNavigate} from 'react-router'
-import { LogOut } from "lucide-react";
+import { API_BASE_URL } from "../api//config";
+
 export interface ApiRequestInit extends RequestInit {
   auth?: boolean; // default true
 }
@@ -79,7 +80,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     async (data: LoginData) => {
       try {
         const tokenResult = await wrappedFetch<AuthResponse>(
-          `${BASE_URL}/api/auth/token/`,
+          `${API_BASE_URL}/api/auth/token/`,
           {
             method: "POST",
             body: JSON.stringify(data),
@@ -93,7 +94,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         });
 
 
-        const me = await wrappedFetch<User>(`${BASE_URL}/api/users/me/`, {
+        const me = await wrappedFetch<User>(`${API_BASE_URL}/api/users/me/`, {
           method: "GET",
           auth: true,
         });
@@ -109,9 +110,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signup = useCallback(
     async (data: SignupData) => {
-      console.log("base_url in authProvider-signup :", BASE_URL)
+      console.log("base_url in authProvider-signup :", API_BASE_URL)
       try {
-        await wrappedFetch(BASE_URL + "/api/users/register/", {
+        await wrappedFetch(API_BASE_URL + "/api/users/register/", {
           method: "POST",
           body: JSON.stringify(data),
           auth: false,
@@ -134,7 +135,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
        console.log("AUTH: loading /me");
        console.log("AUTH: tokens:", tokens);
 
-        const me = await wrappedFetch<User>(BASE_URL + "/api/users/me/", {
+        const me = await wrappedFetch<User>(API_BASE_URL + "/api/users/me/", {
           method: "GET",
           auth: true,
         });

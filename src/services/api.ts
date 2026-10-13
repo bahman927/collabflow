@@ -1,9 +1,8 @@
-const BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+// const BASE_URL =
+//   import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
 // ── Token Refresh Queue ─────────────────────────────
-// Prevents multiple simultaneous refresh calls when
-// several requests get 401 at the same time.
+import { API_BASE_URL } from "../api/config";
 let isRefreshing = false;
 let failedQueue: Array<{
   resolve: (token: string) => void;
@@ -32,7 +31,7 @@ async function refreshAccessToken(): Promise<string> {
   }
 
   const response = await fetch(
-    `${BASE_URL}/api/auth/token/refresh/`,
+    `${API_BASE_URL}/api/auth/token/refresh/`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -89,7 +88,7 @@ async function request<T>(
   } = options;
 
   // Build URL with query params
-  let url = `${BASE_URL}${endpoint}`;
+  let url = `${API_BASE_URL}${endpoint}`;
   if (params) {
     const searchParams = new URLSearchParams();
     Object.entries(params).forEach(([key, value]) => {

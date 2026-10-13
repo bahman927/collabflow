@@ -12,8 +12,7 @@ import {
   X,
 } from "lucide-react";
 
-const API_URL =
-  import.meta.env.VITE_API_URL || "http://localhost:8000/api";
+import { API_BASE_URL } from "../../api/config";
 
 type InvitationData = {
   valid: boolean;
@@ -106,7 +105,7 @@ export  const InvitationUser = ({onSignupSuccess}: InvitationUserProps) => {
         setError("");
 
         const response = await fetch(
-          `${API_URL}/invitations/validate/${token}/`
+          `${API_BASE_URL}/invitations/validate/${token}/`
         );
 
         const data = await response.json();
@@ -233,7 +232,7 @@ export  const InvitationUser = ({onSignupSuccess}: InvitationUserProps) => {
 
       if (avatarFile) {formData.append("avatar", avatarFile); }
 
-      const response = await fetch(`${API_URL}/auth/register/`, {
+      const response = await fetch(`${API_BASE_URL}/auth/register/`, {
           method: "POST",
           body: formData,
         }

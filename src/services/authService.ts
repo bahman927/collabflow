@@ -1,6 +1,7 @@
 import type { Tokens } from "../types/auth";
-
+import { API_BASE_URL } from "../api/config";
 //const API_BASE = "http://localhost:8000/api";
+
 const TOKEN_KEY = "tokens";
 
 
@@ -67,7 +68,7 @@ export const loginRequest = async (
   username: string,
   password: string
 ): Promise<Tokens> => {
-  const response = await fetch("/api/auth/token/", {
+  const response = await fetch(`${API_BASE_URL}/auth/token/`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -93,7 +94,7 @@ export const loginRequest = async (
 // 🔄 REFRESH TOKEN
 // ========================
 export const refreshToken = async (refresh: string) => {
-  const response = await fetch("/api/auth/token/refresh/", {
+  const response = await fetch(`${API_BASE_URL}/auth/token/refresh/`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

@@ -1,10 +1,10 @@
 // src/services/taskService.ts
 
 import { Task, TaskStatus, TaskUpdateData, TaskCreateData } from "../types/task";
+import { API_BASE_URL } from "../api/config";
 
-// const BASE_URL = "http://localhost:8000/api/workspaces"
-const WORKSPACES_BASE = "http://localhost:8000/api/workspaces";
-const TASKS_BASE      = "http://localhost:8000/api/tasks";
+const WORKSPACES_BASE = `${API_BASE_URL}/workspaces`;
+const TASKS_BASE = `${API_BASE_URL}/tasks`;
 
 export  const taskService = {
   list(workspaceId: number) {

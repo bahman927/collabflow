@@ -4,7 +4,7 @@ import { useCallback } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import apiFetch, { ApiRequestInit } from '../api/apiFetch2';
 
-const BASE_URL = 'http://localhost:8000';
+import { API_BASE_URL } from "../api/config";
 
 export function useApi() {
   const { tokens, setTokens, logout } = useAuth();
@@ -12,7 +12,7 @@ export function useApi() {
   const request = useCallback(
     <T = any>(endpoint: string, options: ApiRequestInit = {}) => {
       return apiFetch<T>(
-        `${BASE_URL}${endpoint}`,
+        `${API_BASE_URL}${endpoint}`,
         { auth: true, ...options },
         () => tokens,
         setTokens,

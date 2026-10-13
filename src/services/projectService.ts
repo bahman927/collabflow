@@ -1,12 +1,12 @@
 // src/services/projectService.ts
 
-const BASE_URL = "http://localhost:8000";
+import { API_BASE_URL } from "../api/config";
 
 export const projectService = {
 
   get(projectId: number) {
   return {
-    url: `${BASE_URL}/api/projects/${projectId}/`,
+    url: `${API_BASE_URL}/projects/${projectId}/`,
     options: {
       method: "GET",
       auth: true,
@@ -19,7 +19,7 @@ export const projectService = {
   // -----------------------------------------
   list(workspaceId: number) {
     return {
-      url: `${BASE_URL}/api/projects/?workspace=${workspaceId}`,
+      url: `${API_BASE_URL}/projects/?workspace=${workspaceId}`,
       options: {
         method: "GET",
         auth: true, 
@@ -37,7 +37,7 @@ export const projectService = {
     member_ids?: number[];
   }) {
     return {
-      url: `${BASE_URL}/api/projects/`,
+      url: `${API_BASE_URL}/projects/`,
       options: {
         method: "POST",
         auth: true,
@@ -57,7 +57,7 @@ export const projectService = {
 
  update(id: number, data: any) {
     return {
-      url: `${BASE_URL}/api/projects/${id}/`,
+      url: `${API_BASE_URL}/projects/${id}/`,
       options: {
         method: "PATCH",
         auth: true, 
@@ -67,7 +67,7 @@ export const projectService = {
   },
 
   assignMember: (projectId: number, memberId: number) => ({
-    url: `${BASE_URL}/api/projects/${projectId}/assign_member/`,
+    url: `${API_BASE_URL}/projects/${projectId}/assign_member/`,
     options: {
       method: "POST",
       body: JSON.stringify({
@@ -82,7 +82,7 @@ export const projectService = {
   // -----------------------------------------
   delete(id: number) {
     return {
-      url: `${BASE_URL}/api/projects/${id}/`,
+      url: `${API_BASE_URL}/projects/${id}/`,
       options: {
         method: "DELETE",
         auth: true, 

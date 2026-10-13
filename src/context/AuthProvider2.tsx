@@ -1,5 +1,5 @@
 // 📁 contexts/AuthProvider.tsx (your existing code)
-const BASE_URL = "http://localhost:8000"; 
+// const BASE_URL = "http://localhost:8000"; 
 import {
   createContext,
   useContext,
@@ -19,6 +19,7 @@ import {
 
 import apiFetch     from '../api/apiFetch2'
 import {useNavigate} from 'react-router'
+import { API_BASE_URL } from "../api/config";
 
 export interface ApiRequestInit extends RequestInit { auth?: boolean;}
 
@@ -91,7 +92,7 @@ const setTokens = (newTokens: Tokens | null) => {
     }
 
     const tokenResult = await wrappedFetch<TokenResponse>(
-        `${BASE_URL}/api/auth/token/`,
+        `${API_BASE_URL}/api/auth/token/`,
         {
           method: "POST",
           body: JSON.stringify(data),
@@ -107,7 +108,7 @@ const setTokens = (newTokens: Tokens | null) => {
       setTokens(newTokens);
 
       const me = await apiFetch<User>(
-      `${BASE_URL}/api/users/me/`,
+      `${API_BASE_URL}/api/users/me/`,
       {
         method: "GET",
         auth: true,
@@ -145,7 +146,7 @@ const updateUser = useCallback(
     }
 
     const updatedUser = await wrappedFetch<User>(
-      `${BASE_URL}/api/users/me/`,
+      `${API_BASE_URL}/api/users/me/`,
       {
         method: "PATCH",
         body: formData,
@@ -186,7 +187,7 @@ const updateUser = useCallback(
     async (data: SignupData) => {
       
       try {
-        await wrappedFetch(BASE_URL + "/api/users/register/", {
+        await wrappedFetch(API_BASE_URL + "/api/users/register/", {
           method: "POST",
           body: JSON.stringify(data),
           auth: false,
@@ -224,7 +225,7 @@ const updateUser = useCallback(
       // console.log("🔵 AuthProvider: loading current user");
 
       const me = await wrappedFetch<User>(
-        BASE_URL + "/api/users/me/",
+        API_BASE_URL + "/api/users/me/",
         {
           method: "GET",
           auth: true,

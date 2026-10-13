@@ -1,6 +1,5 @@
 // src/services/invitationService.ts
-
-const BASE_URL = "http://localhost:8000";
+import { API_BASE_URL } from "../api/config";
 
 
  
@@ -11,7 +10,7 @@ export const invitationService = {
   // -----------------------------------------
   list(workspaceId: number) {
     return {
-      url: `${BASE_URL}/api/workspaces/${workspaceId}/invitations/`,
+      url: `${API_BASE_URL}/workspaces/${workspaceId}/invitations/`,
       options: {
         method: "GET",
         auth: true,
@@ -29,7 +28,7 @@ export const invitationService = {
     task_ids?: number[];
   }) {
     return {
-      url: `${BASE_URL}/api/workspaces/${workspaceId}/invitations/`,
+      url: `${API_BASE_URL}/workspaces/${workspaceId}/invitations/`,
       options: {
         method: "POST",
         auth: true,
@@ -45,7 +44,7 @@ export const invitationService = {
   // -----------------------------------------
   getByToken(token: string) {
     return {
-      url: `${BASE_URL}/api/invitations/${token}/`,
+      url: `${API_BASE_URL}/invitations/${token}/`,
       options: {
         method: "GET",
         auth: false,
@@ -58,7 +57,7 @@ export const invitationService = {
   // -----------------------------------------
   accept(token: string) {
     return {
-      url: `${BASE_URL}/api/invitations/accept/`,
+      url: `${API_BASE_URL}/invitations/accept/`,
       options: {
         method: "POST",
         auth: true,
@@ -74,7 +73,7 @@ export const invitationService = {
 
   validate(token:string) {
     return {
-        url: `${BASE_URL}/api/invitations/validate/${token}/`,
+        url: `${API_BASE_URL}/invitations/validate/${token}/`,
         options: {
             method: "GET",
             auth: false

@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, ReactNode, useCallback } from "react";
 import { useAuth }      from "../hooks/useAuth";
 
+
 interface Invitation {
   id: number;
   email: string;
@@ -26,7 +27,7 @@ interface InvitationContextType {
 
 type MemberRole = "member" | "viewer";
 
-const BASE_URL = "http://localhost:8000/api";
+import { API_BASE_URL } from "../api/config";
 
 const InvitationContext = createContext<InvitationContextType | null>(null);
 
@@ -48,7 +49,7 @@ export const InvitationProvider = ({ children }: { children: ReactNode }) => {
   ) => {
 
     const result = await apiFetch(
-      `${BASE_URL}/workspaces/${workspaceId}/invite/`,
+      `${API_BASE_URL}/workspaces/${workspaceId}/invite/`,
       {
         method: "POST",
         auth: true,
@@ -73,7 +74,7 @@ export const InvitationProvider = ({ children }: { children: ReactNode }) => {
  const fetchInvitations = useCallback(
   async (workspaceId: number) => {
     const data = await apiFetch<Invitation[]>(
-      `${BASE_URL}/workspaces/${workspaceId}/invitations/`,
+      `${API_BASE_URL}/workspaces/${workspaceId}/invitations/`,
       {
         method: "GET",
         auth: true,
@@ -94,7 +95,7 @@ export const InvitationProvider = ({ children }: { children: ReactNode }) => {
   ) => {
 
     await apiFetch(
-      `${BASE_URL}/invitations/${invitationId}/resend/`,
+      `${API_BASE_URL}/invitations/${invitationId}/resend/`,
       {
         method: "POST",
         auth: true,
@@ -108,14 +109,14 @@ export const InvitationProvider = ({ children }: { children: ReactNode }) => {
      // --------------------------------------------------
 
     async function acceptInvite(token: string) {
-    await apiFetch(`${BASE_URL}/invitations/${token}/accept/`, {
+    await apiFetch(`${API_BASE_URL}/invitations/${token}/accept/`, {
       method: "POST",
       auth: true,
     });
   }
 
     const denyInvite = async (token: string) => {
-      await apiFetch(`${BASE_URL}/invitations/${token}/deny/`, {
+      await apiFetch(`${API_BASE_URL}/invitations/${token}/deny/`, {
         method: "POST",
         auth:true,
       });
@@ -130,7 +131,7 @@ export const InvitationProvider = ({ children }: { children: ReactNode }) => {
     ) => {
 
       await apiFetch(
-        `${BASE_URL}/invitations/${invitationId}/`,
+        `${API_BASE_URL}/invitations/${invitationId}/`,
         {
           method: "DELETE",
           auth: true,

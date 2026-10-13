@@ -4,7 +4,11 @@ import { Tokens } from "../types/auth";
 import { toast } from "react-hot-toast";
 import { ApiError } from "./apiError";
 
-const BASE_URL = "http://localhost:8000";
+import { API_BASE_URL } from "./config";
+
+
+// const BASE_URL =
+//   import.meta.env.VITE_API_URL || "http://localhost:8000/api";
 
 export interface ApiRequestInit extends RequestInit {
   auth?: boolean;
@@ -42,7 +46,7 @@ async function refreshAccessToken(
 ): Promise<string | null> {
   try {
     const response = await fetch(
-      `${BASE_URL}/api/auth/token/refresh/`,
+      `${API_BASE_URL}/auth/token/refresh/`,
       {
         method: "POST",
         headers: {
@@ -83,58 +87,7 @@ async function refreshAccessToken(
   }
 }
 
-
-// async function refreshAccessToken(
-//   refreshToken: string,
-//   setTokens: (t: Tokens | null) => void,
-//   logout: () => void
-// ): Promise<string | null> {
-
-//   try {
-
-//     const response = await fetch(
-//       `${BASE_URL}/api/auth/token/refresh/`,
-//       {
-//         method: "POST",
-
-//         headers: {
-//           "Content-Type": "application/json",
-//         },
-
-//         body: JSON.stringify({
-//           refresh: refreshToken,
-//         }),
-//       }
-//     );
-
-//     if (!response.ok) {
-//       logout();
-//       return null;
-//     }
-
-//     const newTokens = await response.json();
-
-//     setTokens({
-//       access: newTokens.access,
-//       refresh:
-//         newTokens.refresh ?? refreshToken,
-//     });
-
-//     return newTokens.access;
-
-//   } catch (error) {
-
-//     console.error(
-//       "Token refresh error:",
-//       error
-//     );
-
-//     logout();
-
-//     return null;
-//   }
-// }
-
+ 
 
 // ==================================================
 // MAIN API FETCH
@@ -162,7 +115,6 @@ export default async function apiFetch<T = any>(
   // ------------------------------------------------
 
   let tokens = getTokens();
-  // console.log("tokens.access in ApiFetch2.ts : ", tokens?.access )
 
   // ------------------------------------------------
   // 3. Prepare headers

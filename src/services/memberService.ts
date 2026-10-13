@@ -4,7 +4,7 @@ import apiFetch, { ApiRequestInit } from "../api/apiFetch2";
 import { Tokens } from "../types/auth";
 
 
-const BASE_URL = "http://localhost:8000";
+import { API_BASE_URL } from "../api/config";
  
 export function createMemberService(
   getTokens: () => Tokens | null,
@@ -13,7 +13,7 @@ export function createMemberService(
 ) {
   async function getAll(workspaceId: number): Promise<Member[]> {
     return apiFetch<Member[]>(
-      `${BASE_URL}/api/workspaces/${workspaceId}/members/`,
+      `${API_BASE_URL}/workspaces/${workspaceId}/members/`,
       { method: "GET", auth: true },
       getTokens,
       setTokens,
@@ -26,7 +26,7 @@ export function createMemberService(
     memberId: number
 ) {
     return apiFetch(
-        `${BASE_URL}/api/tasks/${taskId}/assignees/${memberId}/`,
+        `${API_BASE_URL}/tasks/${taskId}/assignees/${memberId}/`,
         {
             method: "POST",
             auth: true
@@ -42,7 +42,7 @@ export function createMemberService(
     memberId: number
 ) {
     return apiFetch(
-        `${BASE_URL}/api/tasks/${taskId}/assign/`,
+        `${API_BASE_URL}/tasks/${taskId}/assign/`,
         {
             method: "POST",
             auth: true,
@@ -61,7 +61,7 @@ export function createMemberService(
   // ✅ NEW — get a single member by ID
   async function getById(workspaceId: number, memberId: number): Promise<Member> {
     return apiFetch<Member>(
-      `${BASE_URL}/api/workspaces/${workspaceId}/members/${memberId}/`,
+      `${API_BASE_URL}/workspaces/${workspaceId}/members/${memberId}/`,
       { method: "GET", auth: true },
       getTokens,
       setTokens,
@@ -71,7 +71,7 @@ export function createMemberService(
 
   async function invite(workspaceId: number, data: MemberInvite): Promise<Member> {
     return apiFetch<Member>(
-      `${BASE_URL}/api/workspaces/${workspaceId}/invite/`,
+      `${API_BASE_URL}/workspaces/${workspaceId}/invite/`,
       {
         method: "POST",
         auth: true,
@@ -91,7 +91,7 @@ export function createMemberService(
   data: Partial<Member>
 ): Promise<Member> {
   return apiFetch<Member>(
-    `${BASE_URL}/api/workspaces/${workspaceId}/members/${memberId}/`,
+    `${API_BASE_URL}/workspaces/${workspaceId}/members/${memberId}/`,
     {
       method: "PATCH",
       auth: true,
@@ -102,32 +102,11 @@ export function createMemberService(
     logout
   );
 }
-
-// async function update(
-//   workspaceId: number,
-//   memberId: number,
-//   data: Partial<Member>
-// ): Promise<Member> {
-//   return apiFetch<Member>(
-//     `${BASE_URL}/api/members/${memberId}/`,
-//     {
-//       method: "PATCH",
-//       auth: true,
-//       body: JSON.stringify(data),
-//     },
-//     getTokens,
-//     setTokens,
-//     logout
-//   );
-// }
-
-
-
  
 
   async function remove(workspaceId: number, memberId: number): Promise<void> {
     await apiFetch(
-      `${BASE_URL}/api/workspaces/${workspaceId}/members/${memberId}/`,
+      `${API_BASE_URL}/workspaces/${workspaceId}/members/${memberId}/`,
       { method: "DELETE", auth: true },
       getTokens,
       setTokens,
