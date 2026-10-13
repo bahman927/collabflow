@@ -1,10 +1,10 @@
 {
 
   "compilerOptions": {
-    "ignoreDeprecations": "6.0",
-    "baseUrl": ".",
+    
+    "skipLibCheck": true,
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["./src/*"]
     },
     "target": "ES6",
     "lib": ["DOM", "DOM.Iterable", "ESNext"],
