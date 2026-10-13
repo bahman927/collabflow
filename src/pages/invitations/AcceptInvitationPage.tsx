@@ -12,7 +12,7 @@ import type { Workspace } from "../../types/workspace";
 import type { Tokens}     from "../../types/auth.ts"
 // import InvitationSignupPage from "./InvitationSignupPage";
 import { ApiError } from "../../api/apiError";
-import {InvitationUser} from "./invitationUser";
+import {InvitationUser} from "./InvitationUser";
  
 
 

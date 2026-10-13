@@ -16,7 +16,7 @@ export function useWorkspaceRefresh() {
     await fetchProjects();
 
     if (currentProject?.id) {
-      await fetchTasks(currentProject.id);
+      await fetchTasks();
     }
 
     await fetchMembers();
