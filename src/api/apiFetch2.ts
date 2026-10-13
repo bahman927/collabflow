@@ -309,6 +309,7 @@ export default async function apiFetch<T = any>(
   // 8. Handle HTTP errors centrally
   // ------------------------------------------------
   if (!response.ok) {
+    
     const data = await safeJson<any>(response);
 
     let message = "Something went wrong.";
