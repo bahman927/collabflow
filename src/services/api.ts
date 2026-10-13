@@ -31,7 +31,7 @@ async function refreshAccessToken(): Promise<string> {
   }
 
   const response = await fetch(
-    `${API_BASE_URL}/api/auth/token/refresh/`,
+    `${API_BASE_URL}/auth/token/refresh/`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -61,9 +61,9 @@ function forceLogout() {
 //          automatic 401 retry with token refresh.
 
 const SKIP_REFRESH_PATHS = [
-  '/api/auth/login/',
-  '/api/auth/signup/',
-  '/api/auth/token/refresh/',
+  '/auth/login/',
+  '/auth/signup/',
+  '/auth/token/refresh/',
 ];
 
 interface RequestOptions {

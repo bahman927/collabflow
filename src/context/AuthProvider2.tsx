@@ -1,5 +1,3 @@
-// 📁 contexts/AuthProvider.tsx (your existing code)
-// const BASE_URL = "http://localhost:8000"; 
 import {
   createContext,
   useContext,
@@ -44,11 +42,7 @@ const setTokens = (newTokens: Tokens | null) => {
     localStorage.removeItem("tokens");
   }
 };  
-
-//   const [tokens, setTokens] = useState<Tokens | null>(() => {
-//   const stored = localStorage.getItem("tokens");
-//   return stored ? JSON.parse(stored) : null;
-// });
+ 
   const [user, setUser] = useState<User | null>(null);
   const navigate = useNavigate();
 
@@ -67,8 +61,6 @@ const setTokens = (newTokens: Tokens | null) => {
     }
    }, []);
 
-  // Your wrappedFetch passes the getter function to apiFetch
- 
 
   const wrappedFetch = useCallback( <T,>
       (url: string,
@@ -92,7 +84,7 @@ const setTokens = (newTokens: Tokens | null) => {
     }
 
     const tokenResult = await wrappedFetch<TokenResponse>(
-        `${API_BASE_URL}/api/auth/token/`,
+        `${API_BASE_URL}/auth/token/`,
         {
           method: "POST",
           body: JSON.stringify(data),
@@ -108,7 +100,7 @@ const setTokens = (newTokens: Tokens | null) => {
       setTokens(newTokens);
 
       const me = await apiFetch<User>(
-      `${API_BASE_URL}/api/users/me/`,
+      `${API_BASE_URL}/users/me/`,
       {
         method: "GET",
         auth: true,
@@ -146,7 +138,7 @@ const updateUser = useCallback(
     }
 
     const updatedUser = await wrappedFetch<User>(
-      `${API_BASE_URL}/api/users/me/`,
+      `${API_BASE_URL}/users/me/`,
       {
         method: "PATCH",
         body: formData,
@@ -160,34 +152,13 @@ const updateUser = useCallback(
   },
   [wrappedFetch]
 );
-
-  // const updateUser = useCallback(
-
-  //   async (data: UpdateUserData): Promise<User> => {
-
-  //     const updatedUser = await wrappedFetch<User>(
-  //       `${BASE_URL}/api/users/me/`,
-  //       {
-  //         method: "PATCH",
-  //         body: JSON.stringify(data),
-  //         auth: true,
-  //       }
-  //     );
-
-  //     setUser(updatedUser);
-
-  //     return updatedUser;
-  //   },
-  //   [wrappedFetch]
-  // );
-
  
 
   const signup = useCallback(
     async (data: SignupData) => {
       
       try {
-        await wrappedFetch(API_BASE_URL + "/api/users/register/", {
+        await wrappedFetch(API_BASE_URL + "/users/register/", {
           method: "POST",
           body: JSON.stringify(data),
           auth: false,
@@ -225,7 +196,7 @@ const updateUser = useCallback(
       // console.log("🔵 AuthProvider: loading current user");
 
       const me = await wrappedFetch<User>(
-        API_BASE_URL + "/api/users/me/",
+        API_BASE_URL + "/users/me/",
         {
           method: "GET",
           auth: true,

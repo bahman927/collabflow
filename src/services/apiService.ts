@@ -1,5 +1,5 @@
 // src/services/apiService.ts
-
+import { API_BASE_URL } from "../api/config";
 export class ApiService {
   private accessToken: string | null = null;
   private refreshToken: string | null = null;
@@ -73,7 +73,7 @@ export class ApiService {
     if (!this.refreshToken) return false;
 
     try {
-      const response = await fetch("/api/auth/refresh/", {
+      const response = await fetch(`${API_BASE_URL}/auth/token/refresh/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ refresh: this.refreshToken }),

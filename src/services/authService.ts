@@ -33,8 +33,7 @@ export async function signup(
   data: SignupData
 ): Promise<SignupResponse> {
 
-  const res = await fetch(
-    "/api/users/register/",
+  const res = await fetch(`${API_BASE_URL}/users/register`,
     {
       method: "POST",
 

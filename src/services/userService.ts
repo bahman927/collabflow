@@ -1,16 +1,13 @@
 // src/services/userService.ts
 
 import {ApiRequestInit}  from "../context/AuthProvider";
-
-// src/services/userService.ts
-
-
+import { API_BASE_URL } from "../api/config";
 export const userService = {
   // SIGNUP
   signup(data: { email: string; password: string; full_name: string }) {
     return {
       action:"signup",
-      url: "/api/users/register/",
+      url: `${API_BASE_URL}/users/register/`,
       options: {
         method: "POST",
         auth: false,
@@ -28,7 +25,7 @@ export const userService = {
   login(data: { email: string; password: string }) {
     return {
       action:"login",
-      url: "/api/users/login/",
+      url: `${API_BASE_URL}/users/login/`,
       options: {
         method: "POST",
         body: JSON.stringify(data),
@@ -41,7 +38,7 @@ export const userService = {
   refresh(refreshToken: string) {
     return {
       action: "refresh",
-      url: "/api/users/refresh/",
+      url: `${API_BASE_URL}/users/refresh/`,
       options: {
         method: "POST",
         body: JSON.stringify({ refresh: refreshToken }),
@@ -53,7 +50,7 @@ export const userService = {
   // LOGOUT
   logout() {
     return {
-      url: "/api/users/logout/",
+      url: `${API_BASE_URL}/users/logout/`,
       options: {
         method: "POST",
         auth: true,
@@ -65,7 +62,7 @@ export const userService = {
   getCurrentUser() {
     return {
       action:"me",
-      url: "/api/users/me/",
+     url: `${API_BASE_URL}/users/me/`,
       options: {
         method: "GET",
         auth: true,

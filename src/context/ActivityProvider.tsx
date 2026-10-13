@@ -24,7 +24,6 @@ export interface ActivityContextType {
 }
  
 const ActivityContext = createContext<ActivityContextType | null>(null);
-// const BASE_URL      = "http://localhost:8000";
 
 export function ActivityProvider({ children }: { children: React.ReactNode }) {
   const { apiFetch } = useAuth();
@@ -46,17 +45,17 @@ export function ActivityProvider({ children }: { children: React.ReactNode }) {
     try {
       const [currentRes, weeklyRes, fullRes] = await Promise.all([
       apiFetch<CurrentActivityItem[]>(
-        `${API_BASE_URL}/api/workspaces/${workspaceId}/activity/current/`,
+        `${API_BASE_URL}/workspaces/${workspaceId}/activity/current/`,
         { auth: true },
        
       ),
       apiFetch<WeeklyMemberSummary[]>(
-        `${API_BASE_URL}/api/workspaces/${workspaceId}/activity/weekly/`,
+        `${API_BASE_URL}/workspaces/${workspaceId}/activity/weekly/`,
         { auth: true },
         
       ),
       apiFetch<FullActivityItem[]>(
-        `${API_BASE_URL}/api/workspaces/${workspaceId}/activity/full/`,
+        `${API_BASE_URL}/workspaces/${workspaceId}/activity/full/`,
         { auth: true },
       
       ),
