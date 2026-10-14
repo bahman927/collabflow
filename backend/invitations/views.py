@@ -61,8 +61,6 @@ class InvitationViewSet(viewsets.ViewSet):
     workspace_id = request.data.get("workspace_id")
     role = request.data.get("role")
 
-   
-
     # ----------------------------------
     # 1. Validate email and role
     # ----------------------------------
@@ -131,8 +129,6 @@ class InvitationViewSet(viewsets.ViewSet):
     ## --------------------------------------
     #    Resend invitation
     #  --------------------------------------    
-
-
 
     token = secrets.token_hex(32)
 
@@ -206,7 +202,6 @@ class InvitationViewSet(viewsets.ViewSet):
         url_path=r"validate/(?P<token>[^/.]+)"
     )
   def validate(self, request, token):
-        # print("VALIDATION TOKEN RECEIVED:", token)
 
         try:
             invitation = Invitation.objects.get(
@@ -215,20 +210,13 @@ class InvitationViewSet(viewsets.ViewSet):
 
         except Invitation.DoesNotExist:
 
-            # print("NO INVITATION FOUND FOR TOKEN:", token)
-
             return Response(
                 {
                     "error": "Invalid token invitation - checked by validate()"
                 },
                 status=status.HTTP_404_NOT_FOUND
             )
-
-        # print("INVITATION FOUND:", invitation.id)
-        # print("INVITATION TOKEN:", invitation.token)
-        # print("INVITATION STATUS:", invitation.status)
-
-
+ 
         if invitation.status != "pending":
 
             return Response(
@@ -257,8 +245,6 @@ class InvitationViewSet(viewsets.ViewSet):
                     invitation.invited_by.full_name
             }
         )
-
-
 
     # -----------------------------------
     # Accept invitation
@@ -316,22 +302,6 @@ class InvitationViewSet(viewsets.ViewSet):
 
     user = request.user
 
-    # full_name = request.data.get("full_name")
-    # password = request.data.get("password")
-    # avatar = request.FILES.get("avatar")
-
-    # if not full_name:
-    #     return Response(
-    #         {"error": "Full name is required."},
-    #         status=status.HTTP_400_BAD_REQUEST
-    #     )
-
-    # if not password:
-    #     return Response(
-    #         {"error": "Password is required."},
-    #         status=status.HTTP_400_BAD_REQUEST
-    #     )
-
     # -----------------------------------
     # 5. The email comes from invitation
     # -----------------------------------
@@ -343,9 +313,6 @@ class InvitationViewSet(viewsets.ViewSet):
             },
             status=status.HTTP_403_FORBIDDEN,
         )
-
-
-    # email = invitation.email
 
     # -----------------------------------
     # 6. Make sure a User doesn't already
@@ -364,20 +331,6 @@ class InvitationViewSet(viewsets.ViewSet):
             },
             status=status.HTTP_400_BAD_REQUEST,
         )
-
-
-    # if User.objects.filter(
-    #     email__iexact=email
-    # ).exists():
-
-    #     return Response(
-    #         {
-    #             "error":
-    #             "An account already exists for this email. "
-    #             "Please log in and accept the invitation."
-    #         },
-    #         status=status.HTTP_400_BAD_REQUEST
-    #     )
 
     # -----------------------------------
     # 7. Create User + membership +
@@ -434,9 +387,6 @@ class InvitationViewSet(viewsets.ViewSet):
         status=status.HTTP_201_CREATED
     )
 
-
- 
-
     # -----------------------------------
     # Deny invitation
     # -----------------------------------
@@ -450,7 +400,6 @@ class InvitationViewSet(viewsets.ViewSet):
 
         token = request.data.get("token")
 
-
         if not token:
 
             return Response(
@@ -460,8 +409,6 @@ class InvitationViewSet(viewsets.ViewSet):
                 },
                 status=status.HTTP_400_BAD_REQUEST
             )
-
-
 
         try:
 
@@ -480,8 +427,6 @@ class InvitationViewSet(viewsets.ViewSet):
                 status=status.HTTP_404_NOT_FOUND
             )
 
-
-
         if invitation.status != "pending":
 
             return Response(
@@ -491,8 +436,6 @@ class InvitationViewSet(viewsets.ViewSet):
                 },
                 status=status.HTTP_400_BAD_REQUEST
             )
-
-
 
         invitation.status = "denied"
 
@@ -506,7 +449,6 @@ class InvitationViewSet(viewsets.ViewSet):
             f"{invitation.email} denied invitation"
         )
 
-
         return Response(
             {
                 "message":
@@ -514,38 +456,7 @@ class InvitationViewSet(viewsets.ViewSet):
             }
         )
 
-
-
-    # -----------------------------------
-    # Owner views sent invitations
-    # -----------------------------------
-
-
-#   def list(self, request):
-
-#         invitations = Invitation.objects.filter(
-#             invited_by=request.user
-#         )
-#         print("INVITATIONS QUERYSET:", invitations)
-
-#         for invitation in invitations:
-#             print(
-#                 "INVITATION:",
-#                 invitation.id,
-#                 invitation.email,
-#                 invitation.status
-#             )
-
-#         serializer = InvitationSerializer(
-#             invitations,
-#             many=True
-#         )
-
-#         print("response invitations : ", serializer.data)
-#         return Response(
-#             serializer.data
-#         )
-
+ 
 
 
  

@@ -15,6 +15,7 @@ from .serializers import (
     RegisterSerializer,
     CustomTokenObtainPairSerializer,
     UserSerializer,
+    NormalRegisterSerializer,
     PasswordResetRequestSerializer,
     PasswordResetConfirmSerializer,
 )
@@ -29,7 +30,8 @@ class EmailTokenObtainPairView(TokenObtainPairView):
 # Register View
 # ----------------------------------------
 class RegisterView(generics.CreateAPIView):
-    serializer_class = RegisterSerializer
+    # serializer_class = RegisterSerializer
+    serializer_class = NormalRegisterSerializer
     permission_classes = [AllowAny]
     parser_classes = [JSONParser, MultiPartParser, FormParser]
 
