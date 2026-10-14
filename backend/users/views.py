@@ -6,16 +6,10 @@ from django.core.mail import send_mail
 from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.parsers import JSONParser, MultiPartParser, FormParser
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
-
-# from django.contrib.auth.tokens import default_token_generator
-# from django.utils.encoding import force_bytes
-# from django.utils.http import urlsafe_base64_encode
-
-
 
 from .serializers import (
     RegisterSerializer,
@@ -25,13 +19,8 @@ from .serializers import (
     PasswordResetConfirmSerializer,
 )
 
-
 from .serializers        import EmailTokenObtainPairSerializer
-# from projects.models     import ProjectMember
-# from tasks.models        import TaskAssignee
-# from workspaces.models   import Workspace, WorkspaceMember
-# from projects.models     import Project
-# from tasks.models        import Task
+ 
 
 class EmailTokenObtainPairView(TokenObtainPairView):
     serializer_class = EmailTokenObtainPairSerializer
@@ -42,7 +31,7 @@ class EmailTokenObtainPairView(TokenObtainPairView):
 class RegisterView(generics.CreateAPIView):
     serializer_class = RegisterSerializer
     permission_classes = [AllowAny]
-    parser_classes = [MultiPartParser, FormParser]
+    parser_classes = [JSONParser, MultiPartParser, FormParser]
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
