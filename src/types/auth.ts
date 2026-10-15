@@ -38,9 +38,10 @@ export interface Tokens {
 // Signup
 // --------------------
 export interface SignupData {
-  email: string
-  password: string
- full_name: string
+  email: string;
+  password: string;
+  full_name: string;
+  avatar?: File;
 }
  
 

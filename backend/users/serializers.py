@@ -98,8 +98,13 @@ class RegisterSerializer(serializers.ModelSerializer):
 
         return user
 
+
 class NormalRegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
+    avatar = serializers.ImageField(
+        required=False,
+        allow_null=True,
+    )
 
     class Meta:
         model = User
@@ -107,6 +112,7 @@ class NormalRegisterSerializer(serializers.ModelSerializer):
             "email",
             "full_name",
             "password",
+            "avatar",
         ]
 
     def validate_password(self, value):
@@ -114,11 +120,44 @@ class NormalRegisterSerializer(serializers.ModelSerializer):
         return value
 
     def create(self, validated_data):
-        return User.objects.create_user(
+        password = validated_data.pop("password")
+        avatar = validated_data.pop("avatar", None)
+
+        user = User.objects.create_user(
             email=validated_data["email"],
             full_name=validated_data.get("full_name", ""),
-            password=validated_data["password"],
+            password=password,
         )
+
+        if avatar:
+            user.avatar = avatar
+            user.save(update_fields=["avatar"])
+
+        return user
+
+
+
+# class NormalRegisterSerializer(serializers.ModelSerializer):
+#     password = serializers.CharField(write_only=True)
+
+#     class Meta:
+#         model = User
+#         fields = [
+#             "email",
+#             "full_name",
+#             "password",
+#         ]
+
+#     def validate_password(self, value):
+#         validate_password(value)
+#         return value
+
+#     def create(self, validated_data):
+#         return User.objects.create_user(
+#             email=validated_data["email"],
+#             full_name=validated_data.get("full_name", ""),
+#             password=validated_data["password"],
+#         )
 
 
 # ----------------------------------------

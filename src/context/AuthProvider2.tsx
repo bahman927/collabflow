@@ -154,29 +154,33 @@ const updateUser = useCallback(
 );
  
 
-  const signup = useCallback(
-    async (data: SignupData) => {
-      
-      try {
-        await wrappedFetch(API_BASE_URL + "/users/register/", {
-          method: "POST",
-          body: JSON.stringify(data),
-          auth: false,
-        });
 
-        // await login({ email: data.email, password: data.password });
+const signup = useCallback(
+  async (data: SignupData) => {
+    
+    const formData = new FormData();
 
-      } catch (err: any) {
-        throw err;
-      }
-      
-       return await login({
-          email: data.email,
-          password: data.password,
-        });
-    },
-    [wrappedFetch, login]
-  );
+    formData.append("email", data.email);
+    formData.append("password", data.password);
+    formData.append("full_name", data.full_name);
+
+    if (data.avatar) {
+      formData.append("avatar", data.avatar);
+    }
+
+    await wrappedFetch(API_BASE_URL + "/users/register/", {
+      method: "POST",
+      body: formData,
+      auth: false,
+    });
+
+    return await login({
+      email: data.email,
+      password: data.password,
+    });
+  },
+  [wrappedFetch, login]
+);
 
    
 
