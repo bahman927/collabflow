@@ -1,6 +1,6 @@
 // src/services/userService.ts
 
-import {ApiRequestInit}  from "../context/AuthProviderrrr";
+import {ApiRequestInit}  from "../context/AuthProvider2";
 import { API_BASE_URL } from "../api/config";
 export const userService = {
   // SIGNUP
