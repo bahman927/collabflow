@@ -21,10 +21,17 @@ ALLOWED_HOSTS = [
 ]
 
 CORS_ALLOWED_ORIGINS = [
-    origin.strip()
-    for origin in os.environ["CORS_ALLOWED_ORIGINS"].split(",")
-    if origin.strip()
+    "https://collabflow-five.vercel.app",
+    "https://collabflow-8umvo2fn0-bahman927-9503.vercel.app",
+    "http://localhost:5174",
 ]
+
+
+# CORS_ALLOWED_ORIGINS = [
+#     origin.strip()
+#     for origin in os.environ["CORS_ALLOWED_ORIGINS"].split(",")
+#     if origin.strip()
+# ]
 
 CSRF_TRUSTED_ORIGINS = CORS_ALLOWED_ORIGINS
 SECURE_HSTS_SECONDS = 3600
