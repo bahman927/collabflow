@@ -136,30 +136,6 @@ class NormalRegisterSerializer(serializers.ModelSerializer):
         return user
 
 
-
-# class NormalRegisterSerializer(serializers.ModelSerializer):
-#     password = serializers.CharField(write_only=True)
-
-#     class Meta:
-#         model = User
-#         fields = [
-#             "email",
-#             "full_name",
-#             "password",
-#         ]
-
-#     def validate_password(self, value):
-#         validate_password(value)
-#         return value
-
-#     def create(self, validated_data):
-#         return User.objects.create_user(
-#             email=validated_data["email"],
-#             full_name=validated_data.get("full_name", ""),
-#             password=validated_data["password"],
-#         )
-
-
 # ----------------------------------------
 # Custom Login Serializer (JWT)
 # ----------------------------------------

@@ -35,11 +35,13 @@ export function ProfilePage() {
    * Fallback to the old email-based image if no avatar
    * is available.
    */
-  const profileImage =
-    user?.avatar ||
-    (user?.email
-      ? `/${user.email.split("@")[0]}.JPG`
-      : "");
+  // const profileImage =
+  //   user?.avatar ||
+    // (user?.email
+    //   ? `/${user.email.split("@")[0]}.JPG`
+    //   : "");
+    
+    const profileImage = user?.avatar || "";
 
   const handleEdit = () => {
     setFullName(user?.full_name || "");

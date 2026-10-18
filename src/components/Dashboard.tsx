@@ -214,9 +214,7 @@ function RecentTaskRow({ task }: { task: Task }) {
 
   const avatarMembers = task.assignees.map((a) => ({
       name: a.name,
-      avatar: a.email
-        ? `/${a.email.split("@")[0]}.JPG`
-        : undefined,
+      avatar: a.avatar || undefined,
     }));
     
       // console.log("CREATED BY:", task.created_by)

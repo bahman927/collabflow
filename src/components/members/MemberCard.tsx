@@ -105,12 +105,7 @@ if (member.projects?.length > 0) {
       <div className="flex items-center gap-3">
         <AvatarChip
           name={member.displayName}
-          // avatarUrl={member.avatarUrl}
-            avatarUrl={
-              member.email
-                ? `/${member.email.split("@")[0]}.JPG`
-                : null
-            }
+          avatarUrl={member.avatarUrl}
           size="md"
           showName={false}
         />

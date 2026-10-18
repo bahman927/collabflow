@@ -77,22 +77,7 @@ interface MemberContextType {
     setError(null);
     try {
       const data = await memberService.getAll( workspaceId);
-
-      // console.log("FETCH MEMBERS RESPONSE:", data);
-      // const member229 = data.find(
-      //   (member) => member.id === 229
-      // );
-
-      // console.log("MEMBER 229:", member229);
-      // console.log(
-      //   "MEMBER 229 PROJECTS:",
-      //   JSON.stringify(member229?.projects, null, 2)
-      // );
-
-      // console.log(
-      //   "MEMBER 229 TASKS:",
-      //   JSON.stringify(member229?.tasks, null, 2)
-      // );
+      console.log("GET ALL MEMBERS RESPONSE:", data);
 
       setMembers(data);
     } catch (err) {

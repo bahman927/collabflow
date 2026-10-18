@@ -14,9 +14,10 @@ export default function AppHeader() {
    const capName = user?.full_name
   const [imageError, setImageError] = useState(false);
 
-  const profileImage = user?.email
-    ? `/${user.email.split("@")[0]}.JPG`
-    : "";
+  // const profileImage = user?.email
+  //   ? `/${user.email.split("@")[0]}.JPG`
+  //   : "";
+  const profileImage = user?.avatar || "";
 
   return (
     <header className="w-full  bg-white border-b shadow-sm flex justify-between items-center mt-3 mb-4   h-22">

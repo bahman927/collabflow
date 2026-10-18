@@ -79,10 +79,11 @@ export default function Sidebar({
    
   
 
-  const profileImage = user?.email
-    ? `/${user.email.split("@")[0]}.JPG`
-    : "";
+  // const profileImage = user?.email
+  //   ? `/${user.email.split("@")[0]}.JPG`
+  //   : "";
 
+  const profileImage = user?.avatar || "";
   return (
     // <aside className=" left-38 bottom-25   w-55 shrink-0  bg-gray-50 text-black  flex flex-col">
     <aside className="w-55 shrink-0  bg-gray-50 text-black  flex flex-col">

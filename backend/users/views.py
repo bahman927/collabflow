@@ -92,6 +92,7 @@ class LogoutView(APIView):
 # Auth Me View (Restore / Update Session)
 # ----------------------------------------
 class MeView(APIView):
+   
     permission_classes = [IsAuthenticated]
     parser_classes = [MultiPartParser, FormParser]
 
@@ -100,20 +101,33 @@ class MeView(APIView):
         return Response(serializer.data)
 
     def patch(self, request):
+        import logging
+        logger = logging.getLogger(__name__)
+
         serializer = UserSerializer(
             request.user,
             data=request.data,
             partial=True
         )
+        try:
+            serializer = UserSerializer(
+                request.user,
+                data=request.data,
+                partial=True,
+            )
 
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data)
 
-        return Response(
-            serializer.errors,
-            status=status.HTTP_400_BAD_REQUEST
-        )
+            return Response(
+                serializer.errors,
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        except Exception:
+            logger.exception("Profile PATCH failed")
+            raise
 
 class PasswordResetRequestView(APIView):
     permission_classes = [AllowAny]
