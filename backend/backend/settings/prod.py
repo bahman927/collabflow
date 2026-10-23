@@ -22,8 +22,6 @@ ALLOWED_HOSTS = [
 
 CORS_ALLOWED_ORIGINS = [
     "https://collabflow-five.vercel.app",
-     "https://collabflow-ba5d4jmmu-bahman927-9503.vercel.app",
-     "https://collabflow-4uypk6o7p-bahman927-9503.vercel.app",
     "http://localhost:5174",
 ]
 
