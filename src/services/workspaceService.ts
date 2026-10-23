@@ -7,21 +7,21 @@ import { API_BASE_URL } from "../api/config";
 export const workspaceService = {
   list() {
     return {
-      url: `${API_BASE_URL}/`,
+      url: `${API_BASE_URL}/workspaces/`,
       options: { method: "GET", auth: true },
     };
   },
 
   get(workspaceId: number) {
     return {
-      url: `${API_BASE_URL}/${workspaceId}/`,
+      url: `${API_BASE_URL}/workspaces//${workspaceId}/`,
       options: { method: "GET", auth: true },
     };
   },
 
    getMembership(workspaceId: number) {
     return {
-      url: `${API_BASE_URL}/${workspaceId}/members/me/`,
+      url: `${API_BASE_URL}/workspaces/${workspaceId}/members/me/`,
       options: {
         method: "GET",
         auth: true,
@@ -31,7 +31,7 @@ export const workspaceService = {
 
   create(data: WorkspaceCreateData) {
     return {
-      url: `${API_BASE_URL}/`,
+      url: `${API_BASE_URL}/workspaces/`,
       options: {
         method: "POST",
         body: JSON.stringify(data),
@@ -42,7 +42,7 @@ export const workspaceService = {
 
   update(workspaceId: number, data: WorkspaceUpdateData) {
     return {
-      url: `${API_BASE_URL}/${workspaceId}/`,
+      url: `${API_BASE_URL}/workspaces/${workspaceId}/`,
       options: {
         method: "PATCH",
         body: JSON.stringify(data),
@@ -54,21 +54,21 @@ export const workspaceService = {
 
   delete(workspaceId: number) {
     return {
-      url: `${API_BASE_URL}/${workspaceId}/`,
+      url: `${API_BASE_URL}/workspaces/${workspaceId}/`,
       options: { method: "DELETE", auth: true },
     };
   },
 
   listMembers(workspaceId: number) {
     return {
-      url: `${API_BASE_URL}/${workspaceId}/members/`,
+      url: `${API_BASE_URL}/workspaces/${workspaceId}/members/`,
       options: { method: "GET", auth: true },
     };
   },
 
   addMember(workspaceId: number, userId: number) {
     return {
-      url: `${API_BASE_URL}/${workspaceId}/members/`,
+      url: `${API_BASE_URL}/workspaces/${workspaceId}/members/`,
       options: {
         method: "POST",
         body: JSON.stringify({ user_id: userId }),
@@ -79,7 +79,7 @@ export const workspaceService = {
 
   removeMember(workspaceId: number, userId: number) {
     return {
-      url: `${API_BASE_URL}/${workspaceId}/members/${userId}/`,
+      url: `${API_BASE_URL}/workspaces/${workspaceId}/members/${userId}/`,
       options: { method: "DELETE", auth: true },
     };
   },

@@ -77,7 +77,7 @@ interface MemberContextType {
     setError(null);
     try {
       const data = await memberService.getAll( workspaceId);
-      console.log("GET ALL MEMBERS RESPONSE:", data);
+      // console.log("GET ALL MEMBERS RESPONSE:", data);
 
       setMembers(data);
     } catch (err) {

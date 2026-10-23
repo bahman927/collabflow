@@ -75,6 +75,9 @@ export const WorkspaceProvider = ({ children }: { children: React.ReactNode }) =
 
       const data = await apiFetch<Workspace[]>(url, options);
 
+      // console.log("FETCH WORKSPACES RESPONSE:", data);
+      // console.log("IS ARRAY:", Array.isArray(data));
+
       setWorkspaces(data);
 
       if (preferredWorkspaceId) {
@@ -152,6 +155,8 @@ export const WorkspaceProvider = ({ children }: { children: React.ReactNode }) =
 
         const { url, options } = workspaceService.create(data);
         const ws = await apiFetch<Workspace>(url, options);
+        // console.log("CREATED WORKSPACE:", ws);
+        // console.log("CURRENT WORKSPACES:", workspaces);
 
         setWorkspaces((prev) => [...prev, ws]);
         setCurrentWorkspace(ws);

@@ -33,7 +33,8 @@ export default function WorkspaceSidebar() {
     <aside className="w-53 ml-1 bg-gray-100 border-r p-6  space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold">Workspaces</h2>
-        {role?.toLowerCase() === "owner" && (
+        
+        {(role?.toLowerCase() === "owner" || !role ) && (
             <button onClick={() => setShowModal(true)} className="p-1 rounded hover:bg-gray-200">
               <Plus size={18} />
             </button>
@@ -41,35 +42,39 @@ export default function WorkspaceSidebar() {
       </div>
 
       <nav className="space-y-1">
-        {workspaces.map((ws) => (
-          <button
-            key={ws.id}
-            onClick={() => setCurrentWorkspace(ws)}
-            className={`flex items-center justify-between w-full px-3 py-2 rounded-md text-left
-              ${
-                currentWorkspace?.id === ws.id
-                  ? "bg-indigo-500 text-white"
-                  : "hover:bg-gray-200"
-              }
-            `}
-          >
-            <span className="flex items-center gap-2">
-              <Building2 size={18} />
-              {ws.name}
-            </span>
-            {projectsByWorkspace[ws.id] > 0 && (
-              <span
-                className={`text-xs px-1.5 py-0.5 rounded-full ${
+        {Array.isArray(workspaces) &&
+          workspaces.map((ws) => (
+            <button
+              key={ws.id}
+              onClick={() => setCurrentWorkspace(ws)}
+              className={`flex items-center justify-between w-full px-3 py-2 rounded-md text-left
+                ${
                   currentWorkspace?.id === ws.id
-                    ? "bg-indigo-400 text-white"
-                    : "bg-gray-200 text-gray-600"
-                }`}
-              >
-                {projectsByWorkspace[ws.id]}
+                    ? "bg-indigo-500 text-white"
+                    : "hover:bg-gray-200"
+                }
+              `}
+            >
+              <span className="flex items-center gap-2">
+                <Building2 size={18} />
+                {ws.name}
               </span>
-            )}
-          </button>
-        ))}
+
+              {projectsByWorkspace[ws.id] > 0 && (
+                <span
+                  className={`text-xs px-1.5 py-0.5 rounded-full ${
+                    currentWorkspace?.id === ws.id
+                      ? "bg-indigo-400 text-white"
+                      : "bg-gray-200 text-gray-600"
+                  }`}
+                >
+                  {projectsByWorkspace[ws.id]}
+                </span>
+              )}
+            </button>
+          ))}
+
+     
       </nav>
 
       {workspaces.length === 0 && (

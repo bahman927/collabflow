@@ -21,7 +21,7 @@ const LoginPage = () => {
 
     try {
       const data = await login({ email, password });
-      console.log("LOGIN RESPONSE:", data);
+      // console.log("LOGIN RESPONSE:", data);
       setTokens(data.tokens);
 
       console.log(
