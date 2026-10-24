@@ -29,29 +29,4 @@ class WorkspaceMemberAdmin(admin.ModelAdmin):
 
 from django.contrib import admin
 
-
-@admin.register(Invitation)
-class InvitationAdmin(admin.ModelAdmin):
-
-    list_display = (
-        "email",
-        "workspace",
-        "role",
-        "invited_by",
-        "status",
-        "created_at",
-    )
-
-    search_fields = (
-        "email",
-        "workspace__name",
-    )
-
-    list_filter = (
-        "status",
-        "created_at",
-    )
-
-# @admin.register(Invitation)
-# class InvitationAdmin(admin.ModelAdmin):
-#     list_display = ('email', 'workspace', 'role', 'invited_by', 'accepted')
+ 
