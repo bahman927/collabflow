@@ -1,5 +1,5 @@
 
-
+from .base import *
 import os
 
 INSTALLED_APPS += ["anymail"]
