@@ -42,7 +42,9 @@ EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
 
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
-ALLOWED_HOSTS = []
+
+ALLOWED_HOSTS=['collabflow-pemg.onrender.com','collabflow-five.vercel.app' ,'localhost' ,'127.0.0.1']
+
 AUTH_USER_MODEL = "users.User"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
