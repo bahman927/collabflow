@@ -12,7 +12,6 @@ ANYMAIL = {
 
 DEFAULT_FROM_EMAIL = os.environ["RESEND_FROM_EMAIL"]
 
-from .base import *
 
 SIMPLE_JWT = {
     **SIMPLE_JWT,
