@@ -36,20 +36,23 @@ ANYMAIL = {
 }
 # EMAIL_HOST = "smtp.gmail.com"
 
-EMAIL_PORT = 587
+# EMAIL_PORT = 587
 
-EMAIL_USE_TLS = True
+# EMAIL_USE_TLS = True
 
-EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
-EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
+# EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
+# EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
 
 DEFAULT_FROM_EMAIL = os.environ.get(
     "RESEND_FROM_EMAIL",
-    "onboarding@resend.dev",
+    # "onboarding@resend.dev",
 )
 
 
-ALLOWED_HOSTS=['collabflow-pemg.onrender.com','collabflow-five.vercel.app' ,'localhost' ,'127.0.0.1']
+ALLOWED_HOSTS=['collabflow-pemg.onrender.com',
+               'collabflow-five.vercel.app' ,
+               'localhost' ,
+               '127.0.0.1']
 
 AUTH_USER_MODEL = "users.User"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
