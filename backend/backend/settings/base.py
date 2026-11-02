@@ -29,9 +29,12 @@ SECRET_KEY = (
     or os.environ.get("SECRET_KEY", "unsafe-dev-key")
 )
 
-EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-
-EMAIL_HOST = "smtp.gmail.com"
+# EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_BACKEND = "anymail.backends.resend.EmailBackend"
+ANYMAIL = {
+    "RESEND_API_KEY": os.environ["RESEND_API_KEY"],
+}
+# EMAIL_HOST = "smtp.gmail.com"
 
 EMAIL_PORT = 587
 
@@ -40,7 +43,10 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
 EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
 
-DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+DEFAULT_FROM_EMAIL = os.environ.get(
+    "RESEND_FROM_EMAIL",
+    "onboarding@resend.dev",
+)
 
 
 ALLOWED_HOSTS=['collabflow-pemg.onrender.com','collabflow-five.vercel.app' ,'localhost' ,'127.0.0.1']

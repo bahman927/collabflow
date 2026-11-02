@@ -101,7 +101,7 @@ class TaskViewSet(ModelViewSet):
 
         if not project_id:
             raise ValidationError({
-                "project_id": "This field is required."
+                "project_id": "project_id field is required."
             })
 
         # -----------------------------------------
@@ -352,37 +352,6 @@ class TaskViewSet(ModelViewSet):
             status=status.HTTP_204_NO_CONTENT
         )
 
-    # def destroy(self, request, *args, **kwargs):
-    #     task = get_object_or_404(
-    #         Task,
-    #         pk=kwargs["pk"]
-    #     )
-
-    #     workspace = task.workspace
-    #     actor = request.user
-
-    #     # --------------------------------
-    #     # Owner check
-    #     # --------------------------------
-    #     get_object_or_404(
-    #         WorkspaceMember,
-    #         workspace=workspace,
-    #         user=actor,
-    #         # role__iexact="owner"
-    #     )
-
-    #     # Log BEFORE deleting
-    #     ActivityLogger.task_deleted(
-    #         actor=actor,
-    #         workspace=workspace,
-    #         task_name=task.name
-    #     )
-
-    #     task.delete()
-
-    #     return Response(
-    #      status=status.HTTP_204_NO_CONTENT
-    #     )
 
     def validate_status(self, value):
             valid_values = [choice[0] for choice in Task.STATUS_CHOICES]

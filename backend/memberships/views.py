@@ -197,7 +197,7 @@ class MemberViewSet(viewsets.ModelViewSet):
         # ⭐ Capture BEFORE deletion
         actor = request.user
         workspace = member.workspace
-        removed_user = member.user
+        removed_user = member.userRegisterView
 
         # ⭐ Log BEFORE deletion
         ActivityLogger.member_removed(

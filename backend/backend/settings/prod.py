@@ -2,15 +2,16 @@
 from .base import *
 import os
 
-INSTALLED_APPS += ["anymail"]
-
 EMAIL_BACKEND = "anymail.backends.resend.EmailBackend"
 
 ANYMAIL = {
     "RESEND_API_KEY": os.environ["RESEND_API_KEY"],
 }
 
-DEFAULT_FROM_EMAIL = os.environ["RESEND_FROM_EMAIL"]
+DEFAULT_FROM_EMAIL = os.environ.get(
+    "RESEND_FROM_EMAIL",
+    "onboarding@resend.dev",
+)
 
 
 SIMPLE_JWT = {

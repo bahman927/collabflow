@@ -29,20 +29,104 @@ class EmailTokenObtainPairView(TokenObtainPairView):
 # ----------------------------------------
 # Register View
 # ----------------------------------------
+
+from django.db import transaction
+from django.contrib.auth import get_user_model
+from django.contrib.auth.password_validation import validate_password
+from rest_framework import generics, serializers, status
+from rest_framework.permissions import AllowAny
+from rest_framework.parsers import JSONParser, MultiPartParser, FormParser
+from rest_framework.response import Response
+from rest_framework_simplejwt.tokens import RefreshToken
+
+from .serializers import NormalRegisterSerializer, UserSerializer
+from invitations.models import Invitation
+from workspaces.models import WorkspaceMember
+
+
+User = get_user_model()
+
+
 class RegisterView(generics.CreateAPIView):
-    # serializer_class = RegisterSerializer
     serializer_class = NormalRegisterSerializer
     permission_classes = [AllowAny]
     parser_classes = [JSONParser, MultiPartParser, FormParser]
 
     def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
+        token = request.data.get("token")
 
-        if not serializer.is_valid():
-            print("REGISTER ERRORS:", serializer.errors)
-            return Response(serializer.errors, status=400)
+        # Normal signup: no invitation token supplied.
+        if not token:
+            serializer = self.get_serializer(data=request.data)
 
-        user = serializer.save()
+            if not serializer.is_valid():
+                return Response(
+                    serializer.errors,
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            user = serializer.save()
+
+        # Invitation signup.
+        else:
+            full_name = (request.data.get("full_name") or "").strip()
+            password = request.data.get("password")
+            avatar = request.FILES.get("avatar")
+
+            if not full_name:
+                return Response(
+                    {"full_name": ["This field is required."]},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            if not password:
+                return Response(
+                    {"password": ["This field is required."]},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            try:
+                invitation = Invitation.objects.select_related(
+                    "workspace", "invited_by"
+                ).get(
+                    token=token,
+                    status="pending",
+                )
+            except Invitation.DoesNotExist:
+                return Response(
+                    {"token": ["This invitation is invalid or no longer pending."]},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            email = invitation.email.strip().lower()
+
+            if User.objects.filter(email__iexact=email).exists():
+                return Response(
+                    {"email": ["An account with this email already exists."]},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            try:
+                validate_password(password)
+            except Exception as exc:
+                return Response(
+                    {"password": list(exc.messages)},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            with transaction.atomic():
+                user = User.objects.create_user(
+                    email=email,
+                    full_name=full_name,
+                    password=password,
+                )
+
+                if avatar:
+                    user.avatar = avatar
+                    user.save(update_fields=["avatar"])
+
+                
+
         refresh = RefreshToken.for_user(user)
 
         return Response(
@@ -53,8 +137,37 @@ class RegisterView(generics.CreateAPIView):
                     "refresh": str(refresh),
                 },
             },
-            status=201,
+            status=status.HTTP_201_CREATED,
         )
+
+
+
+# class RegisterView(generics.CreateAPIView):
+#     # serializer_class = RegisterSerializer
+#     serializer_class = NormalRegisterSerializer
+#     permission_classes = [AllowAny]
+#     parser_classes = [JSONParser, MultiPartParser, FormParser]
+
+#     def create(self, request, *args, **kwargs):
+#         serializer = self.get_serializer(data=request.data)
+
+#         if not serializer.is_valid():
+#             print("REGISTER ERRORS:", serializer.errors)
+#             return Response(serializer.errors, status=400)
+
+#         user = serializer.save()
+#         refresh = RefreshToken.for_user(user)
+
+#         return Response(
+#             {
+#                 "user": UserSerializer(user).data,
+#                 "tokens": {
+#                     "access": str(refresh.access_token),
+#                     "refresh": str(refresh),
+#                 },
+#             },
+#             status=201,
+#         )
 
     
 
