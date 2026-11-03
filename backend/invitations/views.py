@@ -20,6 +20,11 @@ from users.serializers import UserSerializer
 
 from workspaces.models import Workspace, WorkspaceMember
 
+import logging
+
+from rest_framework import status
+
+
 
 from activities.utils import log_activity
 from django.conf import settings
@@ -170,13 +175,15 @@ class InvitationViewSet(viewsets.ViewSet):
         status=status.HTTP_201_CREATED
     )
 
+  
+  
+
+
   @action(detail=True, methods=["post"], url_path="resend")
   def resend(self, request, pk=None):
+        logger = logging.getLogger(__name__)
 
-        invitation = get_object_or_404(
-            Invitation,
-            pk=pk
-        )
+        invitation = get_object_or_404(Invitation, pk=pk)
 
         if invitation.status != "pending":
             return Response(
@@ -184,12 +191,47 @@ class InvitationViewSet(viewsets.ViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        send_invitation_email(invitation)
+        try:
+            send_invitation_email(invitation)
 
-        return Response(
-            {"message": "Invitation resent successfully."},
-            status=status.HTTP_200_OK
-        )
+            return Response(
+                {"message": "Invitation resent successfully."},
+                status=status.HTTP_200_OK
+            )
+
+        except Exception:
+            logger.exception(
+                "Failed to resend invitation %s to %s",
+                invitation.pk,
+                invitation.email
+            )
+
+            return Response(
+                {"error": "Unable to send invitation email. Please try again."},
+                status=status.HTTP_502_BAD_GATEWAY
+            )
+    
+
+#   @action(detail=True, methods=["post"], url_path="resend")
+#   def resend(self, request, pk=None):
+
+#         invitation = get_object_or_404(
+#             Invitation,
+#             pk=pk
+#         )
+
+#         if invitation.status != "pending":
+#             return Response(
+#                 {"error": "Only pending invitations can be resent."},
+#                 status=status.HTTP_400_BAD_REQUEST
+#             )
+
+#         send_invitation_email(invitation)
+
+#         return Response(
+#             {"message": "Invitation resent successfully."},
+#             status=status.HTTP_200_OK
+#         )
 
     # -----------------------------------
     # Validate invitation token
