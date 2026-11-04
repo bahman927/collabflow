@@ -164,9 +164,9 @@ class WorkspaceViewSet(ModelViewSet):
         # 6. Send invitation email
         send_invitation_email(invitation)
 
-        # 7. Build acceptance URL
-        accept_url = f"http://localhost:5173/invite/{token}"
-        print("accept_url =", accept_url)
+        # # 7. Build acceptance URL
+        # accept_url = f"http://localhost:5173/invite/{token}"
+        # print("accept_url =", accept_url)
 
         # 8. Log activity
         ActivityLogger.member_invited(
