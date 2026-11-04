@@ -120,16 +120,33 @@ class WorkspaceViewSet(ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # 3. Do not allow an existing CollabFlow user to be invited
-        if User.objects.filter(email__iexact=email).exists():
-            return Response(
-                {
-                    "error": (
-                        "This email already belongs to a CollabFlow account."
-                    )
-                },
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        # 3. Check whether the existing user is already in this workspace
+        existing_user = User.objects.filter(
+            email__iexact=email
+        ).first()
+
+        if existing_user:
+            already_member = WorkspaceMember.objects.filter(
+                workspace=workspace,
+                user=existing_user,
+            ).exists()
+
+            if already_member:
+                return Response(
+                    {
+                        "error": "This user is already a member of this workspace."
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+        )
+        # if User.objects.filter(email__iexact=email).exists():
+        #     return Response(
+        #         {
+        #             "error": (
+        #                 "This email already belongs to a CollabFlow account."
+        #             )
+        #         },
+        #         status=status.HTTP_400_BAD_REQUEST,
+        #     )
 
         # 4. Do not allow another pending invitation
         pending_invitation = Invitation.objects.filter(
