@@ -102,7 +102,7 @@ class RegisterView(generics.CreateAPIView):
 
             if User.objects.filter(email__iexact=email).exists():
                 return Response(
-                    {"email": ["An account with this email already exists."]},
+                    {"email": ["An account with this email already exists. Please login"]},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
@@ -139,37 +139,6 @@ class RegisterView(generics.CreateAPIView):
             },
             status=status.HTTP_201_CREATED,
         )
-
-
-
-# class RegisterView(generics.CreateAPIView):
-#     # serializer_class = RegisterSerializer
-#     serializer_class = NormalRegisterSerializer
-#     permission_classes = [AllowAny]
-#     parser_classes = [JSONParser, MultiPartParser, FormParser]
-
-#     def create(self, request, *args, **kwargs):
-#         serializer = self.get_serializer(data=request.data)
-
-#         if not serializer.is_valid():
-#             print("REGISTER ERRORS:", serializer.errors)
-#             return Response(serializer.errors, status=400)
-
-#         user = serializer.save()
-#         refresh = RefreshToken.for_user(user)
-
-#         return Response(
-#             {
-#                 "user": UserSerializer(user).data,
-#                 "tokens": {
-#                     "access": str(refresh.access_token),
-#                     "refresh": str(refresh),
-#                 },
-#             },
-#             status=201,
-#         )
-
-    
 
 
 # ----------------------------------------

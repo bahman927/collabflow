@@ -24,10 +24,10 @@ const LoginPage = () => {
       // console.log("LOGIN RESPONSE:", data);
       setTokens(data.tokens);
 
-      console.log(
-        "TOKENS AFTER LOGIN:",
-        localStorage.getItem("tokens")
-      );
+      // console.log(
+      //   "TOKENS AFTER LOGIN:",
+      //   localStorage.getItem("tokens")
+      // );
       navigate("/");
     } catch (err: any) {
       setError(err.message || "Invalid email or password");

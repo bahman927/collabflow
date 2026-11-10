@@ -12,7 +12,6 @@ interface InvitationSignupPageProps {
   onSignupSuccess: (tokens: Tokens) => Promise<void>;
 }
 
-
 const InvitationSignupPage = ({onSignupSuccess,}: InvitationSignupPageProps) => {
 
   const { token } = useParams();
@@ -34,10 +33,7 @@ const InvitationSignupPage = ({onSignupSuccess,}: InvitationSignupPageProps) => 
      workspace: Workspace
   }
 
-    
- 
-
-const handleSignup = async () => {
+  const handleSignup = async () => {
 
   // -----------------------------------------
   // 1. Validate passwords locally
@@ -47,7 +43,6 @@ const handleSignup = async () => {
     setError("Passwords do not match.");
     return;
   }
-
   setError("");
 
   try {
@@ -69,49 +64,36 @@ const handleSignup = async () => {
     // -----------------------------------------
 
     setTokens(result.tokens);
-
     console.log("TOKENS updated by setTokens(result.tokens) : ", result.tokens);
-
     await onSignupSuccess(result.tokens);
-
     console.log("ACCEPT INVITATION FINISHED");
 
     // -----------------------------------------
     // 4. Invitation accepted
     // -----------------------------------------
-
-
   } catch (err) {
-
     console.error(
       "Invitation signup failed:",
       err
     );
-
 
     // -----------------------------------------
     // 5. Django/API error
     // -----------------------------------------
 
     if (err instanceof ApiError) {
-
       setError(err.message);
-
       return;
     }
-
 
     // -----------------------------------------
     // 6. Unexpected JavaScript error
     // -----------------------------------------
 
     if (err instanceof Error) {
-
       setError(err.message);
-
       return;
     }
-
 
     // -----------------------------------------
     // 7. Unknown error
