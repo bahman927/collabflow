@@ -23,37 +23,35 @@ import ForgotPasswordPage from "../pages/ForgetPasswordPage";
 import ResetPasswordPage  from "../pages/ResetPasswordPage";
 
  export default function AppRoutes() {
-  //   console.log("🔥 AppRoutes rendered");
-  // console.log("🔥 pathname:", window.location.pathname);
+ 
   const {user} = useAuth()
   const isAuthenticated = !!user;
   return (
   <Routes>
     <Route path="/invite/:token"       element={<AcceptInvitationPage />}/>
     <Route element={<AppLayout />}>
-      
-       
-       {/* Public routes */}
+        
+        
+        {/* Public routes */}
       <Route element={<PublicRoute isAuthenticated={isAuthenticated} />}>
-        <Route path="/" element={<Landing />} />
-       
+          <Route path="/" element={<Landing />} />  
       </Route>
 
-      {/* Protected routes */}
+        {/* Protected routes */}
       <Route element={<ProtectedRoute isAuthenticated={isAuthenticated} />}>
-        <Route path="/home"                element={<Home />} />
-        <Route path="/dashboard"           element={<Dashboard />} />
+          <Route path="/home"                element={<Home />} />
+          <Route path="/dashboard"           element={<Dashboard />} />
 
-        <Route path="/workspaces"          element={<WorkspacePage />} />
+          <Route path="/workspaces"          element={<WorkspacePage />} />
 
-        <Route path="/projects"            element={<ProjectPage />} />
-        <Route path="/workspace/:workspaceId/project/:projectId/board" element={<TaskBoard />} />
-        
+          <Route path="/projects"            element={<ProjectPage />} />
+          <Route path="/workspace/:workspaceId/project/:projectId/board" element={<TaskBoard />} />
+          
 
-        <Route path="/tasks"               element={<TaskPanel />} /> 
-        <Route path="/members"             element={<MembersPage />} /> 
-        <Route path="/profile"             element={<ProfilePage />}/>
-        <Route path="/activity"            element={<ActivityPage />} />
+          <Route path="/tasks"               element={<TaskPanel />} /> 
+          <Route path="/members"             element={<MembersPage />} /> 
+          <Route path="/profile"             element={<ProfilePage />}/>
+          <Route path="/activity"            element={<ActivityPage />} />
       </Route>
 
     </Route>

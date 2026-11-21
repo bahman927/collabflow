@@ -1,11 +1,13 @@
 // src/pages/auth/Login.tsx
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { Eye, EyeOff, LogIn, Mail, Lock } from "lucide-react";
 
 const LoginPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+
   const { login, setTokens } = useAuth();
 
   const [email, setEmail] = useState("");
@@ -21,14 +23,23 @@ const LoginPage = () => {
 
     try {
       const data = await login({ email, password });
-      // console.log("LOGIN RESPONSE:", data);
+
       setTokens(data.tokens);
 
-      // console.log(
-      //   "TOKENS AFTER LOGIN:",
-      //   localStorage.getItem("tokens")
-      // );
-      navigate("/");
+      // Return to the original destination (e.g. invitation page)
+      const returnTo = location.state?.returnTo;
+
+      if (returnTo) {
+        navigate(returnTo, {
+          replace: true,
+          state: {
+            invitationTokens: data.tokens,
+          },
+        });
+      } else {
+        navigate("/");
+      }
+
     } catch (err: any) {
       setError(err.message || "Invalid email or password");
     } finally {
@@ -37,122 +48,139 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-indigo-50 via-white to-purple-50 px-4">
-      {/* Decorative blobs */}
-      <div className="absolute top-0 left-0 w-72 h-72 bg-indigo-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 -translate-x-1/2 -translate-y-1/2" />
-      <div className="absolute bottom-0 right-0 w-72 h-72 bg-purple-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 translate-x-1/2 translate-y-1/2" />
+  <div className="relative flex min-h-screen min-w-0 items-center justify-center overflow-hidden bg-linear-to-br from-indigo-50 via-white to-purple-50 px-3 py-8 sm:px-5 sm:py-10">
+    {/* Decorative blobs */}
+    <div className="pointer-events-none absolute -left-24 -top-24 h-48 w-48 rounded-full bg-indigo-200 opacity-30 blur-3xl sm:h-72 sm:w-72" />
+    <div className="pointer-events-none absolute -bottom-24 -right-24 h-48 w-48 rounded-full bg-purple-200 opacity-30 blur-3xl sm:h-72 sm:w-72" />
 
-      <div className="relative w-full max-w-md">
-        {/* Logo / Brand */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-indigo-600 text-white mb-4 shadow-lg">
-            <LogIn size={28} />
-          </div>
-          <h1 className="text-3xl font-bold text-gray-900">Welcome back</h1>
-          <p className="text-gray-500 mt-1">Sign in to your account</p>
+    <div className="relative z-10 w-full min-w-0 max-w-md">
+      {/* Logo / Brand */}
+      <div className="mb-6 text-center sm:mb-8">
+        <div className="mb-3 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-600 text-white shadow-lg sm:mb-4 sm:h-14 sm:w-14">
+          <LogIn size={26} />
         </div>
 
-        {/* Card */}
-        <div className="bg-white/80 backdrop-blur-sm shadow-xl rounded-2xl p-8 border border-gray-100">
-          <form onSubmit={handleSubmit} className="space-y-5">
-            {error && (
-              <div className="flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
-                <span className="shrink-0">⚠</span>
-                {error}
-              </div>
-            )}
+        <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">
+          Welcome back
+        </h1>
 
-            {/* Email */}
-            <div className="space-y-1.5">
-              <label className="block text-sm font-medium text-gray-700">
-                Email
-              </label>
-              <div className="relative">
-                <Mail
-                  size={18}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-                />
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  autoComplete="email"
-                  placeholder="you@example.com"
-                  className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:outline-none transition"
-                />
-              </div>
-            </div>
-
-            {/* Password */}
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <label className="block text-sm font-medium text-gray-700">
-                  Password
-                </label>
-                <Link
-                  to="/forgot-password"
-                  className="text-xs text-indigo-600 hover:text-indigo-500 font-medium"
-                >
-                  Forgot password?
-                </Link>
-              </div>
-              <div className="relative">
-                <Lock
-                  size={18}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-                />
-                <input
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  autoComplete="current-password"
-                  placeholder="••••••••"
-                  className="w-full pl-10 pr-11 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:outline-none transition"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                >
-                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                </button>
-              </div>
-            </div>
-
-            {/* Submit */}
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full flex items-center justify-center gap-2 bg-indigo-600 text-white py-2.5 rounded-lg font-medium
-                         hover:bg-indigo-700 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
-            >
-              {loading ? (
-                <span className="inline-block w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              ) : (
-                <>
-                  <LogIn size={18} />
-                  Sign In
-                </>
-              )}
-            </button>
-          </form>
-        </div>
-
-        {/* Footer */}
-        <p className="text-center text-sm text-gray-500 mt-6">
-          Don't have an account?{" "}
-          <Link
-            to="/signup"
-            className="text-indigo-600 hover:text-indigo-500 font-semibold"
-          >
-            Create one
-          </Link>
+        <p className="mt-1 text-sm text-gray-500 sm:text-base">
+          Sign in to your account
         </p>
       </div>
+
+      {/* Card */}
+      <div className="min-w-0 rounded-2xl border border-gray-100 bg-white/80 p-4 shadow-xl backdrop-blur-sm sm:p-6 md:p-8">
+        <form onSubmit={handleSubmit} className="space-y-5">
+          {/* Error */}
+          {error && (
+            <div className="flex min-w-0 items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-3 text-sm text-red-700 sm:px-4">
+              <span className="shrink-0">⚠</span>
+              <span className="min-w-0 wrap-break-word">{error}</span>
+            </div>
+          )}
+
+          {/* Email */}
+          <div className="space-y-1.5">
+            <label className="block text-sm font-medium text-gray-700">
+              Email
+            </label>
+
+            <div className="relative">
+              <Mail
+                size={18}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+              />
+
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                autoComplete="email"
+                placeholder="you@example.com"
+                className="w-full min-w-0 rounded-lg border border-gray-300 py-3 pl-10 pr-4 text-base outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 sm:py-2.5 sm:text-sm"
+              />
+            </div>
+          </div>
+
+          {/* Password */}
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between gap-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Password
+              </label>
+
+              <Link
+                to="/forgot-password"
+                className="shrink-0 text-xs font-medium text-indigo-600 transition hover:text-indigo-500 sm:text-sm"
+              >
+                Forgot password?
+              </Link>
+            </div>
+
+            <div className="relative">
+              <Lock
+                size={18}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+              />
+
+              <input
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                autoComplete="current-password"
+                placeholder="••••••••"
+                className="w-full min-w-0 rounded-lg border border-gray-300 py-3 pl-10 pr-12 text-base outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 sm:py-2.5 sm:text-sm"
+              />
+
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                className="absolute right-2 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-md text-gray-400 transition hover:text-gray-600"
+              >
+                {showPassword ? (
+                  <EyeOff size={18} />
+                ) : (
+                  <Eye size={18} />
+                )}
+              </button>
+            </div>
+          </div>
+
+          {/* Submit */}
+          <button
+            type="submit"
+            disabled={loading}
+            className="flex w-full items-center justify-center gap-2 rounded-lg bg-indigo-600 py-3 font-medium text-white shadow-sm transition-all hover:bg-indigo-700 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {loading ? (
+              <span className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+            ) : (
+              <>
+                <LogIn size={18} />
+                Sign In
+              </>
+            )}
+          </button>
+        </form>
+      </div>
+
+      {/* Footer */}
+      <p className="mt-5 text-center text-sm text-gray-500 sm:mt-6">
+        Don't have an account?{" "}
+        <Link
+          to="/signup"
+          className="font-semibold text-indigo-600 transition hover:text-indigo-500"
+        >
+          Create one
+        </Link>
+      </p>
     </div>
-  );
+  </div>
+);
 };
 
 export default LoginPage;

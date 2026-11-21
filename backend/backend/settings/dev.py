@@ -30,7 +30,7 @@ EMAIL_HOST_USER = "bahman927@gmail.com"
 
 DEFAULT_FROM_EMAIL = os.environ.get(
     "RESEND_FROM_EMAIL",
-    "onboarding@resend.dev",
+    "CollabFlow <noreply@bahmanapps.com>"
 )
 
  

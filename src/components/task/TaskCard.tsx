@@ -60,83 +60,179 @@ export default function TaskCard({ task, onClick }: Props) {
   const due = task.due_date ? formatDue(task.due_date) : null;
 
   return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className={`group rounded-lg bg-white border border-gray-200 p-3 shadow-sm hover:shadow-md
-                  transition-shadow cursor-pointer ${isDragging ? "opacity-50 shadow-lg ring-2 ring-indigo-300" : ""}`}
-      onClick={() => onClick?.(task)}
-    >
-      {/* Top row: drag handle + priority */}
-      <div className="flex items-start gap-2">
-        <button
-          {...attributes}
-          {...listeners}
-          className="mt-0.5 cursor-grab opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-gray-600"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <GripVertical size={14} />
-        </button>
+  <div
+    ref={setNodeRef}
+    style={style}
+    className={`group min-w-0 rounded-lg border border-gray-200 bg-white p-3 shadow-sm transition-shadow hover:shadow-md cursor-pointer
+      ${isDragging
+        ? "opacity-50 shadow-lg ring-2 ring-indigo-300"
+        : ""}`}
+    onClick={() => onClick?.(task)}
+  >
+    {/* Top row: drag handle + task information */}
+    <div className="flex min-w-0 items-start gap-2">
 
-         <div className="flex-1 min-w-0">
-            {/* Priority badge */}
-            {priority && (
-              <div className="flex items-center gap-1 mb-1.5">
-                <span className={`w-2 h-2 rounded-full ${priority.dot}`} />
-                <span className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">
-                  {priority.label}
-                </span>
-              </div>
-            )}
+      {/* Drag handle */}
+      <button
+        type="button"
+        {...attributes}
+        {...listeners}
+        aria-label={`Drag task ${task.name}`}
+        className="mt-0.5 shrink-0 cursor-grab touch-none text-gray-400 transition-opacity hover:text-gray-600 active:cursor-grabbing sm:opacity-0 sm:group-hover:opacity-100"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <GripVertical size={16} />
+      </button>
 
-            {/* Creator avatar + Task name */}
-            <div className="flex items-center gap-2">
-              {task.created_by?.avatar ? (
-                <img
-                  src={task.created_by.avatar}
-                  alt={task.created_by.name}
-                  className="w-7 h-7 rounded-full object-cover flex-shrink-0"
-                />
-              ) : (
-                <UserCircle className="w-7 h-7 text-gray-400 flex-shrink-0" />
-              )}
+      <div className="min-w-0 flex-1">
 
-              <h3 className="text-sm font-semibold text-gray-800 leading-snug truncate">
-                {task.name}
-              </h3>
-            </div>
-
-            {/* Description */}
-            {task.description && (
-              <p className="mt-1 text-xs text-gray-500 line-clamp-2 leading-relaxed">
-                {task.description}
-              </p>
-            )}
+        {/* Priority badge */}
+        {priority && (
+          <div className="mb-1.5 flex items-center gap-1">
+            <span
+              className={`h-2 w-2 shrink-0 rounded-full ${priority.dot}`}
+            />
+            <span className="text-[10px] font-medium uppercase tracking-wide text-gray-500">
+              {priority.label}
+            </span>
           </div>
+        )}
+
+        {/* Creator avatar + Task name */}
+        <div className="flex min-w-0 items-center gap-1">
+          {task.created_by?.avatar ? (
+            <img
+              src={task.created_by.avatar}
+              alt={task.created_by.name}
+              className="h-7 w-7 shrink-0 rounded-full "
+            />
+          ) : (
+            <UserCircle className="h-7 w-7 shrink-0 text-gray-400" />
+          )}
+
+          <h3 className="min-w-0 flex-1 wrap-break-word text-sm font-semibold leading-snug text-gray-800">
+            {task.name}
+          </h3>
+        </div>
+
+        {/* Description */}
+        {task.description && (
+          <p className="mt-1 line-clamp-2 wrap-break-word text-xs leading-relaxed text-gray-500">
+            {task.description}
+          </p>
+        )}
+      </div>
+    </div>
+
+    {/* Bottom row: due date + assignees */}
+    {(due || task.assignees.length > 0) && (
+      <div className="mt-3 flex min-w-0 flex-wrap items-center justify-between gap-2">
+
+        {/* Due date */}
+        {due && (
+          <div
+            className={`flex min-w-0 items-center gap-1 text-[11px] font-medium ${due.color}`}
+          >
+            <Calendar size={12} className="shrink-0" />
+            <span className="wrap-break-word">
+              {due.text}
+            </span>
+          </div>
+        )}
+
+        {/* Assignees */}
+        {task.assignees.length > 0 && (
+          <div className="ml-auto max-w-full shrink-0">
+            <AvatarGroup
+              people={mapTaskAssigneesToPeople(task.assignees)}
+              max={3}
+              size="sm"
+            />
+          </div>
+        )}
+      </div>
+    )}
+  </div>
+);
+
+  // return (
+  //   <div
+  //     ref={setNodeRef}
+  //     style={style}
+  //     className={`group rounded-lg bg-white border border-gray-200 p-3 shadow-sm hover:shadow-md
+  //                 transition-shadow cursor-pointer ${isDragging ? "opacity-50 shadow-lg ring-2 ring-indigo-300" : ""}`}
+  //     onClick={() => onClick?.(task)}
+  //   >
+  //     {/* Top row: drag handle + priority */}
+  //     <div className="flex items-start gap-2">
+  //       <button
+  //         {...attributes}
+  //         {...listeners}
+  //         className="mt-0.5 cursor-grab opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-gray-600"
+  //         onClick={(e) => e.stopPropagation()}
+  //       >
+  //         <GripVertical size={14} />
+  //       </button>
+
+  //        <div className="flex-1 min-w-0">
+  //           {/* Priority badge */}
+  //           {priority && (
+  //             <div className="flex items-center gap-1 mb-1.5">
+  //               <span className={`w-2 h-2 rounded-full ${priority.dot}`} />
+  //               <span className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">
+  //                 {priority.label}
+  //               </span>
+  //             </div>
+  //           )}
+
+  //           {/* Creator avatar + Task name */}
+  //           <div className="flex items-center gap-2">
+  //             {task.created_by?.avatar ? (
+  //               <img
+  //                 src={task.created_by.avatar}
+  //                 alt={task.created_by.name}
+  //                 className="w-7 h-7 rounded-full object-cover flex-shrink-0"
+  //               />
+  //             ) : (
+  //               <UserCircle className="w-7 h-7 text-gray-400 flex-shrink-0" />
+  //             )}
+
+  //             <h3 className="text-sm font-semibold text-gray-800 leading-snug truncate">
+  //               {task.name}
+  //             </h3>
+  //           </div>
+
+  //           {/* Description */}
+  //           {task.description && (
+  //             <p className="mt-1 text-xs text-gray-500 line-clamp-2 leading-relaxed">
+  //               {task.description}
+  //             </p>
+  //           )}
+  //         </div>
 
 
 
 
  
-      </div>
+  //     </div>
 
-      {/* Bottom row: due date + assignees */}
-      {(due || task.assignees.length > 0) && (
-        <div className="mt-3 flex items-center justify-between">
-          {due ? (
-            <div className={`flex items-center gap-1 text-[11px] font-medium ${due.color}`}>
-              <Calendar size={12} />
-              {due.text}
-            </div>
-          ) : (
-            <span />
-          )}
+  //     {/* Bottom row: due date + assignees */}
+  //     {(due || task.assignees.length > 0) && (
+  //       <div className="mt-3 flex items-center justify-between">
+  //         {due ? (
+  //           <div className={`flex items-center gap-1 text-[11px] font-medium ${due.color}`}>
+  //             <Calendar size={12} />
+  //             {due.text}
+  //           </div>
+  //         ) : (
+  //           <span />
+  //         )}
 
-          {task.assignees.length > 0 && (
-            <AvatarGroup   people={mapTaskAssigneesToPeople(task.assignees)} max={3} size="sm" />
-          )}
-        </div>
-      )}
-    </div>
-  );
+  //         {task.assignees.length > 0 && (
+  //           <AvatarGroup   people={mapTaskAssigneesToPeople(task.assignees)} max={3} size="sm" />
+  //         )}
+  //       </div>
+  //     )}
+  //   </div>
+  // );
 }

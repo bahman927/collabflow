@@ -34,22 +34,15 @@ User = get_user_model()
 class InvitationViewSet(viewsets.ViewSet):
   parser_classes = [MultiPartParser, FormParser, JSONParser]
 
-  def list(self, request, workspace_id=None):
-
-      
-
+  def list(self, request, workspace_id=None):    
         invitations = Invitation.objects.filter(
             workspace_id=workspace_id,
             invited_by=request.user
         )
-
-
         serializer = InvitationSerializer(
             invitations,
             many=True
         )
-
-
         return Response(serializer.data)
   
     # -----------------------------------
@@ -210,28 +203,7 @@ class InvitationViewSet(viewsets.ViewSet):
                 {"error": "Unable to send invitation email. Please try again."},
                 status=status.HTTP_502_BAD_GATEWAY
             )
-    
-
-#   @action(detail=True, methods=["post"], url_path="resend")
-#   def resend(self, request, pk=None):
-
-#         invitation = get_object_or_404(
-#             Invitation,
-#             pk=pk
-#         )
-
-#         if invitation.status != "pending":
-#             return Response(
-#                 {"error": "Only pending invitations can be resent."},
-#                 status=status.HTTP_400_BAD_REQUEST
-#             )
-
-#         send_invitation_email(invitation)
-
-#         return Response(
-#             {"message": "Invitation resent successfully."},
-#             status=status.HTTP_200_OK
-#         )
+ 
 
     # -----------------------------------
     # Validate invitation token
@@ -260,6 +232,9 @@ class InvitationViewSet(viewsets.ViewSet):
             )
  
         if invitation.status != "pending":
+            # Check whether the invited email already has an account
+
+            
 
             return Response(
                 {
@@ -269,12 +244,16 @@ class InvitationViewSet(viewsets.ViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-
+        existing_account = User.objects.filter(
+                        email__iexact=invitation.email.strip()
+                    ).exists()
+        
         return Response(
             {
                 "valid": True,
 
                 "email": invitation.email,
+                "existing_account": existing_account,
 
                 "workspace": {
                     "id": invitation.workspace.id,
@@ -292,8 +271,6 @@ class InvitationViewSet(viewsets.ViewSet):
     # Accept invitation
     # User MUST be authenticated
     # -----------------------------------
-  
-
 
   @action(
     detail=False,
@@ -338,7 +315,7 @@ class InvitationViewSet(viewsets.ViewSet):
             )
 
         # 5. Make sure the invitation belongs to this user's email
-        if user.email.lower() != invitation.email.lower():
+        if user.email.strip().lower() != invitation.email.strip().lower():
             return Response(
                 {
                     "error": (
@@ -471,6 +448,46 @@ class InvitationViewSet(viewsets.ViewSet):
         )
 
  
+  def destroy(self, request, pk=None):
 
+        # 1. Find the invitation
+        invitation = get_object_or_404(
+            Invitation,
+            pk=pk
+        )
+
+        # 2. Only the workspace Owner can cancel it
+        is_owner = WorkspaceMember.objects.filter(
+            workspace=invitation.workspace,
+            user=request.user,
+            role__iexact="owner",
+            is_active=True
+        ).exists()
+
+        if not is_owner:
+            return Response(
+                {"error": "Only the workspace Owner can cancel invitations."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        # 3. Only pending invitations can be cancelled
+        if invitation.status != "pending":
+            return Response(
+                {"error": "Only pending invitations can be cancelled."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+          # Log activity before deleting the invitation
+        log_activity(
+            invitation.workspace,
+            request.user,
+            f"Cancelled invitation to {invitation.email}"
+        )
+
+        # 4. Delete the invitation
+        invitation.delete()
+
+        return Response(
+            status=status.HTTP_204_NO_CONTENT
+        )
 
  

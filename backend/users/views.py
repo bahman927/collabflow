@@ -105,6 +105,8 @@ class RegisterView(generics.CreateAPIView):
                     {"email": ["An account with this email already exists. Please login"]},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
+            
+            
 
             try:
                 validate_password(password)
@@ -136,6 +138,9 @@ class RegisterView(generics.CreateAPIView):
                     "access": str(refresh.access_token),
                     "refresh": str(refresh),
                 },
+                "existing_account": User.objects.filter(
+                    email__iexact=invitation.email
+                ).exists(),
             },
             status=status.HTTP_201_CREATED,
         )

@@ -25,32 +25,36 @@ export function AssigneeAvatars({
   const remaining = assignees.length - max;
 
   return (
-    <div className="flex items-center -space-x-2">
-      {visible.map((assignee) => (
-        <div
-          key={assignee.id}
-          className="ring-2 ring-white rounded-full"
-          title={assignee.name || assignee.email || 'Unknown'}
-        >
-          <AvatarChip
-            name={assignee.name}
-            avatarUrl={assignee.avatar_url}
-            size={size}
-            showName={false}
-          />
-        </div>
-      ))}
-      {remaining > 0 && (
-        <div
-          className={`
-            ${size === 'sm' ? 'w-6 h-6 text-xs' : 'w-8 h-8 text-sm'}
-            rounded-full bg-gray-200 text-gray-600 font-medium
-            flex items-center justify-center ring-2 ring-white
-          `}
-        >
-          +{remaining}
-        </div>
-      )}
-    </div>
-  );
+  <div className="flex w-fit max-w-full shrink-0 items-center -space-x-2">
+
+    {visible.map((assignee) => (
+      <div
+        key={assignee.id}
+        className="shrink-0 rounded-full ring-2 ring-white"
+        title={assignee.name || assignee.email || "Unknown"}
+      >
+        <AvatarChip
+          name={assignee.name}
+          avatarUrl={assignee.avatar_url}
+          size={size}
+          showName={false}
+        />
+      </div>
+    ))}
+
+    {remaining > 0 && (
+      <div
+        className={`
+          ${size === "sm" ? "h-6 w-6 text-xs" : "h-8 w-8 text-sm"}
+          flex shrink-0 items-center justify-center
+          rounded-full bg-gray-200 font-medium text-gray-600
+          ring-2 ring-white
+        `}
+      >
+        +{remaining}
+      </div>
+    )}
+
+  </div>
+);
 }

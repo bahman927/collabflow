@@ -136,183 +136,190 @@ export function ActivityPanel() {
   const groupedFullActivity = groupByDay(visibleFullActivity);
   
 
-  return (
-    <div className="w-full flex justify-center">
-      <aside className="w-full min-w-88 max-w-xlg bg-gray-50 flex flex-col shrink-0">
+ return (
+  <div className="flex w-full min-w-0 justify-center">
+    <aside className="flex w-full min-w-0 max-w-2xl shrink-0 flex-col bg-gray-50">
 
-        {/* Scrollable Content */}
-        <div className="flex-1 overflow-y-auto px-1 py-1 space-y-8">
+      {/* Scrollable Content */}
+      <div className="min-h-0 min-w-0 flex-1 space-y-6 overflow-y-auto overflow-x-hidden px-2 py-2 sm:space-y-8 sm:px-3 sm:py-3">
 
-          {/* CURRENT ACTIVITY */}
-          <section>
-            <h3 className="font-semibold text-gray-500 mb-3">
-              Current Activity
-            </h3>
+        {/* CURRENT ACTIVITY */}
+        <section>
+          <h3 className="mb-3 font-semibold text-gray-500">
+            Current Activity
+          </h3>
 
-            {loading && (
-              <p className="text-xs text-gray-400">Loading activity…</p>
-            )}
+          {loading && (
+            <p className="text-xs text-gray-400">Loading activity…</p>
+          )}
 
-            {error && (
-              <p className="text-xs text-red-500">{error}</p>
-            )}
+          {error && (
+            <p className="wrap-break-word text-xs text-red-500">{error}</p>
+          )}
 
-            {currentActivity.length === 0 ? (
-              <p className="text-xs text-gray-400">No recent actions.</p>
-            ) : (
-              <ul className="space-y-1">
-                {currentActivity.map((item) => {
-                  const { icon, color } = getActivityStyle(item.description);
+          {currentActivity.length === 0 ? (
+            <p className="text-xs text-gray-400">No recent actions.</p>
+          ) : (
+            <ul className="space-y-2">
+              {currentActivity.map((item) => {
+                const { icon, color } = getActivityStyle(item.description);
 
-                  return (
-                    <li
-                      key={item.id}
-                      className="flex items-start gap-2 text-sm leading-relaxed font-semibold"
-                    >
-                      <span className="mt-0.5 text-gray-400">{icon}</span>
-
-                      <div className="wrap-break-words whitespace-normal">
-                        <span className={color}>{item.description}</span>
-
-                        <div className="text-[10px] text-gray-400">
-                          {item.relativeTime}
-                        </div>
-                      </div>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-          </section>
-
-          {/* WEEKLY SUMMARY */}
-          <section>
-            <h3 className="font-semibold text-gray-500 mb-2">
-              Last 7 Days Activity
-            </h3>
-
-            {activeMembers.length === 0 ? (
-              <p className="text-xs text-gray-400">No activity this week.</p>
-            ) : (
-              <ul className="space-y-3">
-                {activeMembers.map((m) => (
+                return (
                   <li
-                    key={m.memberId}
-                    className="border border-gray-100 rounded-md px-3 py-2"
+                    key={item.id}
+                    className="flex min-w-0 items-start gap-2 text-sm font-semibold leading-relaxed"
                   >
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs font-medium text-gray-800">
-                        {m.memberName}
-                      </span>
-                    </div>
+                    <span className="mt-0.5 shrink-0 text-gray-400">{icon}</span>
 
-                    <div className="flex flex-wrap font-semibold gap-x-3 gap-y-1 text-[11px] text-gray-600 wrap-break-words whitespace-normal">
-                      <span>📁 {m.projectsCreated} projects created</span>
-                      <span>🗑️ {m.projectsDeleted} projects deleted</span>
-                      <span>✅ {m.tasksCompleted} completed</span>
-                      <span>📌 {m.tasksAssigned} assigned</span>
-                      <span>💬 {m.comments} comments</span>
-                      <span>🔁 {m.statusChanges} status changes</span>
+                    <div className="min-w-0 flex-1">
+                      <span className={`${color} wrap-break-word`}>
+                        {item.description}
+                      </span>
+
+                      <div className="mt-0.5 text-[10px] text-gray-400">
+                        {item.relativeTime}
+                      </div>
                     </div>
                   </li>
-                ))}
-              </ul>
-            )}
-          </section>
+                );
+              })}
+            </ul>
+          )}
+        </section>
 
-         {/* FULL ACTIVITY FEED */}
-    {/* FULL ACTIVITY FEED */}
-    <section>
-      <h3 className="font-semibold text-gray-500 mb-2">
-        Full Activity Feed
-      </h3>
+        {/* WEEKLY SUMMARY */}
+        <section>
+          <h3 className="mb-2 font-semibold text-gray-500">
+            Last 7 Days Activity
+          </h3>
 
-      {loading && (
-        <p className="text-sm text-gray-400">Loading full activity…</p>
-      )}
-
-      {error && (
-        <p className="text-xs text-red-500">{error}</p>
-      )}
-
-      {fullActivity.length === 0 ? (
-        <p className="text-sm text-gray-400">No activity found.</p>
-      ) : (
-        <>
-          {/* GROUPED BY DAY */}
-          {Object.entries(groupedFullActivity).map(([day, items]) => {
-            const isCollapsed = collapsedDays[day] ?? false;
-
-            return (
-              <div key={day} className="mb-2">
-
-                {/* ⭐ Sticky Day Header + Collapse Toggle */}
-                <div
-                  className="text-xs font-semibold text-gray-700 bg-gray-100 px-2 py-1 sticky top-0 cursor-pointer flex justify-between items-center border-b border-gray-200"
-                  onClick={() => toggleDay(day)}
+          {activeMembers.length === 0 ? (
+            <p className="text-xs text-gray-400">No activity this week.</p>
+          ) : (
+            <ul className="space-y-3">
+              {activeMembers.map((m) => (
+                <li
+                  key={m.memberId}
+                  className="min-w-0 rounded-md border border-gray-100 px-3 py-3 sm:py-2"
                 >
-                  <span>{day}</span>
-                  <span className="text-gray-500 text-xs">
-                    {isCollapsed ? "▼" : "▲"}
-                  </span>
-                </div>
+                  <div className="mb-2 min-w-0">
+                    <span className="wrap-break-word text-xs font-medium text-gray-800">
+                      {m.memberName}
+                    </span>
+                  </div>
 
-                {/* ⭐ Collapsible Day Items */}
-                {!isCollapsed && (
-                  <ul className="space-y-1 mt-1">
-                    {items.map((item) => {
-                      const { icon, color } = getActivityStyle(item.description);
+                  <div className="flex flex-wrap gap-x-3 gap-y-2 text-[11px] font-semibold text-gray-600">
+                    <span>📁 {m.projectsCreated} projects created</span>
+                    <span>🗑️ {m.projectsDeleted} projects deleted</span>
+                    <span>✅ {m.tasksCompleted} completed</span>
+                    <span>📌 {m.tasksAssigned} assigned</span>
+                    <span>💬 {m.comments} comments</span>
+                    <span>🔁 {m.statusChanges} status changes</span>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
 
-                      return (
-                        <li
-                          key={item.id}
-                          className="flex items-start gap-2 text-sm leading-relaxed font-semibold"
-                        >
-                          <span className="mt-0.5 text-gray-400">{icon}</span>
+        {/* FULL ACTIVITY FEED */}
+        <section className="min-w-0">
+          <h3 className="mb-2 font-semibold text-gray-500">
+            Full Activity Feed
+          </h3>
 
-                          <div className="wrap-break-words whitespace-normal">
-                            <span className={color}>{item.description}</span>
-
-                            <div className="text-[10px] text-gray-400">
-                              {new Date(item.created_at).toLocaleTimeString()}
-                            </div>
-                          </div>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                )}
-              </div>
-            );
-          })}
-
-          {/* MORE BUTTON */}
-          {!showAll && fullActivity.length > VISIBLE_COUNT && (
-            <button
-              onClick={() => setShowAll(true)}
-              className="text-xs text-blue-600 hover:underline mt-2"
-            >
-              more...
-            </button>
+          {loading && (
+            <p className="text-sm text-gray-400">Loading full activity…</p>
           )}
 
-          {/* SHOW LESS BUTTON */}
-          {showAll && fullActivity.length > VISIBLE_COUNT && (
-            <button
-              onClick={() => setShowAll(false)}
-              className="text-xs text-blue-600 hover:underline mt-2"
-            >
-              show less
-            </button>
+          {error && (
+            <p className="wrap-break-word text-xs text-red-500">{error}</p>
           )}
-        </>
-      )}
-    </section>
 
+          {fullActivity.length === 0 ? (
+            <p className="text-sm text-gray-400">No activity found.</p>
+          ) : (
+            <>
+              {/* GROUPED BY DAY */}
+              {Object.entries(groupedFullActivity).map(([day, items]) => {
+                const isCollapsed = collapsedDays[day] ?? false;
 
+                return (
+                  <div key={day} className="mb-2 min-w-0">
 
-        </div>
-      </aside>
-    </div>
-  );
+                    {/* Day Header + Collapse Toggle */}
+                    <button
+                      type="button"
+                      className="sticky top-0 flex w-full items-center justify-between gap-2 border-b border-gray-200 bg-gray-100 px-2 py-2 text-left text-xs font-semibold text-gray-700"
+                      onClick={() => toggleDay(day)}
+                      aria-expanded={!isCollapsed}
+                    >
+                      <span className="wrap-break-word">{day}</span>
+                      <span className="shrink-0 text-xs text-gray-500">
+                        {isCollapsed ? "▼" : "▲"}
+                      </span>
+                    </button>
+
+                    {/* Collapsible Day Items */}
+                    {!isCollapsed && (
+                      <ul className="mt-2 space-y-2">
+                        {items.map((item) => {
+                          const { icon, color } = getActivityStyle(item.description);
+
+                          return (
+                            <li
+                              key={item.id}
+                              className="flex min-w-0 items-start gap-2 text-sm font-semibold leading-relaxed"
+                            >
+                              <span className="mt-0.5 shrink-0 text-gray-400">
+                                {icon}
+                              </span>
+
+                              <div className="min-w-0 flex-1">
+                                <span className={`${color} wrap-break-word`}>
+                                  {item.description}
+                                </span>
+
+                                <div className="mt-0.5 text-[10px] text-gray-400">
+                                  {new Date(item.created_at).toLocaleTimeString()}
+                                </div>
+                              </div>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    )}
+                  </div>
+                );
+              })}
+
+              {/* MORE BUTTON */}
+              {!showAll && fullActivity.length > VISIBLE_COUNT && (
+                <button
+                  type="button"
+                  onClick={() => setShowAll(true)}
+                  className="mt-2 py-2 text-xs text-blue-600 hover:underline"
+                >
+                  more...
+                </button>
+              )}
+
+              {/* SHOW LESS BUTTON */}
+              {showAll && fullActivity.length > VISIBLE_COUNT && (
+                <button
+                  type="button"
+                  onClick={() => setShowAll(false)}
+                  className="mt-2 py-2 text-xs text-blue-600 hover:underline"
+                >
+                  show less
+                </button>
+              )}
+            </>
+          )}
+        </section>
+
+      </div>
+    </aside>
+  </div>
+);
 }

@@ -30,32 +30,34 @@ export default function AppLayout() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen">
+  <div className="flex min-h-screen min-w-0 flex-col">
 
-      {/* Top Header */}
-      {isAuthenticated ? <AppHeader /> : <MarketingHeader />}
+    {/* TOP HEADER */}
+    {isAuthenticated ? <AppHeader /> : <MarketingHeader />}
 
-      <div className="flex flex-1 overflow-hidden">
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-visible lg:flex-row lg:overflow-hidden">
 
-        {/* Global App Sidebar */}
-        {isAuthenticated && (
-          <Sidebar onAssignProjectClick={handleAssignProjectClick} />
-        )}
+      {/* GLOBAL APP SIDEBAR */}
+      {isAuthenticated && (
+        <Sidebar onAssignProjectClick={handleAssignProjectClick} />
+      )}
 
-        {/* Contextual Sidebar (Workspace / Project / Task) */}
-        {isAuthenticated && contextualSidebar}
+      {/* CONTEXTUAL SIDEBAR */}
+      {isAuthenticated && contextualSidebar}
 
-        {/* Main Content Area */}
-        <div className="flex-1 flex flex-col overflow-hidden">
-          {/* {isAuthenticated && <Navbar />} */}
+      {/* MAIN CONTENT AREA */}
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
 
-          <main className="flex-1 p-6 overflow-y-auto">
-            <Outlet />
-          </main>
-        </div>
+        {/* MAIN CONTENT */}
+        <main className="min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-4 lg:p-6">
+          <Outlet />
+        </main>
+
       </div>
+
     </div>
-  );
+  </div>
+);
 }
 
 

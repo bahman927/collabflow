@@ -6,12 +6,6 @@ import { ApiError } from "./apiError";
 
 import { API_BASE_URL } from "./config";
 
-
-// const BASE_URL =
-//   import.meta.env.VITE_API_URL || "http://localhost:8000/api";
-// console.log("API_BASE_URL:", API_BASE_URL);
-// console.log("Input URL:", URL); // Use your actual parameter name if it isn't endpoint
-
 export interface ApiRequestInit extends RequestInit {
   auth?: boolean;
 }
@@ -166,31 +160,12 @@ export default async function apiFetch<T = any>(
 
         if (!newAccessToken) {
           toast.error("Session expired — please log in again.");
-
-          // console.error("❌ REFRESH FAILED");
-          // console.error("newAccessToken:", newAccessToken);
-          // console.error("tokens before logout:", getTokens());
+ 
 
           logout();
 
           throw new Error("SESSION_EXPIRED");
         }
-
-      // if (!newAccessToken) {
-
-      //   toast.error(
-      //     "Session expired — please log in again."
-      //   );
-
-      //   logout();
-
-      //   window.location.href =
-      //     "/login";
-
-      //   throw new Error(
-      //     "SESSION_EXPIRED"
-      //   );
-      // }
 
       headers.set(
         "Authorization",
@@ -220,8 +195,7 @@ export default async function apiFetch<T = any>(
   const executeFetch = async () => {
 
     try {
-      // console.log("URL:", url);
-      // console.log("Page URL:", window.location.href);
+       
 
       return await fetch(
         url,
@@ -262,9 +236,6 @@ export default async function apiFetch<T = any>(
     tokens?.refresh
   ) {
 
-    // console.log(
-    //   "Token expired, attempting refresh..."
-    // );
 
     const newAccessToken =
       await refreshAccessToken(

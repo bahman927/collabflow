@@ -32,43 +32,60 @@ export default function KanbanColumn({ status, label, tasks, onTaskClick }: Prop
 
   const ids = tasks.map((t) => String(t.id));
 
-  return (
-    <div
-      className={`min-w-50 max-w-xs flex-1 rounded-xl bg-gray-50/80 border border-gray-200 border-t-4
-                  ${COLUMN_COLORS[status]} flex flex-col transition-colors
-                  ${isOver ? "bg-indigo-50/60 border-indigo-200" : ""}`}
-    >
-      {/* Column header */}
-      <div className="px-4 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <h3 className="text-sm font-semibold text-gray-700">{label}</h3>
-          <span
-            className={`text-[11px] font-bold px-1.5 py-0.5 rounded-full ${COUNT_COLORS[status]}`}
-          >
-            {tasks.length}
-          </span>
-        </div>
-      </div>
+ return (
+  <div
+    className={`flex w-[210px] min-w-[210px] shrink-0 flex-col rounded-xl border border-t-4 border-gray-200 bg-gray-50/80 transition-colors
+      ${COLUMN_COLORS[status]}
+      ${isOver ? "border-indigo-200 bg-indigo-50/60" : ""}`}
+  >
+    {/* Column header */}
+    <div className="flex items-center justify-between gap-2 px-3 py-3 sm:px-4">
+      <div className="flex min-w-0 items-center gap-2">
+        <h3 className="wrap-break-word text-sm font-semibold text-gray-700">
+          {label}
+        </h3>
 
-      {/* Cards */}
-      <div ref={setNodeRef} className="px-2 pb-3 space-y-2 flex-1 min-h-15">
-        <SortableContext items={ids} strategy={verticalListSortingStrategy}>
-          {tasks.map((task) => (
-            <TaskCard key={task.id} task={task} onClick={onTaskClick} />
-          ))}
-        </SortableContext>
-
-        {tasks.length === 0 && (
-          <div
-            className={`flex items-center justify-center h-20 rounded-lg border-2 border-dashed
-                        ${isOver ? "border-indigo-300 bg-indigo-50" : "border-gray-200"} transition-colors`}
-          >
-            <p className="text-xs text-gray-400">
-              {isOver ? "Drop here" : "No tasks"}
-            </p>
-          </div>
-        )}
+        <span
+          className={`shrink-0 rounded-full px-1.5 py-0.5 text-[11px] font-bold ${COUNT_COLORS[status]}`}
+        >
+          {tasks.length}
+        </span>
       </div>
     </div>
-  );
+
+    {/* Cards */}
+    <div
+      ref={setNodeRef}
+      className="min-h-15 min-w-0 flex-1 space-y-2 px-2 pb-3"
+    >
+      <SortableContext
+        items={ids}
+        strategy={verticalListSortingStrategy}
+      >
+        {tasks.map((task) => (
+          <TaskCard
+            key={task.id}
+            task={task}
+            onClick={onTaskClick}
+          />
+        ))}
+      </SortableContext>
+
+      {tasks.length === 0 && (
+        <div
+          className={`flex h-20 items-center justify-center rounded-lg border-2 border-dashed transition-colors
+            ${isOver
+              ? "border-indigo-300 bg-indigo-50"
+              : "border-gray-200"}`}
+        >
+          <p className="text-xs text-gray-400">
+            {isOver ? "Drop here" : "No tasks"}
+          </p>
+        </div>
+      )}
+    </div>
+  </div>
+);
+
+   
 }

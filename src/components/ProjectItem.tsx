@@ -99,7 +99,7 @@ const ProjectItem: React.FC<ProjectItemProps> = ({
 
       </div>
 
-        <span className="font-semibold truncate">{title}</span>
+        <span className="font-semibold">{title}</span>
 
         {/* Assignee avatars */}
         {assignees.length > 0 && (
@@ -113,11 +113,6 @@ const ProjectItem: React.FC<ProjectItemProps> = ({
                 <AvatarChip
                   name={assignee.name}
                   avatarUrl={assignee.avatar ?? null}
-                    // avatarUrl={
-                    //   assignee.email
-                    //     ? `/${assignee.email.split("@")[0]}.JPG`
-                    //     : null
-                    // }
                   size="sm"
                   showName={false}
                 />
@@ -184,7 +179,7 @@ const ProjectItem: React.FC<ProjectItemProps> = ({
         )}
 
          {  deletable  && (
-            <div className="px-6 py-3 border-t border-gray-100">
+            <div className=" border-gray-100">
               <button
                 onClick={(e) => {
                   e.stopPropagation();

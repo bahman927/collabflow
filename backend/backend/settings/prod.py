@@ -10,7 +10,7 @@ ANYMAIL = {
 
 DEFAULT_FROM_EMAIL = os.environ.get(
     "RESEND_FROM_EMAIL",
-    "onboarding@resend.dev",
+    "CollabFlow <noreply@bahmanapps.com>"
 )
 
 
@@ -34,7 +34,7 @@ ALLOWED_HOSTS = [
 CORS_ALLOWED_ORIGINS = [
     "https://collabflow.bahmanapps.com",
     "https://collabflow-five.vercel.app",
-    "http://localhost:5174",
+    "http://localhost:5173",
 ]
 
 

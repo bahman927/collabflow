@@ -161,15 +161,28 @@ function EditableText({
     return (
       <div
         onClick={() => setEditing(true)}
-        className={`group cursor-pointer rounded-md px-2 py-1 -mx-2 hover:bg-gray-50 transition ${className}`}
+        className={`group -mx-2 cursor-pointer rounded-md px-2 py-2 transition hover:bg-gray-50 ${className}`}
       >
-        <span className={value ? "" : "text-gray-400 italic"}>
+        <span className={`wrap-break-word ${value ? "" : "text-gray-400 italic"}`}>
           {value || placeholder}
         </span>
-        <span className="ml-2 opacity-0 group-hover:opacity-100 text-gray-300 transition inline-block">
+
+        <span className="ml-2 inline-block text-gray-300 opacity-100 transition sm:opacity-0 sm:group-hover:opacity-100">
           <IconEdit />
         </span>
       </div>
+
+      // <div
+      //   onClick={() => setEditing(true)}
+      //   className={`group cursor-pointer rounded-md px-2 py-1 -mx-2 hover:bg-gray-50 transition ${className}`}
+      // >
+      //   <span className={value ? "" : "text-gray-400 italic"}>
+      //     {value || placeholder}
+      //   </span>
+      //   <span className="ml-2 opacity-0 group-hover:opacity-100 text-gray-300 transition inline-block">
+      //     <IconEdit />
+      //   </span>
+      // </div>
     );
   }
 
@@ -187,7 +200,8 @@ function EditableText({
           }
         }}
         rows={4}
-        className="w-full rounded-lg border border-indigo-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+        className="w-full resize-none rounded-lg border border-indigo-300 px-3 py-3 text-base focus:outline-none focus:ring-2 focus:ring-indigo-500 sm:py-2 sm:text-sm"
+        // className="w-full rounded-lg border border-indigo-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
         placeholder={placeholder}
       />
     );
@@ -206,7 +220,9 @@ function EditableText({
           setEditing(false);
         }
       }}
-      className="w-full rounded-lg border border-indigo-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+      className="w-full min-w-0 rounded-lg border border-indigo-300 px-3 py-3 text-base focus:outline-none focus:ring-2 focus:ring-indigo-500 sm:py-2 sm:text-sm"
+
+      // className="w-full rounded-lg border border-indigo-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
       placeholder={placeholder}
     />
   );
@@ -240,9 +256,7 @@ export default function TaskDetailDrawer({
 useEffect(() => {
   setAssignees(task?.assignees ?? []);
 }, [task]);
-  // Reset internal UI when task changes
-  useEffect(() => {}, [task?.id]);
-
+   
   useEffect(() => {
     setShowDeleteConfirm(false);
   }, [task?.id]);
@@ -301,31 +315,40 @@ const handleConfirmRemove = async (memberId: number) => {
 
   return (
     <>
-      {/* Backdrop */}
+    
+        {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/30 z-40 transition-opacity"
+        className="fixed inset-0 z-40 bg-black/30 transition-opacity"
         onClick={onClose}
       />
 
       {/* Drawer */}
-     <div className="fixed top-12 bottom-12 right-0 w-full max-w-lg h-[50vh]  bg-white shadow-2xl z-50 flex flex-col animate-slide-in rounded-l-xl">
+      <div
+        className="fixed inset-y-0 right-0 z-50 flex h-dvh w-full max-w-lg flex-col overflow-hidden rounded-none bg-white shadow-2xl animate-slide-in sm:inset-y-4 sm:h-auto sm:rounded-l-xl"
+      >
 
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-          <div className="flex items-center gap-2 text-xs text-gray-400">
-            <IconClock />
-            <span>Updated {timeAgo(task.updated_at)}</span>
-          </div>
-          <button
-            onClick={onClose}
-            className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition"
-          >
-            <IconX />
-          </button>
+       {/* Header */}
+      <div className="flex shrink-0 items-center justify-between gap-3 border-b border-gray-100 px-4 py-3 sm:px-6 sm:py-4">
+        <div className="flex min-w-0 items-center gap-2 text-xs text-gray-400">
+          <IconClock />
+          <span className="truncate">
+            Updated {timeAgo(task.updated_at)}
+          </span>
         </div>
 
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Close task details"
+          className="shrink-0 rounded-lg p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
+        >
+          <IconX />
+        </button>
+      </div>
+
         {/* Body */}
-        <div className="flex-1 overflow-y-auto space-y-6 px-6 py-4">
+        <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-4 py-4 sm:px-6">
+        {/* <div className="flex-1 overflow-y-auto space-y-6 px-6 py-4"> */}
 
           {/* Task name */}
           <EditableText
@@ -356,8 +379,11 @@ const handleConfirmRemove = async (memberId: number) => {
             </h3>
 
             {/* Status */}
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 w-28 text-sm text-gray-500">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+              <div className="flex w-full shrink-0 items-center gap-2 text-sm text-gray-500 sm:w-28">
+
+            {/* <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 w-28 text-sm text-gray-500"> */}
                 <IconStatus />
                 Status
               </div>
@@ -366,11 +392,17 @@ const handleConfirmRemove = async (memberId: number) => {
                   <button
                     key={opt.value}
                     onClick={() => onUpdate((task.id), { status: opt.value })}
-                    className={`text-xs px-3 py-1 rounded-full font-medium transition-all ${
+                    className={`rounded-full px-3 py-2 text-xs font-medium transition-all ${
                       task.status === opt.value
                         ? `${opt.color} ring-2 ring-offset-1 ring-current`
                         : "bg-gray-50 text-gray-400 hover:bg-gray-100"
                     }`}
+
+                    // className={`text-xs px-3 py-1 rounded-full font-medium transition-all ${
+                    //   task.status === opt.value
+                    //     ? `${opt.color} ring-2 ring-offset-1 ring-current`
+                    //     : "bg-gray-50 text-gray-400 hover:bg-gray-100"
+                    // }`}
                   >
                     {opt.label}
                   </button>
@@ -379,8 +411,11 @@ const handleConfirmRemove = async (memberId: number) => {
             </div>
 
             {/* Priority */}
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 w-28 text-sm text-gray-500">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+              <div className="flex w-full shrink-0 items-center gap-2 text-sm text-gray-500 sm:w-28">
+
+            {/* <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 w-28 text-sm text-gray-500"> */}
                 <IconFlag />
                 Priority
               </div>
@@ -389,11 +424,16 @@ const handleConfirmRemove = async (memberId: number) => {
                   <button
                     key={opt.value}
                     onClick={() => onUpdate((task.id), { priority: opt.value } as any)}
-                    className={`text-xs px-3 py-1 rounded-full font-medium flex items-center gap-1.5 transition-all ${
+                    className={`flex items-center gap-1.5 rounded-full px-3 py-2 text-xs font-medium transition-all ${
                       (task as any).priority === opt.value
                         ? `bg-white ring-2 ${opt.ring} ring-offset-1 text-gray-800`
                         : "bg-gray-50 text-gray-400 hover:bg-gray-100"
                     }`}
+                                        // className={`text-xs px-3 py-1 rounded-full font-medium flex items-center gap-1.5 transition-all ${
+                    //   (task as any).priority === opt.value
+                    //     ? `bg-white ring-2 ${opt.ring} ring-offset-1 text-gray-800`
+                    //     : "bg-gray-50 text-gray-400 hover:bg-gray-100"
+                    // }`}
                   >
                     <span className={`w-2 h-2 rounded-full ${opt.dot}`} />
                     {opt.label}
@@ -403,7 +443,37 @@ const handleConfirmRemove = async (memberId: number) => {
             </div>
 
             {/* Due date */}
-            <div className="flex items-center gap-3">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+            <div className="flex w-full shrink-0 items-center gap-2 text-sm text-gray-500 sm:w-28">
+              <IconCalendar />
+              Due date
+            </div>
+
+            <div className="flex min-w-0 flex-wrap items-center gap-2">
+              <input
+                type="date"
+                value={toInputDate(task.due_date)}
+                onChange={(e) =>
+                  onUpdate(task.id, {
+                    due_date: e.target.value || null,
+                  })
+                }
+                className="w-full min-w-0 rounded-lg border border-gray-200 px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-indigo-500 sm:w-auto sm:py-1.5 sm:text-sm"
+              />
+
+              {task.due_date && (
+                <button
+                  type="button"
+                  onClick={() => onUpdate(task.id, { due_date: null })}
+                  className="py-2 text-xs text-gray-400 transition hover:text-red-500"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+          </div>
+
+            {/* <div className="flex items-center gap-3">
               <div className="flex items-center gap-2 w-28 text-sm text-gray-500">
                 <IconCalendar />
                 Due date
@@ -426,25 +496,25 @@ const handleConfirmRemove = async (memberId: number) => {
                   </button>
                 )}
               </div>
-            </div>
+            </div> */}
 
           {/* Assignees */}
-          <div className="flex items-start gap-3">
-            <div className="flex items-center gap-2 w-28 text-sm text-gray-500 mt-1">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:gap-3">
+           <div className="flex w-full shrink-0 items-center gap-2 text-sm text-gray-500 sm:mt-1 sm:w-28">
               <IconUser />
               Assignees
             </div>
 
-            <div className="flex flex-wrap gap-2">
+            <div className="flex min-w-0 max-w-full flex-wrap gap-2">
               {assignees?.length ? (
                 
                 assignees.map((person, i) => {
                   const { memberId, fullName } = normalizeAssignee(person);
-                  console.log("TaskDetailDrawer memberId", memberId)
+                  // console.log("TaskDetailDrawer memberId", memberId)
                   return (
                     <div
                       key={person.id}
-                      className="flex items-center gap-2 bg-gray-100 rounded-full pl-1 pr-2 py-1"
+                      className="flex max-w-full min-w-0 items-center gap-2 rounded-full bg-gray-100 py-1 pl-1 pr-2"
                     >
                       {/* Avatar */}
                       {person.email ? (
@@ -467,7 +537,7 @@ const handleConfirmRemove = async (memberId: number) => {
                       )}
 
                       {/* Name */}
-                      <span className="text-sm text-gray-700">
+                      <span className="min-w-0 wrap-breakword text-sm text-gray-700">
                         {fullName}
                       </span>
 
@@ -475,9 +545,10 @@ const handleConfirmRemove = async (memberId: number) => {
                       {role?.toLowerCase() === "owner" && (
                         <button
                           type="button"
-                          className="ml-1 text-gray-400 hover:text-red-600"
+                          className="ml-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-gray-400 hover:bg-gray-200 hover:text-red-600"
                           onClick={() => setAssigneeToRemove(memberId)}
                           title="Remove assignee"
+                          aria-label={`Remove ${fullName}`}
                         >
                           ✕
                         </button>
@@ -494,8 +565,8 @@ const handleConfirmRemove = async (memberId: number) => {
           </div>
           </div>
           {assigneeToRemove !== null && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-              <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
+          <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/40 p-3 sm:p-5">
+              <div className="w-full max-w-md rounded-lg bg-white p-4 shadow-xl sm:p-6">
                 <h2 className="text-lg font-semibold text-gray-900">
                   Remove assignee?
                 </h2>
@@ -504,34 +575,36 @@ const handleConfirmRemove = async (memberId: number) => {
                   Are you sure you want to remove this person from the task?
                 </p>
 
-                <div className="mt-6 flex justify-end gap-3">
+                <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end sm:gap-3">
                   <button
+                    type="button"
                     onClick={() => setAssigneeToRemove(null)}
-                    className="rounded-md border px-4 py-2 text-sm"
+                    className="w-full rounded-md border px-4 py-3 text-sm sm:w-auto sm:py-2"
                   >
                     Cancel
                   </button>
 
                   <button
-                        onClick={async () => {
-                          try {
-                            await unassign(task.id, assigneeToRemove);
+                    type="button"
+                    onClick={async () => {
+                      try {
+                        await unassign(task.id, assigneeToRemove);
 
-                            setAssignees((prev) =>
-                              prev.filter((person) => {
-                                const { memberId } = normalizeAssignee(person);
-                                return memberId !== assigneeToRemove;
-                              })
-                            );
+                        setAssignees((prev) =>
+                          prev.filter((person) => {
+                            const { memberId } = normalizeAssignee(person);
+                            return memberId !== assigneeToRemove;
+                          })
+                        );
 
-                            setAssigneeToRemove(null);
-                          } catch (error) {
-                            console.error("Failed to remove assignee:", error);
-                          }
-                        }}
-                        className="rounded-md bg-red-600 px-4 py-2 text-sm text-white hover:bg-red-700"
-                      >
-                        Remove
+                        setAssigneeToRemove(null);
+                      } catch (error) {
+                        console.error("Failed to remove assignee:", error);
+                      }
+                    }}
+                    className="w-full rounded-md bg-red-600 px-4 py-3 text-sm text-white hover:bg-red-700 sm:w-auto sm:py-2"
+                  >
+                    Remove
                   </button>
                 </div>
               </div>
@@ -539,17 +612,15 @@ const handleConfirmRemove = async (memberId: number) => {
           )}
 
           {/* Timestamps */}
-          <div className="border-t border-gray-100 pt-4 space-y-1">
-            <p className="text-xs text-gray-400">
+          <div className="space-y-1 border-t border-gray-100 pt-4">
+            <p className="wrap-break-word text-xs text-gray-400">
               Created {new Date(task.created_at).toLocaleString()}
             </p>
-            <p className="text-xs text-gray-400">
+            <p className="wrap-break-word text-xs text-gray-400">
               Last updated {timeAgo(task.updated_at)}
             </p>
           </div>
-
         </div>
- 
       </div>
     </>
   );

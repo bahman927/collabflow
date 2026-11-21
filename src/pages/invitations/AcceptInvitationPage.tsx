@@ -1,21 +1,15 @@
 
 // src/pages/invitations/AcceptInvitationPage.tsx
-
-import { useCallback, useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-
+import { useCallback, useEffect, useState, useRef } from "react";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { invitationService } from "../../services/invitationService";
 import { useAuth } from "../../hooks/useAuth";
 import { useWorkspace } from "../../hooks/useWorkspace";
-
 import type { Workspace } from "../../types/workspace";
 import type { Tokens}     from "../../types/auth.ts"
-// import InvitationSignupPage from "./InvitationSignupPage";
 import { ApiError } from "../../api/apiError";
 import {InvitationUser} from "./InvitationUser";
  
-
-
 // --------------------------------------------------
 // Response returned by POST /api/invitations/accept/
 // --------------------------------------------------
@@ -25,7 +19,6 @@ export interface AcceptInvitationResponse {
   workspace: Workspace;
 }
 
-
 // --------------------------------------------------
 // Response returned by invitation validation
 // --------------------------------------------------
@@ -33,11 +26,14 @@ export interface AcceptInvitationResponse {
 interface InvitationValidationResponse {
   valid: boolean;
   email: string;
-  workspace: Workspace;
+  workspace: {
+    id: number;
+    name: string;
+  };
   role: string;
   invited_by: string;
+  existing_account: boolean;
 }
-
 
 // --------------------------------------------------
 // Component
@@ -46,86 +42,45 @@ interface InvitationValidationResponse {
 const AcceptInvitationPage = () => {
 
   const { token } = useParams<{ token: string }>();
-
   const navigate = useNavigate();
-
+  const location = useLocation();
   const { apiFetch, user } = useAuth();
-
-  const {
-    setCurrentWorkspace,
-  } = useWorkspace();
-
-
-  // ------------------------------------------------
-  // State
-  // ------------------------------------------------
-
+  const {setCurrentWorkspace, } = useWorkspace();
   const [showSignup, setShowSignup] = useState(false);
   const { setTokens } = useAuth();
-
   const [invitationData, setInvitationData] =
     useState<InvitationValidationResponse | null>(null);
 
-  const [loading, setLoading] =
-    useState(true);
-
-  const [error, setError] =
-    useState("");
-
-  const [message, setMessage] =
-    useState("");
-
-
-//   console.log("🔥 AcceptInvitationPage mounted");
-// console.log("🔥 token:", token);
-// console.log("🔥 user:", user);
-
-  // ------------------------------------------------
-  // Validate invitation
-  // ------------------------------------------------
-
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
   const validateInvitation = useCallback(async () => {
-
 
     if (!token) {
       setError("Invalid invitation token.");;
       setLoading(false);
       return;
     }
-
-
     try {   
 
       setLoading(true);
       setError("");
 
-      const {
-        url,
-        options,
-      } = invitationService.validate(token);
-
-
-      const result =
-        await apiFetch<InvitationValidationResponse>(
-          url,
-          options
-        );
+      const {url, options } = invitationService.validate(token);
+      const result = await apiFetch<InvitationValidationResponse>(url, options);
  
       if (!result.valid) {
         setError("This invitation is no longer valid.");
         return;
       }
 
-
       setInvitationData(result);
 
     } catch (err: any) {
-
       console.error(
         "Invitation validation failed:",
         err
       );
-
 
       setError(
         err.message ||
@@ -133,161 +88,102 @@ const AcceptInvitationPage = () => {
       );
 
     } finally {
-
       setLoading(false);
-
     }
 
   }, [token, apiFetch]);
 
+  useEffect(() => {
+        validateInvitation();
+    }, [validateInvitation]);
 
-  // ------------------------------------------------
-  // Run validation when page loads
-  // ------------------------------------------------
+  const acceptInvitation = useCallback(
+    async (newTokens?: Tokens) => {
+      
+          if (!token) {
+            setError("Invalid invitation token.");
+            return;
+          }
+
+          try {
+            setError("");
+            setMessage("");    
+            if (newTokens) {
+               setTokens(newTokens);
+            }
+
+          const {url, options} = invitationService.accept(token);
+          const result = await apiFetch<AcceptInvitationResponse>(url,
+                {
+                  ...options,
+                  auth: true,
+                },                      
+              );
+
+            setMessage(
+              result.message ||
+              "Invitation accepted successfully."
+            );
+
+          console.log("Invitation accepted:", result);
+
+            setTimeout(() => {
+              navigate("/members");
+            }, 4000);
+
+          } catch (err) {
+
+            console.error(
+              "Accept invitation failed:",
+              err
+            );
+
+            if (err instanceof ApiError) {
+              setError(err.message);
+            } else if (err instanceof Error) {
+              setError(err.message);
+            } else {
+              setError(
+                "Unable to accept invitation."
+              );
+            }
+          }
+
+        },
+        [
+          token,
+          apiFetch,
+          navigate,
+          setCurrentWorkspace,
+          setTokens,      
+        ]
+  );
+
+  const processedLoginTokens = useRef(false);
 
   useEffect(() => {
+    const state = location.state as {
+      invitationTokens?: Tokens;
+    } | null;
 
-    validateInvitation();
+    const newTokens = state?.invitationTokens;
 
-  }, []);
-
-
-  // ------------------------------------------------
-  // Accept invitation
-  //
-  // IMPORTANT:
-  //
-  // This function is called AFTER signup().
-  //
-  // signup() already registers and logs the user in.
-  //
-  // Therefore request.user exists when this endpoint
-  // is called.
-  // ------------------------------------------------
-  
-  const acceptInvitation = useCallback(
-    async (newTokens: Tokens) => {
-
-    //  console.log("=== ACCEPT INVITATION START ===");
-    // console.log("Invitation token:", token);
-    // console.log("New access token exists:", !!newTokens.access);
-    // console.log("New refresh token exists:", !!newTokens.refresh);  
-
-    if (!token) {
-        // console.log("NO INVITATION TOKEN");
-      setError("Invalid invitation token.");
+    if (!newTokens || processedLoginTokens.current) {
       return;
     }
+    processedLoginTokens.current = true;
+    acceptInvitation(newTokens);
 
-    try {
-
-      setError("");
-      setMessage("");
-
-      const {
-        url,
-        options,
-      } = invitationService.accept(token);
-
-
-      const result =
-        await apiFetch<AcceptInvitationResponse>(
-          url,
-          {
-            ...options,
-            auth: true,
-          },
-          newTokens
-         
-        );
-
-
-      console.log(
-        "Invitation accepted:",
-        result
-      );
-
-      console.log(
-      "NEW ACCESS TOKEN:",
-      newTokens.access
-    );
-
-
-      setMessage(
-        result.message ||
-        "Invitation accepted successfully."
-      );
-
-     setTokens(newTokens);
-     console.log("Invitation accepted:", result);
-     console.log("About to navigate to /members");
-     console.log("Current access token:", newTokens.access);
-
-      setCurrentWorkspace(
-        result.workspace
-      );
-
-      console.log(
-        "Stored access token:",
-        localStorage.getItem("access")
-      );
-
-      console.log(
-        "Stored refresh token:",
-        localStorage.getItem("refresh")
-      );
-
-      setTimeout(() => {
-        navigate("/members");
-      }, 4000);
-
-    } catch (err) {
-
-      console.error(
-        "Accept invitation failed:",
-        err
-      );
-
-
-      if (err instanceof ApiError) {
-
-        setError(err.message);
-
-      } else if (err instanceof Error) {
-
-        setError(err.message);
-
-      } else {
-
-        setError(
-          "Unable to accept invitation."
-        );
-      }
-    }
-
-  },
-  [
-    token,
-    apiFetch,
+  }, [
+    location.state,
+    location.pathname,
     navigate,
-    setCurrentWorkspace,
-    
-  ]
-);
+    acceptInvitation,
+  ]);
 
-
-  // ------------------------------------------------
-  // Show signup page
-  // ------------------------------------------------
-
-  const handleContinueSignup = () => {
-
-    setError("");
-
-    setShowSignup(true);
-
-  };
-
+  const handleAcceptExistingUser = () => {
+        acceptInvitation();
+    };
 
   // ------------------------------------------------
   // If signup page is being displayed
@@ -308,181 +204,110 @@ const AcceptInvitationPage = () => {
 
   }
 
-
   // ------------------------------------------------
   // Main invitation page
   // ------------------------------------------------
 
-  return (
+ return (
+  <div className="flex min-h-screen min-w-0 items-center justify-center bg-slate-100 px-3 py-6 sm:px-5 sm:py-8">
 
-    <div className="min-h-screen bg-slate-100 flex items-center justify-center p-6">
+    <div className="w-full min-w-0 max-w-md rounded-2xl bg-white p-4 shadow-xl sm:p-8">
 
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8">
+      {/* HEADER */}
+      <div className="text-center">
+        <h1 className="wrap-break-word text-2xl font-bold text-slate-800 sm:text-3xl">
+          Workspace Invitation
+        </h1>
 
-        <div className="text-center">
+        <p className="mt-3 text-sm text-slate-500 sm:text-base">
+          You've been invited to join a workspace.
+        </p>
+      </div>
 
-          <h1 className="text-3xl font-bold text-slate-800">
-            Workspace Invitation
-          </h1>
+      {/* LOADING */}
+      {loading && (
+        <div className="mt-6 rounded-lg bg-slate-50 p-4 text-center text-sm text-slate-600 sm:text-base">
+          Checking invitation...
+        </div>
+      )}
 
+      {/* ERROR */}
+      {error && (
+        <div className="mt-6 wrap-break-word rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 sm:p-4 sm:text-base">
+          {error}
+        </div>
+      )}
 
-          <p className="mt-3 text-slate-500">
-            You've been invited to join a workspace.
+      {/* INVITATION INFORMATION */}
+      {!loading && !error && invitationData && (
+        <div className="mt-6 min-w-0 rounded-lg border border-slate-200 bg-slate-50 p-3 sm:p-4">
+
+          <p className="text-sm text-slate-500">
+            Workspace
+          </p>
+
+          <p className="mt-1 wrap-break-word font-semibold text-slate-800">
+            {invitationData.workspace.name}
+          </p>
+
+          <p className="mt-4 text-sm text-slate-500">
+            Invited email
+          </p>
+
+          <p className="mt-1 wrap-break-word font-medium text-slate-800">
+            {invitationData.email}
+          </p>
+
+          <p className="mt-4 text-sm text-slate-500">
+            Role
+          </p>
+
+          <p className="mt-1 font-medium capitalize text-slate-800">
+            {invitationData.role}
           </p>
 
         </div>
+      )}
 
+      {/* SUCCESS MESSAGE */}
+      {message && (
+        <div className="mt-6 wrap-break-word rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-700 sm:p-4 sm:text-base">
+          {message}
+        </div>
+      )}
 
-        {/* ------------------------------------------
-            Loading
-        ------------------------------------------ */}
-
-        {loading && (
-
-          <div className="mt-6 rounded-lg bg-slate-50 p-4 text-center text-slate-600">
-
-            Checking invitation...
-
-          </div>
-
-        )}
-
-
-        {/* ------------------------------------------
-            Validation error
-        ------------------------------------------ */}
-
-        {error && (
-
-          <div className="mt-6 rounded-lg border border-red-200 bg-red-50 p-4 text-red-700">
-
-            {error}
-
-          </div>
-
-        )}
-
-
-        {/* ------------------------------------------
-            Invitation information
-        ------------------------------------------ */}
-
-        {!loading &&
-          !error &&
-          invitationData && (
-
-          <div className="mt-6 rounded-lg border border-slate-200 bg-slate-50 p-4">
-
-            <p className="text-sm text-slate-500">
-              Workspace
-            </p>
-
-            <p className="mt-1 font-semibold text-slate-800">
-              {invitationData.workspace.name}
-            </p>
-
-
-            <p className="mt-4 text-sm text-slate-500">
-              Invited email
-            </p>
-
-            <p className="mt-1 font-medium text-slate-800">
-              {invitationData.email}
-            </p>
-
-
-            <p className="mt-4 text-sm text-slate-500">
-              Role
-            </p>
-
-            <p className="mt-1 font-medium text-slate-800">
-              {invitationData.role}
-            </p>
-
-          </div>
-
-        )}
-
-
-        {/* ------------------------------------------
-            Success message
-        ------------------------------------------ */}
-
-        {message && (
-
-          <div className="mt-6 rounded-lg border border-green-200 bg-green-50 p-4 text-green-700">
-
-            {message}
-
-          </div>
-
-        )}
-
-
-        {/* ------------------------------------------
-            Continue to signup
-        ------------------------------------------ */}
-
-        {!loading &&
-          !error &&
-          invitationData && (
+      {/* INVITATION ACTIONS */}
+      {invitationData?.existing_account ? (
+        <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center sm:gap-4">
 
           <button
             type="button"
-            onClick={handleContinueSignup}
-            className="
-              mt-8
-              w-full
-              rounded-lg
-              bg-indigo-600
-              px-4
-              py-3
-              text-white
-              font-semibold
-              transition
-              hover:bg-indigo-700
-            "
+            onClick={handleAcceptExistingUser}
+            className="w-full rounded-lg bg-blue-600 px-6 py-3 text-sm font-medium text-white transition hover:bg-blue-700 sm:w-auto sm:text-base"
           >
-
-            Continue to Sign Up
-
+            Accept Invitation
           </button>
 
-        )}
+          <button
+            type="button"
+            onClick={() => navigate("/")}
+            className="w-full rounded-lg border border-gray-300 px-6 py-3 text-sm transition hover:bg-gray-100 sm:w-auto sm:text-base"
+          >
+            Exit
+          </button>
 
-
-        {/* ------------------------------------------
-            Cancel
-        ------------------------------------------ */}
-
-        <button
-          type="button"
-          onClick={() => navigate("/")}
-          className="
-            mt-3
-            w-full
-            rounded-lg
-            border
-            border-gray-300
-            bg-white
-            px-4
-            py-3
-            font-medium
-            text-gray-700
-            transition
-            hover:bg-gray-100
-          "
-        >
-
-          Cancel
-
-        </button>
-
-      </div>
+        </div>
+      ) : (
+        <div className="mt-6 min-w-0">
+          <InvitationUser
+            onSignupSuccess={acceptInvitation}
+          />
+        </div>
+      )}
 
     </div>
-
-  );
+  </div>
+);
 
 };
  export default AcceptInvitationPage

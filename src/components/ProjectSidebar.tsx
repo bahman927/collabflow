@@ -18,7 +18,6 @@ export default function ProjectSidebar() {
     setCurrentProject,
     createProject,
   } = useProject();
-  // console.log("ProjectSidebar - projects : ", projects)
   const handleCreate = async (data: { name: string; description: string }) => {
       await createProject({
         ...data,
@@ -32,49 +31,66 @@ export default function ProjectSidebar() {
     return acc;
   }, {} as Record<number, Task[]>);
 
-  return (
-    <aside className="w-50 shrink-0 bg-gray-100 border-r p-7  space-y-4 ml-0.5 ">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold">Projects</h2>
+ return (
+  <aside className="flex w-full min-w-0 shrink-0 flex-col gap-4 border-b border-gray-200 bg-gray-100 p-4 sm:p-5 lg:w-50 lg:border-b-0 lg:border-r lg:p-7">
+
+    {/* Header */}
+    <div className="flex items-center justify-between gap-2">
+      <h2 className="text-lg font-semibold text-gray-800">
+        Projects
+      </h2>
+
       {role?.toLowerCase() === "owner" && (
-        <button onClick={() => setShowModal(true)} className="p-1 rounded hover:bg-gray-200">
+        <button
+          type="button"
+          onClick={() => setShowModal(true)}
+          aria-label="Create project"
+          title="Create project"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition hover:bg-gray-200"
+        >
           <Plus size={18} />
         </button>
-       )}  
-      </div>
-     
-     
-       <nav className="space-y-1">
-         {projects.map((project) => (
-          <button
-             key={project.id}
-             onClick={() => setCurrentProject(project)}
-             className={`flex items-center gap-2 w-full px-3 py-2 rounded-md text-left
-             ${
-               currentProject?.id === project.id
-                  ? "bg-indigo-500 text-white"
-                  : "hover:bg-gray-200"
-             }
-             `}
-           >
-            <FolderKanban size={18} />
-            {project.name}
-          </button>
-        ))}
-       </nav> 
-        {projects.length === 0 && (
-        <p className="text-sm text-gray-500 text-center py-4">
-          No project yet. Create one to get started.
-        </p>
       )}
-       <CreateProjectModal
-          isOpen={showModal}
-          onClose={() => setShowModal(false)}
-          onCreate={handleCreate}
-        />
-        
-    </aside>
-  );
+    </div>
+
+    {/* Project Navigation */}
+    <nav className="flex min-w-0 flex-col gap-1">
+      {projects.map((project) => (
+        <button
+          key={project.id}
+          type="button"
+          onClick={() => setCurrentProject(project)}
+          className={`flex min-w-0 w-full items-center gap-2 rounded-md px-3 py-3 text-left text-sm transition sm:py-2 ${
+            currentProject?.id === project.id
+              ? "bg-indigo-500 text-white"
+              : "text-gray-700 hover:bg-gray-200"
+          }`}
+        >
+          <FolderKanban size={18} className="shrink-0" />
+
+          <span className="min-w-0 flex-1 wrap-break-word">
+            {project.name}
+          </span>
+        </button>
+      ))}
+    </nav>
+
+    {/* Empty State */}
+    {projects.length === 0 && (
+      <p className="py-4 text-center text-sm text-gray-500">
+        No project yet. Create one to get started.
+      </p>
+    )}
+
+    {/* Create Project Modal */}
+    <CreateProjectModal
+      isOpen={showModal}
+      onClose={() => setShowModal(false)}
+      onCreate={handleCreate}
+    />
+
+  </aside>
+);
 }
 
  

@@ -11,9 +11,7 @@ import {
   User,
   X,
 } from "lucide-react";
-
 import { API_BASE_URL } from "../../api/config";
-
 type InvitationData = {
   valid: boolean;
   email: string;
@@ -53,7 +51,6 @@ type SignupResponse = {
     avatar: string | null;
   };
   tokens: Tokens;
-  // error?: string;
 };
 
 interface InvitationUserProps {
@@ -63,34 +60,21 @@ interface InvitationUserProps {
 export  const InvitationUser = ({onSignupSuccess}: InvitationUserProps) => {
   const { token } = useParams<{ token: string }>();
   const navigate = useNavigate();
-
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-
   const [invitation, setInvitation] =
     useState<InvitationData | null>(null);
-
   const [loadingInvitation, setLoadingInvitation] =
     useState(true);
-
   const [fullName, setFullName] = useState("");
   const [password, setPassword] = useState("");
-
   const [showPassword, setShowPassword] = useState(false);
-
   const [avatarFile, setAvatarFile] =
     useState<File | null>(null);
-
   const [avatarPreview, setAvatarPreview] =
     useState<string | null>(null);
-
   const [submitting, setSubmitting] = useState(false);
-
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
-
-  // ---------------------------------------
-  // Validate invitation
-  // ---------------------------------------
 
   useEffect(() => {
     if (!token) {
@@ -98,24 +82,19 @@ export  const InvitationUser = ({onSignupSuccess}: InvitationUserProps) => {
       setLoadingInvitation(false);
       return;
     }
-
     const validateInvitation = async () => {
       try {
         setLoadingInvitation(true);
         setError("");
-
         const response = await fetch(
           `${API_BASE_URL}/invitations/validate/${token}/`
         );
-
         const data = await response.json();
-
         if (!response.ok) {
           throw new Error(
             data.error || "This invitation is no longer valid."
           );
         }
-
         setInvitation(data);
       } catch (err) {
         setError(
@@ -131,42 +110,26 @@ export  const InvitationUser = ({onSignupSuccess}: InvitationUserProps) => {
     validateInvitation();
   }, [token]);
 
-  // ---------------------------------------
-  // Select avatar
-  // ---------------------------------------
-
   const handleAvatarChange = (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     const file = event.target.files?.[0];
-
     if (!file) {
       return;
     }
-
-    // Basic client-side validation
     if (!file.type.startsWith("image/")) {
       setError("Please select an image file.");
       return;
     }
-
     if (file.size > 5 * 1024 * 1024) {
       setError("Profile photo must be smaller than 5 MB.");
       return;
     }
-
     setError("");
-
     setAvatarFile(file);
-
     const previewUrl = URL.createObjectURL(file);
-
     setAvatarPreview(previewUrl);
   };
-
-  // ---------------------------------------
-  // Remove avatar
-  // ---------------------------------------
 
   const handleRemoveAvatar = () => {
     if (avatarPreview) {
@@ -181,10 +144,6 @@ export  const InvitationUser = ({onSignupSuccess}: InvitationUserProps) => {
     }
   };
 
-  // ---------------------------------------
-  // Submit invitation signup
-  // ---------------------------------------
-
   const handleSubmit = async (
     event: React.FormEvent<HTMLFormElement>
   ) => {
@@ -194,44 +153,27 @@ export  const InvitationUser = ({onSignupSuccess}: InvitationUserProps) => {
       setError("Invalid invitation link.");
       return;
     }
-
     if (!invitation) {
       setError("Invitation information is unavailable.");
       return;
     }
-
     if (!fullName.trim()) {
       setError("Please enter your full name.");
       return;
     }
-
     if (!password) {
       setError("Please enter a password.");
       return;
     }
-
     try {
       setSubmitting(true);
       setError("");
       setSuccess(false);
-
       const formData = new FormData();
-
-      // Token identifies the invitation.
       formData.append("token", token);
-
-      // Email is intentionally NOT submitted.
-      // Backend gets it from invitation.email.
-
       formData.append("full_name", fullName.trim());
-
       formData.append("password", password);
-
-      // Role is intentionally NOT submitted.
-      // Backend gets it from invitation.role.
-
       if (avatarFile) {formData.append("avatar", avatarFile); }
-
       const response = await fetch(`${API_BASE_URL}/auth/register/`, {
           method: "POST",
           body: formData,
@@ -267,369 +209,554 @@ export  const InvitationUser = ({onSignupSuccess}: InvitationUserProps) => {
     }
   };
 
-  // ---------------------------------------
-  // Loading state
-  // ---------------------------------------
-
-  if (loadingInvitation) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-        <div className="flex items-center gap-3 text-gray-600">
-          <Loader2 className="w-5 h-5 animate-spin" />
+  return (
+  <>
+    {/* LOADING */}
+    {loadingInvitation && (
+      <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
+        <div className="flex items-center gap-3 text-sm text-gray-600 sm:text-base">
+          <Loader2 className="h-5 w-5 shrink-0 animate-spin" />
           <span>Checking invitation...</span>
         </div>
       </div>
-    );
-  }
+    )}
 
-  // ---------------------------------------
-  // Invalid invitation
-  // ---------------------------------------
-
-  if (!invitation) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-        <div className="w-full max-w-md rounded-2xl bg-white border border-gray-200 shadow-sm p-8 text-center">
+    {/* INVALID INVITATION */}
+    {!loadingInvitation && !invitation && (
+      <div className="flex min-h-screen items-center justify-center bg-gray-50 px-3 py-6 sm:px-4">
+        <div className="w-full max-w-md rounded-2xl border border-gray-200 bg-white p-5 text-center shadow-sm sm:p-8">
 
           <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-red-50">
             <X className="h-7 w-7 text-red-500" />
           </div>
 
-          <h1 className="text-2xl font-semibold text-gray-900">
+          <h1 className="text-xl font-semibold text-gray-900 sm:text-2xl">
             Invalid invitation
           </h1>
 
-          <p className="mt-3 text-sm text-gray-500">
+          <p className="mt-3 wrap-break-word text-sm text-gray-500">
             {error || "This invitation link is no longer valid."}
           </p>
 
           <button
             type="button"
             onClick={() => navigate("/login")}
-            className="mt-6 w-full rounded-lg bg-gray-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-gray-800"
+            className="mt-6 w-full rounded-lg bg-gray-900 px-4 py-3 text-sm font-medium text-white transition hover:bg-gray-800"
           >
             Go to login
           </button>
 
         </div>
       </div>
-    );
-  }
+    )}
 
-  return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-10">
+    {/* VALID INVITATION */}
+    {!loadingInvitation && invitation && (
+      <div className="flex min-h-screen min-w-0 items-center justify-center bg-gray-50 px-3 py-6 sm:px-5 sm:py-10">
 
-      <div className="w-full max-w-lg">
+        <div className="w-full min-w-0 max-w-lg">
 
-        {/* -------------------------------- */}
-        {/* Header */}
-        {/* -------------------------------- */}
+          {/* HEADER */}
+          <div className="mb-6 text-center sm:mb-8">
+            <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">
+              Join CollabFlow
+            </h1>
 
-        <div className="text-center mb-8">
-
-          <h1 className="text-3xl font-bold text-gray-900">
-            Join CollabFlow
-          </h1>
-
-          <p className="mt-2 text-sm text-gray-500">
-            Create your account to join the workspace.
-          </p>
-
-        </div>
-
-        {/* -------------------------------- */}
-        {/* Card */}
-        {/* -------------------------------- */}
-
-        <div className="rounded-2xl bg-white border border-gray-200 shadow-sm p-7">
-
-          {/* -------------------------------- */}
-          {/* Invitation information */}
-          {/* -------------------------------- */}
-
-          <div className="rounded-xl bg-gray-50 border border-gray-200 p-4 mb-7">
-
-            <div className="flex items-center gap-3 mb-4">
-
-              <div className="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center">
-                <User className="h-5 w-5 text-blue-600" />
-              </div>
-
-              <div>
-                <p className="text-xs text-gray-500">
-                  You've been invited to
-                </p>
-
-                <p className="font-semibold text-gray-900">
-                  {invitation.workspace.name}
-                </p>
-              </div>
-
-            </div>
-
-            <div className="space-y-3">
-
-              {/* Email */}
-
-              <div>
-                <p className="text-xs text-gray-500 mb-1">
-                  Email
-                </p>
-
-                <div className="rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-700">
-                  {invitation.email}
-                </div>
-              </div>
-
-              {/* Role */}
-
-              <div>
-                <p className="text-xs text-gray-500 mb-1">
-                  Workspace role
-                </p>
-
-                <div className="rounded-lg border border-gray-200 bg-white px-3 py-2.5">
-
-                  <span className="inline-flex items-center gap-2 text-sm font-medium text-gray-800">
-
-                    <span className="h-2 w-2 rounded-full bg-blue-500" />
-
-                    {invitation.role === "viewer"
-                      ? "Viewer"
-                      : "Member"}
-
-                  </span>
-
-                </div>
-              </div>
-
-            </div>
+            <p className="mt-2 text-sm text-gray-500 sm:text-base">
+              Create your account to join the workspace.
+            </p>
           </div>
 
-          {/* -------------------------------- */}
-          {/* Errors */}
-          {/* -------------------------------- */}
+          {/* REGISTRATION CARD */}
+          <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6 md:p-7">
 
-          {error && (
-            <div className="mb-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-              {error}
-            </div>
-          )}
+            {/* INVITATION DETAILS */}
+            <div className="mb-6 rounded-xl border border-gray-200 bg-gray-50 p-3 sm:mb-7 sm:p-4">
 
-          {/* -------------------------------- */}
-          {/* Success */}
-          {/* -------------------------------- */}
+              <div className="mb-4 flex min-w-0 items-center gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-100">
+                  <User className="h-5 w-5 text-blue-600" />
+                </div>
 
-          {success && (
-            <div className="mb-5 flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
-              <Check className="h-4 w-4 shrink-0" />
-              Your account has been created successfully.
-            </div>
-          )}
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs text-gray-500">
+                    You've been invited to
+                  </p>
 
-          {/* -------------------------------- */}
-          {/* Form */}
-          {/* -------------------------------- */}
+                  <p className="wrap-break-word font-semibold text-gray-900">
+                    {invitation.workspace.name}
+                  </p>
+                </div>
+              </div>
 
-          <form
-            onSubmit={handleSubmit}
-            className="space-y-5"
-          >
+              <div className="space-y-3">
 
-            {/* Full name */}
+                {/* EMAIL */}
+                <div>
+                  <p className="mb-1 text-xs text-gray-500">
+                    Email
+                  </p>
 
-            <div>
-              <label
-                htmlFor="fullName"
-                className="block text-sm font-medium text-gray-700 mb-1.5"
-              >
-                Full name
-              </label>
+                  <div className="min-w-0 wrap-break-word rounded-lg border border-gray-200 bg-white px-3 py-3 text-sm text-gray-700 sm:py-2.5">
+                    {invitation.email}
+                  </div>
+                </div>
 
-              <input
-                id="fullName"
-                type="text"
-                value={fullName}
-                onChange={(e) =>
-                  setFullName(e.target.value)
-                }
-                placeholder="Enter your full name"
-                autoComplete="name"
-                disabled={submitting}
-                className="w-full rounded-lg border border-gray-300 px-3.5 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
-              />
-            </div>
+                {/* ROLE */}
+                <div>
+                  <p className="mb-1 text-xs text-gray-500">
+                    Workspace role
+                  </p>
 
-            {/* Password */}
+                  <div className="rounded-lg border border-gray-200 bg-white px-3 py-3 sm:py-2.5">
+                    <span className="inline-flex items-center gap-2 text-sm font-medium text-gray-800">
+                      <span className="h-2 w-2 shrink-0 rounded-full bg-blue-500" />
 
-            <div>
-              <label
-                htmlFor="password"
-                className="block text-sm font-medium text-gray-700 mb-1.5"
-              >
-                Password
-              </label>
-
-              <div className="relative">
-
-                <input
-                  id="password"
-                  type={
-                    showPassword
-                      ? "text"
-                      : "password"
-                  }
-                  value={password}
-                  onChange={(e) =>
-                    setPassword(e.target.value)
-                  }
-                  placeholder="Create a password"
-                  autoComplete="new-password"
-                  disabled={submitting}
-                  className="w-full rounded-lg border border-gray-300 px-3.5 py-2.5 pr-11 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
-                />
-
-                <button
-                  type="button"
-                  onClick={() =>
-                    setShowPassword((value) => !value)
-                  }
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                  aria-label={
-                    showPassword
-                      ? "Hide password"
-                      : "Show password"
-                  }
-                >
-                  {showPassword ? (
-                    <EyeOff className="h-5 w-5" />
-                  ) : (
-                    <Eye className="h-5 w-5" />
-                  )}
-                </button>
+                      {invitation.role === "viewer" ? "Viewer" : "Member"}
+                    </span>
+                  </div>
+                </div>
 
               </div>
             </div>
 
-            {/* -------------------------------- */}
-            {/* Profile photo */}
-            {/* -------------------------------- */}
+            {/* ERROR */}
+            {error && (
+              <div className="mb-5 wrap-break-word rounded-lg border border-red-200 bg-red-50 px-3 py-3 text-sm text-red-700 sm:px-4">
+                {error}
+              </div>
+            )}
 
-            <div>
+            {/* SUCCESS */}
+            {success && (
+              <div className="mb-5 flex items-start gap-2 rounded-lg border border-green-200 bg-green-50 px-3 py-3 text-sm text-green-700 sm:px-4">
+                <Check className="mt-0.5 h-4 w-4 shrink-0" />
 
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Profile photo
-                <span className="ml-1 font-normal text-gray-400">
-                  (optional)
+                <span>
+                  Your account has been created successfully.
                 </span>
-              </label>
+              </div>
+            )}
 
-              <div className="flex items-center gap-4">
+            {/* REGISTRATION FORM */}
+            <form
+              onSubmit={handleSubmit}
+              className="space-y-5"
+            >
 
-                {/* Avatar preview */}
+              {/* FULL NAME */}
+              <div className="min-w-0">
+                <label
+                  htmlFor="fullName"
+                  className="mb-1.5 block text-sm font-medium text-gray-700"
+                >
+                  Full name
+                </label>
 
-                <div className="relative shrink-0">
+                <input
+                  id="fullName"
+                  type="text"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  placeholder="Enter your full name"
+                  autoComplete="name"
+                  disabled={submitting}
+                  className="w-full min-w-0 rounded-lg border border-gray-300 px-3.5 py-3 text-base outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100 sm:py-2.5 sm:text-sm"
+                />
+              </div>
 
-                  {avatarPreview ? (
-                    <img
-                      src={avatarPreview}
-                      alt="Profile preview"
-                      className="h-20 w-20 rounded-full object-cover border border-gray-200"
-                    />
-                  ) : (
-                    <div className="h-20 w-20 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center">
-                      <User className="h-8 w-8 text-gray-400" />
-                    </div>
-                  )}
+              {/* PASSWORD */}
+              <div className="min-w-0">
+                <label
+                  htmlFor="password"
+                  className="mb-1.5 block text-sm font-medium text-gray-700"
+                >
+                  Password
+                </label>
 
-                  {avatarPreview && (
-                    <button
-                      type="button"
-                      onClick={handleRemoveAvatar}
-                      className="absolute -right-1 -top-1 h-6 w-6 rounded-full bg-gray-900 text-white flex items-center justify-center hover:bg-gray-700"
-                      aria-label="Remove profile photo"
-                    >
-                      <X className="h-3.5 w-3.5" />
-                    </button>
-                  )}
-
-                </div>
-
-                {/* Upload controls */}
-
-                <div>
-
+                <div className="relative">
                   <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={handleAvatarChange}
-                    className="hidden"
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Create a password"
+                    autoComplete="new-password"
+                    disabled={submitting}
+                    className="w-full min-w-0 rounded-lg border border-gray-300 px-3.5 py-3 pr-12 text-base outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100 sm:py-2.5 sm:text-sm"
                   />
 
                   <button
                     type="button"
-                    onClick={() =>
-                      fileInputRef.current?.click()
-                    }
-                    disabled={submitting}
-                    className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-3.5 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                    onClick={() => setShowPassword((value) => !value)}
+                    className="absolute right-3 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center text-gray-400 transition hover:text-gray-600"
+                    aria-label={showPassword ? "Hide password" : "Show password"}
                   >
-                    {avatarPreview ? (
-                      <Camera className="h-4 w-4" />
+                    {showPassword ? (
+                      <EyeOff className="h-5 w-5" />
                     ) : (
-                      <ImagePlus className="h-4 w-4" />
+                      <Eye className="h-5 w-5" />
                     )}
-
-                    {avatarPreview
-                      ? "Change photo"
-                      : "Upload photo"}
                   </button>
-
-                  <p className="mt-1.5 text-xs text-gray-400">
-                    JPG, PNG or other image · Max 5 MB
-                  </p>
-
                 </div>
-
               </div>
 
-            </div>
+              {/* PROFILE PHOTO */}
+              <div className="min-w-0">
 
-            {/* -------------------------------- */}
-            {/* Submit */}
-            {/* -------------------------------- */}
+                <label className="mb-2 block text-sm font-medium text-gray-700">
+                  Profile photo
+                  <span className="ml-1 font-normal text-gray-400">
+                    (optional)
+                  </span>
+                </label>
 
-            <button
-              type="submit"
-              disabled={submitting}
-              className="w-full rounded-lg bg-gray-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-60"
-            >
+                <div className="flex min-w-0 flex-wrap items-center gap-3 sm:gap-4">
 
-              {submitting ? (
-                <span className="flex items-center justify-center gap-2">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Creating account...
-                </span>
-              ) : (
-                "Create account"
-              )}
+                  {/* AVATAR PREVIEW */}
+                  <div className="relative shrink-0">
+                    {avatarPreview ? (
+                      <img
+                        src={avatarPreview}
+                        alt="Profile preview"
+                        className="h-20 w-20 rounded-full border border-gray-200 object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-20 w-20 items-center justify-center rounded-full border border-gray-200 bg-gray-100">
+                        <User className="h-8 w-8 text-gray-400" />
+                      </div>
+                    )}
 
-            </button>
+                    {avatarPreview && (
+                      <button
+                        type="button"
+                        onClick={handleRemoveAvatar}
+                        className="absolute -right-1 -top-1 flex h-7 w-7 items-center justify-center rounded-full bg-gray-900 text-white transition hover:bg-gray-700"
+                        aria-label="Remove profile photo"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    )}
+                  </div>
 
-          </form>
+                  {/* UPLOAD */}
+                  <div className="min-w-0 flex-1">
 
-          {/* -------------------------------- */}
-          {/* Footer */}
-          {/* -------------------------------- */}
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleAvatarChange}
+                      className="hidden"
+                    />
 
-          <p className="mt-6 text-center text-xs text-gray-400">
-            By creating an account, you will join this workspace
-            with the role shown above.
-          </p>
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={submitting}
+                      className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
+                    >
+                      <ImagePlus className="h-4 w-4 shrink-0" />
+                      Upload photo
+                    </button>
 
+                    <p className="mt-1.5 wrap-break-word text-xs leading-relaxed text-gray-400">
+                      JPG, PNG or other image · Max 5 MB
+                    </p>
+
+                  </div>
+                </div>
+              </div>
+
+              {/* SUBMIT */}
+              <button
+                type="submit"
+                disabled={submitting}
+                className="w-full rounded-lg bg-gray-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {submitting ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Creating account...
+                  </span>
+                ) : (
+                  "Create account"
+                )}
+              </button>
+
+            </form>
+
+            {/* FOOTER */}
+            <p className="mt-6 text-center text-xs leading-relaxed text-gray-400">
+              By creating an account, you will join this workspace
+              with the role shown above.
+            </p>
+
+          </div>
         </div>
       </div>
-    </div>
-  );
+    )}
+  </>
+);
+
+  // if (loadingInvitation) {
+  //   return (
+  //     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+  //       <div className="flex items-center gap-3 text-gray-600">
+  //         <Loader2 className="w-5 h-5 animate-spin" />
+  //         <span>Checking invitation...</span>
+  //       </div>
+  //     </div>
+  //   );
+  // }
+ 
+  // if (!invitation) {
+  //   return (
+  //     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+  //       <div className="w-full max-w-md rounded-2xl bg-white border border-gray-200 shadow-sm p-8 text-center">
+  //         <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-red-50">
+  //           <X className="h-7 w-7 text-red-500" />
+  //         </div>
+  //         <h1 className="text-2xl font-semibold text-gray-900">
+  //           Invalid invitation
+  //         </h1>
+  //         <p className="mt-3 text-sm text-gray-500">
+  //           {error || "This invitation link is no longer valid."}
+  //         </p>
+  //         <button
+  //           type="button"
+  //           onClick={() => navigate("/login")}
+  //           className="mt-6 w-full rounded-lg bg-gray-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-gray-800"
+  //         >
+  //           Go to login
+  //         </button>
+
+  //       </div>
+  //     </div>
+  //   );
+  // }
+
+  // return (
+  //   <div className=" bg-gray-50 flex items-center justify-center px-4 py-10">
+  //     <div className="w-full max-w-lg">
+  //       <div className="text-center mb-8">
+  //         <h1 className="text-3xl font-bold text-gray-900">
+  //           Join CollabFlow
+  //         </h1>
+  //         <p className="mt-2 text-sm text-gray-500">
+  //           Create your account to join the workspace.
+  //         </p>
+  //       </div>
+
+  //       <div className="rounded-2xl bg-white border border-gray-200 shadow-sm p-7">
+  //         <div className="rounded-xl bg-gray-50 border border-gray-200 p-4 mb-7">
+  //           <div className="flex items-center gap-3 mb-4">
+  //             <div className="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center">
+  //               <User className="h-5 w-5 text-blue-600" />
+  //             </div>
+  //             <div>
+  //               <p className="text-xs text-gray-500">
+  //                 You've been invited to
+  //               </p>
+  //               <p className="font-semibold text-gray-900">
+  //                 {invitation.workspace.name}
+  //               </p>
+  //             </div>
+  //           </div>
+  //           <div className="space-y-3">
+  //             <div>
+  //               <p className="text-xs text-gray-500 mb-1">
+  //                 Email
+  //               </p>
+  //               <div className="rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-700">
+  //                 {invitation.email}
+  //               </div>
+  //             </div>
+  //             <div>
+  //               <p className="text-xs text-gray-500 mb-1">
+  //                 Workspace role
+  //               </p>
+  //               <div className="rounded-lg border border-gray-200 bg-white px-3 py-2.5">
+  //                 <span className="inline-flex items-center gap-2 text-sm font-medium text-gray-800">
+  //                   <span className="h-2 w-2 rounded-full bg-blue-500" />
+  //                    {invitation.role === "viewer"
+  //                     ? "Viewer"
+  //                     : "Member"}
+  //                   </span>
+  //               </div>
+  //             </div>
+  //           </div>
+  //         </div>
+ 
+  //         {error && (
+  //           <div className="mb-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+  //             {error}
+  //           </div>
+  //         )}
+ 
+  //         {success && (
+  //           <div className="mb-5 flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
+  //             <Check className="h-4 w-4 shrink-0" />
+  //             Your account has been created successfully.
+  //           </div>
+  //         )}
+ 
+  //         <form
+  //           onSubmit={handleSubmit}
+  //           className="space-y-5"
+  //         >
+  //           <div>
+  //             <label
+  //               htmlFor="fullName"
+  //               className="block text-sm font-medium text-gray-700 mb-1.5"
+  //             >
+  //               Full name
+  //             </label>
+  //             <input
+  //               id="fullName"
+  //               type="text"
+  //               value={fullName}
+  //               onChange={(e) =>
+  //                 setFullName(e.target.value)
+  //               }
+  //               placeholder="Enter your full name"
+  //               autoComplete="name"
+  //               disabled={submitting}
+  //               className="w-full rounded-lg border border-gray-300 px-3.5 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
+  //             />
+  //           </div>
+  //           <div>
+  //             <label
+  //               htmlFor="password"
+  //               className="block text-sm font-medium text-gray-700 mb-1.5"
+  //             >
+  //               Password
+  //             </label>
+  //             <div className="relative">
+  //               <input
+  //                 id="password"
+  //                 type={
+  //                   showPassword
+  //                     ? "text"
+  //                     : "password"
+  //                 }
+  //                 value={password}
+  //                 onChange={(e) =>
+  //                   setPassword(e.target.value)
+  //                 }
+  //                 placeholder="Create a password"
+  //                 autoComplete="new-password"
+  //                 disabled={submitting}
+  //                 className="w-full rounded-lg border border-gray-300 px-3.5 py-2.5 pr-11 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
+  //               />
+
+  //               <button
+  //                 type="button"
+  //                 onClick={() =>
+  //                   setShowPassword((value) => !value)
+  //                 }
+  //                 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+  //                 aria-label={
+  //                   showPassword
+  //                     ? "Hide password"
+  //                     : "Show password"
+  //                 }
+  //               >
+  //                 {showPassword ? (
+  //                   <EyeOff className="h-5 w-5" />
+  //                 ) : (
+  //                   <Eye className="h-5 w-5" />
+  //                 )}
+  //               </button>
+
+  //             </div>
+  //           </div>
+  //           <div>
+
+  //             <label className="block text-sm font-medium text-gray-700 mb-2">
+  //               Profile photo
+  //               <span className="ml-1 font-normal text-gray-400">
+  //                 (optional)
+  //               </span>
+  //             </label>
+  //             <div className="flex items-center gap-4">                 
+  //               <div className="relative shrink-0">
+  //                 {avatarPreview ? (
+  //                   <img
+  //                     src={avatarPreview}
+  //                     alt="Profile preview"
+  //                     className="h-20 w-20 rounded-full object-cover border border-gray-200"
+  //                   />
+  //                 ) : (
+  //                   <div className="h-20 w-20 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center">
+  //                     <User className="h-8 w-8 text-gray-400" />
+  //                   </div>
+  //                 )}
+
+  //                 {avatarPreview && (
+  //                   <button
+  //                     type="button"
+  //                     onClick={handleRemoveAvatar}
+  //                     className="absolute -right-1 -top-1 h-6 w-6 rounded-full bg-gray-900 text-white flex items-center justify-center hover:bg-gray-700"
+  //                     aria-label="Remove profile photo"
+  //                   >
+  //                     <X className="h-3.5 w-3.5" />
+  //                   </button>
+  //                 )}
+
+  //               </div>
+  //               <div>
+  //                 <input
+  //                   ref={fileInputRef}
+  //                   type="file"
+  //                   accept="image/*"
+  //                   onChange={handleAvatarChange}
+  //                   className="hidden"
+  //                 />
+
+  //                 <button
+  //                   type="button"
+  //                   onClick={() => {
+  //                      console.log("Upload clicked");
+  //                      console.log("File input:", fileInputRef.current);
+  //                     fileInputRef.current?.click();
+  //                   }}
+  //                   disabled={submitting}
+  //                   className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-3.5 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+  //                 > 
+  //                   <ImagePlus className="h-4 w-4" />
+  //                     Upload photo  
+  //                 </button>
+  //                 <p className="mt-1.5 text-xs text-gray-400">
+  //                   JPG, PNG or other image · Max 5 MB
+  //                 </p>
+  //               </div>
+  //             </div>
+  //           </div>
+ 
+  //           <button
+  //             type="submit"
+  //             disabled={submitting}
+  //             className="w-full rounded-lg bg-gray-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-60"
+  //           >
+  //             {submitting ? (
+  //               <span className="flex items-center justify-center gap-2">
+  //                 <Loader2 className="h-4 w-4 animate-spin" />
+  //                 Creating account...
+  //               </span>
+  //             ) : (
+  //               "Create account"
+  //             )}
+  //           </button>
+  //         </form>
+ 
+  //         <p className="mt-6 text-center text-xs text-gray-400">
+  //           By creating an account, you will join this workspace
+  //           with the role shown above.
+  //         </p>
+
+  //       </div>
+  //     </div>
+  //   </div>
+  // );
 }

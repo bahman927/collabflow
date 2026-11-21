@@ -16,12 +16,14 @@ from datetime import timedelta
 from decouple import config
 from dotenv import load_dotenv
 
-load_dotenv()
+# load_dotenv()
+# load_dotenv(override=True)
 
 # SECRET_KEY = config("SECRET_KEY")
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
+load_dotenv(BASE_DIR / ".env")
 
  
 SECRET_KEY = (
@@ -34,19 +36,15 @@ EMAIL_BACKEND = "anymail.backends.resend.EmailBackend"
 ANYMAIL = {
     "RESEND_API_KEY": os.environ["RESEND_API_KEY"],
 }
-# EMAIL_HOST = "smtp.gmail.com"
-
-# EMAIL_PORT = 587
-
-# EMAIL_USE_TLS = True
-
-# EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
-# EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
+ 
 
 DEFAULT_FROM_EMAIL = os.environ.get(
     "RESEND_FROM_EMAIL",
-    # "onboarding@resend.dev",
+    "CollabFlow <noreply@bahmanapps.com>"
 )
+
+print("RESEND_FROM_EMAIL ENV:", os.environ.get("RESEND_FROM_EMAIL"))
+print("DEFAULT_FROM_EMAIL:", DEFAULT_FROM_EMAIL)
 
 
 ALLOWED_HOSTS=['collabflow-pemg.onrender.com',

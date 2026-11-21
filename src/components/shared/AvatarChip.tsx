@@ -84,26 +84,58 @@ export function AvatarChip({
 
   if (!showName && !onRemove) return avatar;
 
-  return (
-    <div
-      className={`inline-flex items-center gap-1.5 ${sizeClasses.chip} rounded-full bg-gray-100 border border-gray-200`}
-    >
+ return (
+  <div
+    className={`inline-flex max-w-full shrink-0 items-center gap-1.5 rounded-full border border-gray-200 bg-gray-100 ${sizeClasses.chip}`}
+  >
+    {/* Avatar */}
+    <div className="shrink-0">
       {avatar}
-      {showName && (
-        <span className="font-medium text-gray-700 truncate max-w-30">
-          {displayName}
-        </span>
-      )}
-      {onRemove && (
-        <button
-          onClick={onRemove}
-          className="ml-0.5 p-0.5 rounded-full hover:bg-gray-300 transition-colors"
-        >
-          <X
-            className={`${sizeClasses.remove} text-gray-400`}
-          />
-        </button>
-      )}
     </div>
-  );
+
+    {/* Member Name */}
+    {showName && (
+      <span className="max-w-30 truncate font-medium text-gray-700">
+        {displayName}
+      </span>
+    )}
+
+    {/* Remove Button */}
+    {onRemove && (
+      <button
+        type="button"
+        onClick={onRemove}
+        aria-label={`Remove ${displayName}`}
+        className="ml-0.5 flex shrink-0 items-center justify-center rounded-full p-1 hover:bg-gray-300 transition-colors"
+      >
+        <X
+          className={`${sizeClasses.remove} text-gray-400`}
+        />
+      </button>
+    )}
+  </div>
+);
+
+  // return (
+  //   <div
+  //     className={`inline-flex items-center gap-1.5 ${sizeClasses.chip} rounded-full bg-gray-100 border border-gray-200`}
+  //   >
+  //     {avatar}
+  //     {showName && (
+  //       <span className="font-medium text-gray-700 truncate max-w-30">
+  //         {displayName}
+  //       </span>
+  //     )}
+  //     {onRemove && (
+  //       <button
+  //         onClick={onRemove}
+  //         className="ml-0.5 p-0.5 rounded-full hover:bg-gray-300 transition-colors"
+  //       >
+  //         <X
+  //           className={`${sizeClasses.remove} text-gray-400`}
+  //         />
+  //       </button>
+  //     )}
+  //   </div>
+  // );
 }

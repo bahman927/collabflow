@@ -53,37 +53,42 @@ const AvatarChip: React.FC<AvatarChipProps> = ({
   const bgColor = getColorFromName(name || email);
   const classes = sizeClasses[size];
 
-  return (
-    <span className={`inline-flex items-center gap-1.5 bg-gray-100 rounded-full ${classes.chip}`}>
-      {/* Avatar circle */}
-      <span
-        className={`inline-flex items-center justify-center rounded-full text-white font-medium shrink-0 ${classes.avatar}`}
-        style={{ backgroundColor: bgColor }}
-        title={displayName}
-      >
-        {initials}
-      </span>
-
-      {/* Name */}
-      {showName && (
-        <span className="truncate max-w-30 text-gray-700">{displayName}</span>
-      )}
-
-      {/* Remove button */}
-      {onRemove && (
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onRemove();
-          }}
-          className="ml-0.5 text-gray-400 hover:text-gray-600"
-          aria-label={`Remove ${displayName}`}
-        >
-          ×
-        </button>
-      )}
+ return (
+  <span
+    className={`inline-flex max-w-full min-w-0 shrink-0 items-center gap-1.5 rounded-full bg-gray-100 ${classes.chip}`}
+  >
+    {/* Avatar circle */}
+    <span
+      className={`inline-flex shrink-0 items-center justify-center rounded-full font-medium text-white ${classes.avatar}`}
+      style={{ backgroundColor: bgColor }}
+      title={displayName}
+    >
+      {initials}
     </span>
-  );
+
+    {/* Name */}
+    {showName && (
+      <span className="min-w-0 max-w-30 truncate text-gray-700">
+        {displayName}
+      </span>
+    )}
+
+    {/* Remove button */}
+    {onRemove && (
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          onRemove();
+        }}
+        className="ml-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-gray-400 transition hover:bg-gray-200 hover:text-gray-600"
+        aria-label={`Remove ${displayName}`}
+      >
+        ×
+      </button>
+    )}
+  </span>
+);
 };
 
 export default AvatarChip;

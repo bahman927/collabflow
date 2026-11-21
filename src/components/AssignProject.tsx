@@ -88,30 +88,41 @@ export default function AssignProject({
 
   if (userRole !== "Owner") return null; // Only Owner can see this
 
-  return (
+ return (
+  <div
+    className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/40 p-3 sm:p-5"
+    onClick={handleOverlayClick}
+  >
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
-      onClick={handleOverlayClick}
+      ref={modalRef}
+      className="flex max-h-[90dvh] w-full max-w-xl flex-col overflow-hidden rounded-xl bg-white shadow-xl"
     >
-      <div
-        ref={modalRef}
-        className="bg-white rounded-xl shadow-xl w-full max-w-xl p-6"
-      >
-        {/* Header */}
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold">Assign Project Task</h2>
-          <button
-            onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 text-lg"
-          >
-            ✕
-          </button>
-        </div>
+      {/* Header */}
+      <div className="flex shrink-0 items-center justify-between gap-3 border-b border-gray-100 px-4 py-3 sm:px-6 sm:py-4">
+        <h2 className="min-w-0 wrap-break-word text-lg font-semibold sm:text-xl">
+          Assign Project Task
+        </h2>
+
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Close modal"
+          className="shrink-0 rounded-lg p-2 text-gray-500 transition hover:bg-gray-100 hover:text-gray-700"
+        >
+          ✕
+        </button>
+      </div>
+
+      {/* Scrollable Form Content */}
+      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-6">
 
         {/* Project Selector */}
-        <label className="block mb-1 text-sm font-medium">Project</label>
+        <label className="mb-1 block text-sm font-medium">
+          Project
+        </label>
+
         <select
-          className="w-full border rounded-lg p-2 mb-4"
+          className="mb-4 w-full min-w-0 rounded-lg border p-3 text-base sm:p-2 sm:text-sm"
           value={selectedProject}
           onChange={(e) => setSelectedProject(Number(e.target.value))}
         >
@@ -123,24 +134,36 @@ export default function AssignProject({
         </select>
 
         {/* Developers Multi-select */}
-        <label className="block mb-1 text-sm font-medium">Assign to Developers</label>
-        <div className="mb-4 max-h-32 overflow-y-auto border rounded p-2 space-y-1">
+        <label className="mb-1 block text-sm font-medium">
+          Assign to Developers
+        </label>
+
+        <div className="mb-4 max-h-40 overflow-y-auto rounded border p-2">
           {developers.map((dev) => (
-            <label key={dev.id} className="flex items-center gap-2 text-sm">
+            <label
+              key={dev.id}
+              className="flex items-start gap-3 rounded py-2 text-sm"
+            >
               <input
                 type="checkbox"
                 checked={selectedDevelopers.includes(dev.id)}
                 onChange={() => toggleDeveloper(dev.id)}
+                className="mt-0.5 h-4 w-4 shrink-0"
               />
-              {dev.name}
+              <span className="min-w-0 wrap-break-word">
+                {dev.name}
+              </span>
             </label>
           ))}
         </div>
 
         {/* Task Description */}
-        <label className="block mb-1 text-sm font-medium">Task Description</label>
+        <label className="mb-1 block text-sm font-medium">
+          Task Description
+        </label>
+
         <textarea
-          className="w-full border rounded-lg p-2 mb-4"
+          className="mb-4 w-full min-w-0 rounded-lg border p-3 text-base sm:p-2 sm:text-sm"
           rows={3}
           placeholder="Explain what the task does..."
           value={taskDescription}
@@ -148,9 +171,12 @@ export default function AssignProject({
         />
 
         {/* Status */}
-        <label className="block mb-1 text-sm font-medium">Status</label>
+        <label className="mb-1 block text-sm font-medium">
+          Status
+        </label>
+
         <select
-          className="w-full border rounded-lg p-2 mb-4"
+          className="mb-4 w-full min-w-0 rounded-lg border p-3 text-base sm:p-2 sm:text-sm"
           value={status}
           onChange={(e) => setStatus(e.target.value as Status)}
         >
@@ -159,16 +185,20 @@ export default function AssignProject({
           <option>Done</option>
           <option>Overdue</option>
         </select>
+      </div>
 
-        {/* Assign Button */}
+      {/* Assign Button */}
+      <div className="shrink-0 border-t border-gray-100 bg-white px-4 py-3 sm:px-6 sm:py-4">
         <button
+          type="button"
           onClick={handleAssign}
-          className="w-full bg-blue-600 text-white rounded-lg py-2 hover:bg-blue-700 transition"
+          className="w-full rounded-lg bg-blue-600 py-3 text-sm font-medium text-white transition hover:bg-blue-700 sm:py-2"
         >
           Assign Task
         </button>
       </div>
     </div>
-  );
+  </div>
+);
 }
 

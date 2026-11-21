@@ -39,35 +39,65 @@ export default function AvatarGroup({ people, max = 3, size = "sm" }: Props) {
   }))
 );
 
-  return (
-    <div className="flex -space-x-1.5">
-      {visible.map((p, i) => (
-        <div
-          key={p.id}
-          title={p.name}
-          className={`${px} ${COLORS[i % COLORS.length]} rounded-full flex items-center justify-center
-                      text-white font-medium ring-2 ring-white`}
-        >
-          {p.avatarUrl ? (
-            <img
-              src={p.avatarUrl}
-              alt={p.name}
-              className="w-full h-full rounded-full object-cover"
-            />
-          ) : (
-            getInitials(p.name)
-          )}
-        </div>
-      ))}
 
-      {overflow > 0 && (
-        <div
-          className={`${px} bg-gray-200 text-gray-600 rounded-full flex items-center justify-center
-                      font-medium ring-2 ring-white`}
-        >
-          +{overflow}
-        </div>
-      )}
-    </div>
-  );
+return (
+  <div className="flex w-fit max-w-full shrink-0 items-center -space-x-1.5">
+    {visible.map((p, i) => (
+      <div
+        key={p.id}
+        title={p.name}
+        className={`${px} ${COLORS[i % COLORS.length]} relative flex shrink-0 items-center justify-center overflow-hidden rounded-full text-white font-medium ring-2 ring-white`}
+      >
+        {p.avatarUrl ? (
+          <img
+            src={p.avatarUrl}
+            alt={p.name}
+            className="h-full w-full rounded-full object-cover"
+          />
+        ) : (
+          getInitials(p.name)
+        )}
+      </div>
+    ))}
+
+    {overflow > 0 && (
+      <div
+        className={`${px} relative flex shrink-0 items-center justify-center rounded-full bg-gray-200 text-gray-600 font-medium ring-2 ring-white`}
+      >
+        +{overflow}
+      </div>
+    )}
+  </div>
+);
+  // return (
+  //   <div className="flex -space-x-1.5">
+  //     {visible.map((p, i) => (
+  //       <div
+  //         key={p.id}
+  //         title={p.name}
+  //         className={`${px} ${COLORS[i % COLORS.length]} rounded-full flex items-center justify-center
+  //                     text-white font-medium ring-2 ring-white`}
+  //       >
+  //         {p.avatarUrl ? (
+  //           <img
+  //             src={p.avatarUrl}
+  //             alt={p.name}
+  //             className="w-full h-full rounded-full object-cover"
+  //           />
+  //         ) : (
+  //           getInitials(p.name)
+  //         )}
+  //       </div>
+  //     ))}
+
+  //     {overflow > 0 && (
+  //       <div
+  //         className={`${px} bg-gray-200 text-gray-600 rounded-full flex items-center justify-center
+  //                     font-medium ring-2 ring-white`}
+  //       >
+  //         +{overflow}
+  //       </div>
+  //     )}
+  //   </div>
+  // );
 }

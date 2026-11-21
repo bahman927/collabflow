@@ -7,7 +7,7 @@ from django.core.mail import send_mail
 def send_invitation_email(invitation):
     frontend_url = os.environ.get(
         "FRONTEND_URL",
-        "http://localhost:5174",
+        "http://localhost:5173",
     ).rstrip("/")
 
     accept_url = f"{frontend_url}/invite/{invitation.token}"

@@ -170,32 +170,19 @@ function TaskDistributionBar({
   ];
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-5">
       <h3 className="text-sm font-semibold text-gray-700 mb-3">
         Task Distribution
       </h3>
 
       {/* Bar */}
-      <div className="flex h-3 rounded-full overflow-hidden bg-gray-100">
-        {segments.map((seg) => {
-          const pct = (counts[seg.key] / total) * 100;
-          if (pct === 0) return null;
-          return (
-            <div
-              key={seg.key}
-              className={`${seg.color} transition-all duration-500`}
-              style={{ width: `${pct}%` }}
-              title={`${seg.label}: ${counts[seg.key]}`}
-            />
-          );
-        })}
-      </div>
-
-      {/* Legend */}
-      <div className="flex flex-wrap gap-4 mt-3">
+      <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2">
         {segments.map((seg) => (
-          <div key={seg.key} className="flex items-center gap-1.5 text-xs text-gray-500">
-            <span className={`w-2.5 h-2.5 rounded-full ${seg.color}`} />
+          <div
+            key={seg.key}
+            className="flex items-center gap-1.5 text-xs text-gray-500"
+          >
+            <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${seg.color}`} />
             {seg.label}{" "}
             <span className="font-medium text-gray-700">
               {counts[seg.key]}
@@ -203,6 +190,9 @@ function TaskDistributionBar({
           </div>
         ))}
       </div>
+
+      {/* Legend */}
+      
     </div>
   );
 }
@@ -216,54 +206,55 @@ function RecentTaskRow({ task }: { task: Task }) {
       name: a.name,
       avatar: a.avatar || undefined,
     }));
-    
-      // console.log("CREATED BY:", task.created_by)
-      // console.log("AVATAR:", task.created_by?.avatar)
+  
+return (
+  <li className="group flex min-w-0 flex-col gap-2 border-b border-gray-50 py-3 last:border-0 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
 
-  return (
-    <li className="flex  py-3 border-b border-gray-50 last:border-0 group">
-      <div className=" mr-3 gap-2">
-       
+    {/* Creator Avatar + Task Information */}
+    <div className="flex min-w-0 items-start gap-3">
+      <div className="shrink-0">
         {task.created_by?.avatar ? (
           <img
             src={task.created_by.avatar}
             alt={task.created_by.name}
-            className="w-7 h-7 rounded-full object-cover"
+            className="h-8 w-8 rounded-full object-cover"
           />
         ) : (
-          <UserCircle className="w-7 h-7 text-gray-400" />
+          <UserCircle className="h-8 w-8 text-gray-400" />
         )}
-
       </div>
-      <div className="flex items-center gap-2 min-w-0">
-        <div className="min-w-0">
-          <p className="text-sm font-medium text-gray-800 truncate group-hover:text-indigo-600 transition-colors">
-            {task.name}
+
+      <div className="min-w-0 flex-1">
+        <p className="wrap-break-word text-sm font-medium text-gray-800 transition-colors group-hover:text-indigo-600">
+          {task.name}
+        </p>
+
+        {task.description && (
+          <p className="mt-0.5 line-clamp-2 wrap-break-word text-xs text-gray-400">
+            {task.description}
           </p>
-          {task.description && (
-            <p className="text-xs text-gray-400 truncate max-w-xs">
-              {task.description}
-            </p>
-          )}
-        </div>
+        )}
       </div>
+    </div>
 
-      <div className="flex items-center gap-3 shrink-0 ml-3">
-        {/* ← Overlapping avatars */}
-        <AvatarStack members={avatarMembers} max={3} />
+    {/* Assignees + Status + Updated Time */}
+    <div className="flex min-w-0 flex-wrap items-center justify-between gap-2 pl-11 sm:shrink-0 sm:justify-end sm:pl-0">
 
-        <span
-          className={`text-xs px-2 py-0.5 rounded-full font-medium ${badge.bg} ${badge.text}`}
-        >
-          {badge.label}
-        </span>
-        <span className="text-xs text-gray-400 w-16 text-right">
-          {relativeTime(task.updated_at)}
-        </span>
-      </div>
-     
-    </li>
-  );
+      <AvatarStack members={avatarMembers} max={3} />
+
+      <span
+        className={`shrink-0 rounded-full px-2 py-1 text-xs font-medium ${badge.bg} ${badge.text}`}
+      >
+        {badge.label}
+      </span>
+
+      <span className="w-auto text-right text-xs text-gray-400 sm:w-16">
+        {relativeTime(task.updated_at)}
+      </span>
+    </div>
+
+  </li>
+);
 }
 
 //********************************************************** */
@@ -284,41 +275,43 @@ function ProjectCard({
   const pct = total > 0 ? Math.round((done / total) * 100) : 0;
 
   return (
-    <Link
-      to={`/workspace/${workspaceId}/project/${project.id}/board`}
-      onClick={onSelect}
+  <Link
+    to={`/workspace/${workspaceId}/project/${project.id}/board`}
+    onClick={onSelect}
+    className="group block min-w-0 rounded-xl border border-gray-100 bg-white p-4 shadow-sm transition-all hover:border-indigo-200 hover:shadow-md sm:p-5"
+  >
+    <div className="mb-3 flex min-w-0 items-start justify-between gap-2">
+      <div className="min-w-0 flex-1">
+        <h4 className="wrap-break-word font-semibold text-gray-800 transition-colors group-hover:text-indigo-600">
+          {project.name}
+        </h4>
 
-      className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 hover:shadow-md hover:border-indigo-200 transition-all group block"
-    >
-      <div className="flex items-start justify-between mb-3">
-        <div className="min-w-0">
-          <h4 className="font-semibold text-gray-800 truncate group-hover:text-indigo-600 transition-colors">
-            {project.name}
-          </h4>
-          {project.description && (
-            <p className="text-xs text-gray-400 mt-0.5 truncate">
-              {project.description}
-            </p>
-          )}
-        </div>
-        <span className="text-xs font-medium text-gray-400 shrink-0 ml-2">
-          {total} tasks
-        </span>
+        {project.description && (
+          <p className="mt-0.5 line-clamp-2 wrap-break-word text-xs text-gray-400">
+            {project.description}
+          </p>
+        )}
       </div>
 
-      {/* Mini progress bar */}
-      <div className="h-1.5 rounded-full bg-gray-100 overflow-hidden">
-        <div
-          className="h-full bg-green-500 rounded-full transition-all duration-500"
-          style={{ width: `${pct}%` }}
-        />
-      </div>
-      <div className="flex justify-between mt-2 text-xs text-gray-400">
-        <span>{done} completed</span>
-        <span>{pct}%</span>
-      </div>
-    </Link>
-  );
+      <span className="ml-1 shrink-0 text-xs font-medium text-gray-400">
+        {total} tasks
+      </span>
+    </div>
+
+    {/* Mini Progress Bar */}
+    <div className="h-1.5 overflow-hidden rounded-full bg-gray-100">
+      <div
+        className="h-full rounded-full bg-green-500 transition-all duration-500"
+        style={{ width: `${pct}%` }}
+      />
+    </div>
+
+    <div className="mt-2 flex justify-between gap-2 text-xs text-gray-400">
+      <span>{done} completed</span>
+      <span>{pct}%</span>
+    </div>
+  </Link>
+);
 }
 
 /* ───────────────────────────── icons ─────────────────────────────── */
@@ -367,27 +360,26 @@ const IconProjects = () => (
 
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
-  // console.log("dashboard - user :", user)
   const { currentWorkspace } = useWorkspace();
   const { getCurrentWorkspaceTasks,getWorkspaceTasks, fetchTasks, tasks, loading} = useTask();
   const { projects, setCurrentProject } = useProject();
   const normalize = (s: string) => s.toLowerCase() as TaskStatus;
 
+  useEffect(() => {
+    setCurrentProject(null);
+  }, [setCurrentProject]);
+
   if (!currentWorkspace) return null;
 
   const wsTasks = getWorkspaceTasks(currentWorkspace.id);
-  
-   const dashboardGrouped = wsTasks.reduce((acc, task) => {
+
+  const dashboardGrouped = wsTasks.reduce((acc, task) => {
       const key = normalize(task.status);
 
       if (!acc[key]) acc[key] = [];
          acc[key].push(task);
       return acc;
   }, {} as Record<TaskStatus, Task[]>);
-
-  useEffect(() => {
-    setCurrentProject(null);
-  }, []);
 
   const counts = {
     todo: dashboardGrouped["todo"]?.length ?? 0,
@@ -412,25 +404,23 @@ const Dashboard: React.FC = () => {
 
    const email = user?.email.split("a")[0]
   return (
-    <div className="p-6 lg:p-8 bg-gray-50 min-h-screen space-y-6 ml-0">
+    <div className="min-h-screen min-w-0 space-y-5 bg-gray-50 px-3 py-5 sm:space-y-6 sm:px-5 sm:py-6 lg:px-8">
       {/* ── Header ── */}
-      <header>
-        <h1 className="text-2xl lg:text-3xl font-bold text-green-900">
+     <header className="min-w-0">
+        <h1 className="wrap-break-word text-xl font-bold text-green-900 sm:text-2xl lg:text-3xl">
           {greeting() + " "}
-          <span className="text-2xl  text-blue-600">
-          {/* {userName ? `, ${userName.charAt(0).toUpperCase() + userName.slice(1)}` : ""} 👋 */}
-          {userName ??  ""} 👋
+          <span className="text-blue-600">
+            {userName ?? ""} 👋
           </span>
         </h1>
-        <p className="text-sm text-gray-500 mt-1">
-          {currentWorkspace
-            ? `Here's what's happening in ${currentWorkspace.name}`
-            : "Select a workspace to get started"}
+
+        <p className="mt-1 wrap-break-word text-sm text-gray-500">
+          {`Here's what's happening in ${currentWorkspace.name}`}
         </p>
-      </header>
+     </header>
 
       {/* ── Stats Cards ── */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid min-w-0 grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-5">
         <StatCard
           icon={<IconTasks />}
           label="Total Tasks"
@@ -472,31 +462,32 @@ const Dashboard: React.FC = () => {
       <TaskDistributionBar counts={counts} total={total} />
 
       {/* ── Two-column layout: Recent Tasks + Projects ── */}
-      <div className="grid grid-cols-1 md:grid-cols-2   gap-8">
+      <div className="grid min-w-0 grid-cols-1 gap-5 lg:grid-cols-2 lg:gap-8">
 
         {/* Projects Overview */}
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+          <div className="flex min-w-0 items-center justify-between gap-2">
+          {/* <div className="flex items-center justify-between"> */}
+            <h2 className="flex min-w-0 items-center gap-2 text-lg font-semibold text-gray-800">
               <span className="p-1.5 rounded-lg bg-indigo-50 text-indigo-600">
                 <IconProjects />
               </span>
               Projects
             </h2>
-            <span className="text-xs text-gray-400">
+            <span className="shrink-0 text-xs text-gray-400">
               {projects.length} project{projects.length !== 1 ? "s" : ""}
             </span>
           </div>
 
           {projects.length === 0 ? (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 text-center">
+           <div className="rounded-xl border border-gray-100 bg-white p-6 text-center sm:p-8">
               <p className="text-gray-400 text-sm">No projects yet</p>
               <p className="text-xs text-gray-300 mt-1">
                 Create a project to get started
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 gap-3 lg:pr-6">
+            <div className="grid min-w-0 grid-cols-1 gap-3">
               {projects.map((project) => (
                 <ProjectCard
                   key={project.id}
@@ -511,17 +502,15 @@ const Dashboard: React.FC = () => {
           
         </div>    
         {/* Recent Tasks */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8  ">
-         <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+        <div className="min-w-0 rounded-xl border border-gray-100 bg-white p-4 shadow-sm sm:p-6">
+         <div className="mb-4 flex min-w-0 items-center justify-between gap-2">
+            <h2 className="flex min-w-0 items-center gap-2 text-base font-semibold text-gray-800 sm:text-lg">
 
-              {/* Icon */}
-              <span className="p-1.5 rounded-lg bg-emerald-50 text-green-600">
+              <span className="shrink-0 rounded-lg bg-emerald-50 p-1.5 text-green-600">
                 <IconTasks />
               </span>
 
-              {/* All text in ONE inline span */}
-              <span className="flex items-center gap-1">
+              <span className="flex min-w-0 flex-wrap items-center gap-x-1">
                 Recent
                 <span className="text-green-600">
                   task{wsTasks.length !== 1 ? "s" : ""}

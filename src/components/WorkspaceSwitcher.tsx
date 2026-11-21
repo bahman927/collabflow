@@ -9,40 +9,64 @@ export default function WorkspaceSwitcher() {
   // console.log("workspace related : ", {workspaces, currentWorkspace})
   const [open, setOpen] = useState(false);
 
-  return (
-    <div className="relative">
-      <button
-        onClick={() => setOpen(!open)}
-        className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded hover:bg-gray-100 border-b transition"
-      >
-        <Building2 size={18} />
-        <span className="font-medium">
-          {currentWorkspace
-            ? `${currentWorkspace.name.split("@")[0]} Workspace`
-            : "No Workspace"}
-        </span>
+ return (
+  <div className="relative w-full min-w-0 sm:w-auto">
 
-        <ChevronDown size={16} />
-      </button>
+    {/* SWITCHER BUTTON */}
+    <button
+      type="button"
+      onClick={() => setOpen((prev) => !prev)}
+      aria-expanded={open}
+      className="flex w-full min-w-0 items-center gap-2 rounded border-b bg-gray-50 px-3 py-3 text-left transition hover:bg-gray-100 sm:w-auto sm:py-2"
+    >
+      <Building2 size={18} className="shrink-0" />
 
-      {open && (
-        <div className="absolute mt-2 w-56 bg-white shadow-lg rounded border z-20 animate-fadeIn">
-          {workspaces.map((ws) => (
-            <button
-              key={ws.id}
-              onClick={() => {
-                setCurrentWorkspace(ws);
-                setOpen(false);
-              }}
-              className={`block w-full text-left px-3 py-2 hover:bg-gray-100 ${
-                currentWorkspace?.id === ws.id ? "bg-gray-200" : ""
-              }`}
-            >
-             <span className="font-bold "> {ws.name} </span>
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
+      <span className="min-w-0 flex-1 truncate font-medium sm:max-w-48">
+        {currentWorkspace
+          ? `${currentWorkspace.name.split("@")[0]} Workspace`
+          : "No Workspace"}
+      </span>
+
+      <ChevronDown
+        size={16}
+        className={`shrink-0 transition-transform ${
+          open ? "rotate-180" : ""
+        }`}
+      />
+    </button>
+
+    {/* DROPDOWN */}
+    {open && (
+      <div className="absolute left-0 top-full z-50 mt-2 max-h-64 w-full min-w-0 overflow-y-auto rounded border border-gray-200 bg-white shadow-lg animate-fadeIn sm:w-56">
+
+        {workspaces.map((ws) => (
+          <button
+            key={ws.id}
+            type="button"
+            onClick={() => {
+              setCurrentWorkspace(ws);
+              setOpen(false);
+            }}
+            className={`block w-full min-w-0 px-3 py-3 text-left text-sm transition hover:bg-gray-100 sm:py-2 ${
+              currentWorkspace?.id === ws.id
+                ? "bg-gray-200"
+                : ""
+            }`}
+          >
+            <span className="block wrap-break-word font-bold">
+              {ws.name}
+            </span>
+          </button>
+        ))}
+
+        {workspaces.length === 0 && (
+          <p className="px-3 py-3 text-sm text-gray-500">
+            No workspaces available
+          </p>
+        )}
+
+      </div>
+    )}
+  </div>
+);
 }

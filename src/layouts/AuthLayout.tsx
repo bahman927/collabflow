@@ -5,17 +5,24 @@ interface AuthLayoutProps {
 }
 
 const AuthLayout: React.FC<AuthLayoutProps> = ({ title }) => {
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="w-full max-w-md bg-white p-6 rounded-xl shadow">
-        {title && (
-          <h1 className="text-2xl font-semibold mb-6 text-center">{title}</h1>
-        )}
-        {/* Outlet renders the nested route element */}
-        <Outlet />
-      </div>
+ return (
+  <div className="flex min-h-screen min-w-0 items-center justify-center bg-gray-50 px-3 py-6 sm:px-5 sm:py-8">
+
+    <div className="w-full min-w-0 max-w-md rounded-xl bg-white p-4 shadow sm:p-6">
+
+      {title && (
+        <h1 className="mb-5 text-center text-xl font-semibold sm:mb-6 sm:text-2xl wrap-break-word">
+          {title}
+        </h1>
+      )}
+
+      {/* Outlet renders the nested route element */}
+      <Outlet />
+
     </div>
-  );
+
+  </div>
+);
 };
 
 export default AuthLayout;

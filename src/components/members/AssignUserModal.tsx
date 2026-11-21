@@ -142,12 +142,6 @@ useEffect(() => {
 const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
 
-  //  console.log("=== HANDLE SUBMIT START ===");
-  // console.log("selectedMemberId:", selectedMemberId);
-  // console.log("selectedProjects:", selectedProjects);
-  // console.log("selectedTasks:", selectedTasks);
-  // console.log("BEFORE MEMBER CHECK");
-
   if (!selectedMemberId){
     //  console.log("STOP: no selected member");
   setError("Please select a member.");
@@ -183,14 +177,7 @@ console.log("LOADING SET");
         projectId,
         selectedMemberId
       );
-
-  //      console.log("ASSIGN PROJECT");
-  // console.log("projectId:", projectId);
-  // console.log("selectedMemberId:", selectedMemberId);
-  // console.log("url:", config.url);
-  // console.log("options:", config.options);
-
-
+ 
       const result = await apiFetch(
         config.url,
         config.options,
@@ -227,129 +214,271 @@ console.log("LOADING SET");
   // ── Render ─────────────────────────────────────────
   if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
-        <h2 className="text-xl font-bold text-gray-900 mb-4">
-          User Assignment
-        </h2>
-         {/* Member Selection */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Assign User
-          </label>
 
-          <select
-            value={selectedMemberId ?? ""}
-            onChange={(e) =>
-              setSelectedMemberId(Number(e.target.value))
-            }
-            className=" mb-8 w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white"
-          >
-            <option value="">
-              Select member
-            </option>
+return (
+  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-3 sm:p-5">
 
-            {/* {members.map((member) => ( */}
-            {members
-              .filter(
-                (member) => member.role?.toLowerCase() !== "viewer"
-              )
-              .map((member) => (
-              <option
-                key={member.id}
-                value={member.id}
-              >
+    <div className="bg-white rounded-xl shadow-xl w-full max-w-lg p-4 sm:p-6 max-h-[90dvh] overflow-y-auto">
+
+      <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-4">
+        User Assignment
+      </h2>
+
+      {/* Member Selection */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Assign User
+        </label>
+
+        <select
+          value={selectedMemberId ?? ""}
+          onChange={(e) =>
+            setSelectedMemberId(Number(e.target.value))
+          }
+          className="mb-6 sm:mb-8 w-full px-3 py-3 sm:py-2 border border-gray-300 rounded-lg text-sm bg-white"
+        >
+          <option value="">
+            Select member
+          </option>
+
+          {members
+            .filter(
+              (member) => member.role?.toLowerCase() !== "viewer"
+            )
+            .map((member) => (
+              <option key={member.id} value={member.id}>
                 {member.email}
               </option>
             ))}
-          </select>
-        </div>
-        <form onSubmit={handleSubmit} className="space-y-5 ">
-          
-          {/* Project Assignment */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Assign to Projects
-              <span className="text-gray-400 font-normal ml-1">(optional)</span>
-            </label>
-            {projects.length === 0 ? (
-              <p className="text-sm text-gray-400">
-                No projects in this workspace yet.
-              </p>
-            ) : (
-              <div className="space-y-2 max-h-32 overflow-y-auto border border-gray-200 rounded-lg p-3">
-                {projects.map((project) => (
-                  <label
-                    key={project.id}
-                    className="flex items-center gap-2 cursor-pointer"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={selectedProjects.includes(project.id)}
-                      onChange={() => toggleProject(project.id)}
-                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                    />
-                    <span className="text-sm text-gray-700">
-                      {project.name}
-                    </span>
-                  </label>
-                ))}
-              </div>
-            )}
-          </div>
+        </select>
+      </div>
 
-          {/* Task Assignment — only shows when projects are selected */}
-          {filteredTasks.length > 0 && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Assign to Tasks
-                <span className="text-gray-400 font-normal ml-1">(optional)</span>
-              </label>
-              <div className="space-y-2 max-h-40 overflow-y-auto border border-gray-200 rounded-lg p-3">
-                {filteredTasks.map((task) => (
-                  <label key={task.id} className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={selectedTasks.includes(task.id)}
-                      onChange={() => toggleTask(task.id)}
-                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                    />
-                    <span className="text-sm text-gray-700">
-                      {task.title}
-                    </span>
-                  </label>
-                ))}
-              </div>
+      <form onSubmit={handleSubmit} className="space-y-5">
+
+        {/* Project Assignment */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Assign to Projects
+            <span className="text-gray-400 font-normal ml-1">
+              (optional)
+            </span>
+          </label>
+
+          {projects.length === 0 ? (
+            <p className="text-sm text-gray-400">
+              No projects in this workspace yet.
+            </p>
+          ) : (
+            <div className="space-y-2 max-h-40 overflow-y-auto border border-gray-200 rounded-lg p-3">
+              {projects.map((project) => (
+                <label
+                  key={project.id}
+                  className="flex items-start gap-3 cursor-pointer py-1"
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedProjects.includes(project.id)}
+                    onChange={() => toggleProject(project.id)}
+                    className="mt-0.5 shrink-0 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+
+                  <span className="text-sm text-gray-700 wrap-break-word">
+                    {project.name}
+                  </span>
+                </label>
+              ))}
             </div>
           )}
+        </div>
 
+        {/* Task Assignment */}
+        {filteredTasks.length > 0 && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Assign to Tasks
+              <span className="text-gray-400 font-normal ml-1">
+                (optional)
+              </span>
+            </label>
 
-          {/* Error */}
-          {error && (
-            <p className="text-sm text-red-500">{error}</p>
-          )}
+            <div className="space-y-2 max-h-48 overflow-y-auto border border-gray-200 rounded-lg p-3">
+              {filteredTasks.map((task) => (
+                <label
+                  key={task.id}
+                  className="flex items-start gap-3 cursor-pointer py-1"
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedTasks.includes(task.id)}
+                    onChange={() => toggleTask(task.id)}
+                    className="mt-0.5 shrink-0 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
 
-          {/* Actions */}
-          <div className="flex justify-end gap-3 pt-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 text-sm text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={loading}
-              className="px-4 py-2 text-sm text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
-            >
-              {loading ? 'Assigning...' : 'Assign'}
-            </button>
+                  <span className="text-sm text-gray-700 wrap-break-word">
+                    {task.title}
+                  </span>
+                </label>
+              ))}
+            </div>
           </div>
-        </form>
-       
-   </div>
-   </div>
-  );
+        )}
+
+        {/* Error */}
+        {error && (
+          <p className="text-sm text-red-500 wrap-break-word">
+            {error}
+          </p>
+        )}
+
+        {/* Actions */}
+        <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 sm:gap-3 pt-2">
+
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-full sm:w-auto px-4 py-3 sm:py-2 text-sm text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            Cancel
+          </button>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full sm:w-auto px-4 py-3 sm:py-2 text-sm text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+          >
+            {loading ? "Assigning..." : "Assign"}
+          </button>
+
+        </div>
+      </form>
+    </div>
+  </div>
+);
+
 }
+//   return (
+//     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+//       <div className="bg-white rounded-xl shadow-xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
+//         <h2 className="text-xl font-bold text-gray-900 mb-4">
+//           User Assignment
+//         </h2>
+//          {/* Member Selection */}
+//         <div>
+//           <label className="block text-sm font-medium text-gray-700 mb-2">
+//             Assign User
+//           </label>
+
+//           <select
+//             value={selectedMemberId ?? ""}
+//             onChange={(e) =>
+//               setSelectedMemberId(Number(e.target.value))
+//             }
+//             className=" mb-8 w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white"
+//           >
+//             <option value="">
+//               Select member
+//             </option>
+
+//             {/* {members.map((member) => ( */}
+//             {members
+//               .filter(
+//                 (member) => member.role?.toLowerCase() !== "viewer"
+//               )
+//               .map((member) => (
+//               <option
+//                 key={member.id}
+//                 value={member.id}
+//               >
+//                 {member.email}
+//               </option>
+//             ))}
+//           </select>
+//         </div>
+//         <form onSubmit={handleSubmit} className="space-y-5 ">
+          
+//           {/* Project Assignment */}
+//           <div>
+//             <label className="block text-sm font-medium text-gray-700 mb-2">
+//               Assign to Projects
+//               <span className="text-gray-400 font-normal ml-1">(optional)</span>
+//             </label>
+//             {projects.length === 0 ? (
+//               <p className="text-sm text-gray-400">
+//                 No projects in this workspace yet.
+//               </p>
+//             ) : (
+//               <div className="space-y-2 max-h-32 overflow-y-auto border border-gray-200 rounded-lg p-3">
+//                 {projects.map((project) => (
+//                   <label
+//                     key={project.id}
+//                     className="flex items-center gap-2 cursor-pointer"
+//                   >
+//                     <input
+//                       type="checkbox"
+//                       checked={selectedProjects.includes(project.id)}
+//                       onChange={() => toggleProject(project.id)}
+//                       className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+//                     />
+//                     <span className="text-sm text-gray-700">
+//                       {project.name}
+//                     </span>
+//                   </label>
+//                 ))}
+//               </div>
+//             )}
+//           </div>
+
+//           {/* Task Assignment — only shows when projects are selected */}
+//           {filteredTasks.length > 0 && (
+//             <div>
+//               <label className="block text-sm font-medium text-gray-700 mb-2">
+//                 Assign to Tasks
+//                 <span className="text-gray-400 font-normal ml-1">(optional)</span>
+//               </label>
+//               <div className="space-y-2 max-h-40 overflow-y-auto border border-gray-200 rounded-lg p-3">
+//                 {filteredTasks.map((task) => (
+//                   <label key={task.id} className="flex items-center gap-2 cursor-pointer">
+//                     <input
+//                       type="checkbox"
+//                       checked={selectedTasks.includes(task.id)}
+//                       onChange={() => toggleTask(task.id)}
+//                       className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+//                     />
+//                     <span className="text-sm text-gray-700">
+//                       {task.title}
+//                     </span>
+//                   </label>
+//                 ))}
+//               </div>
+//             </div>
+//           )}
+
+
+//           {/* Error */}
+//           {error && (
+//             <p className="text-sm text-red-500">{error}</p>
+//           )}
+
+//           {/* Actions */}
+//           <div className="flex justify-end gap-3 pt-2">
+//             <button
+//               type="button"
+//               onClick={onClose}
+//               className="px-4 py-2 text-sm text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+//             >
+//               Cancel
+//             </button>
+//             <button
+//               type="submit"
+//               disabled={loading}
+//               className="px-4 py-2 text-sm text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+//             >
+//               {loading ? 'Assigning...' : 'Assign'}
+//             </button>
+//           </div>
+//         </form>
+       
+//    </div>
+//    </div>
+//   );
+// }

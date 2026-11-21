@@ -7,7 +7,6 @@ interface InvitationResponseProps {
 }
 export default function InvitationResponse({ token }: InvitationResponseProps ) {
   const { acceptInvite, denyInvite } = useInvitations();
-  // const { refreshActivity } = useActivity();
   const activity = useActivity();
 
   const handleAccept = async () => {

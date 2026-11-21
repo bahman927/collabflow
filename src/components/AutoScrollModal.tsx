@@ -13,12 +13,11 @@ export default function AutoScrollModal({
   photo,
   children,
   scrollSpeed = 0.4,
-  width = "w-[500px]",
-  height = "h-[350px]"
+  width = "lg:w-[650px]",
+  height = "lg:h-[420px]"
 } : AutoScrollModalProps    ) {
   const contentRef = useRef<HTMLDivElement | null>(null);
   const [autoScroll, setAutoScroll] = useState(true);
-  // const [scrollSpeed, setScrollSpeed] = useState(0.25);
 
   // Auto-scroll loop
   useEffect(() => {
@@ -48,31 +47,32 @@ export default function AutoScrollModal({
 
  
 
-  return (
-    <div className="relative w-full h-full">
+return (
+  <div className="relative h-full min-h-0 w-full overflow-hidden">
 
-      {/* PHOTO — now receives mouse events */}
-      <img
-        src={photo}
-        className="w-full h-full object-cover rounded-xl relative "
+    {/* PHOTO */}
+    <img
+      src={photo}
+      alt=""
+      className="absolute inset-0 h-full w-full rounded-xl object-cover"
+      onMouseEnter={() => setAutoScroll(false)}
+      onMouseLeave={() => setAutoScroll(true)}
+    />
+
+    {/* OVERLAY */}
+    <div className="absolute inset-0 z-10 flex items-center justify-center overflow-y-auto bg-black/30 p-3 sm:p-4">
+
+      {/* MODAL */}
+      <div
+        ref={contentRef}
+        className={`${width} ${height} my-auto max-h-[90dvh] max-w-full min-w-0 overflow-x-hidden overflow-y-auto rounded-xl p-4 backdrop-blur-md sm:p-6 no-scrollbar`}
         onMouseEnter={() => setAutoScroll(false)}
         onMouseLeave={() => setAutoScroll(true)}
-      />
-
-      {/* OVERLAY — lower z-index so photo is interactive */}
-      <div className="absolute inset-0 bg-black/30 flex justify-center items-center p-4 z-10">
-
-        {/* MODAL — also stops scroll on hover */}
-        <div
-          ref={contentRef}
-          className={`${width} ${height}  backdrop-blur-md p-4 rounded-xl overflow-y-auto no-scrollbar`}
-          onMouseEnter={() => setAutoScroll(false)}
-          onMouseLeave={() => setAutoScroll(true)}
-        >
-          {children}
-        </div>
-
+      >
+        {children}
       </div>
+
     </div>
-  );
+  </div>
+);
 }

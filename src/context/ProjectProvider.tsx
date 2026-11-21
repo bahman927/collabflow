@@ -112,7 +112,6 @@ const createProject = useCallback(
   // Update project (optimistic)
   // -----------------------------
   const updateProject = useCallback(
-  // async (id: number, data: ProjectUpdateData) => {
    async (id: number, data: ProjectUpdateData): Promise<void> => {
     // ⭐ Optimistic update
     setProjects((prev) =>
@@ -120,7 +119,7 @@ const createProject = useCallback(
     );
 
     try {
-      const { url, options } = projectService.update(id, data);
+      const { url, options } = projectService.update(id,currentWorkspace!.id, data);
       const updated = await apiFetch<Project>(url, options);
 
       // Replace optimistic with real
@@ -144,36 +143,40 @@ const createProject = useCallback(
   [apiFetch, currentProject, fetchProjects, activity]
 );
 
+ 
   // -----------------------------
-  // Delete project (optimistic)
-  // -----------------------------
+// Delete project (optimistic)
+// -----------------------------
   const deleteProject = useCallback(
-  async (id: number) => {
-    const previous = projects;
+    async (id: number) => {
+      const previous = projects;
 
-    // ⭐ Optimistic removal
-    setProjects((prev) => prev.filter((p) => p.id !== id));
+      // Optimistic removal
+      setProjects((prev) => prev.filter((p) => p.id !== id));
 
-    try {
-      const { url, options } = projectService.delete(id);
-      await apiFetch(url, options);
+      try {
+        const { url, options } = projectService.delete(
+          id,
+          currentWorkspace!.id
+        );
 
-      if (currentProject?.id === id) {
-        setCurrentProject(null);
+        await apiFetch(url, options);
+
+        if (currentProject?.id === id) {
+          setCurrentProject(null);
+        }
+
+        // Refresh activity feed
+        await activity.fetchActivity();
+
+      } catch (err) {
+        // Roll back optimistic removal
+        setProjects(previous);
+        throw err;
       }
-
-      // ⭐ NEW — refresh activity feed
-      await activity.fetchActivity();
-
-    } catch (err) {
-      // Roll back optimistic removal
-      setProjects(previous);
-      throw err;
-    }
-  },
-  [apiFetch, projects, currentProject, activity]
-);
-
+    },
+    [apiFetch, projects, currentProject, currentWorkspace, activity]
+  );
 
   // -----------------------------
   // Auto-load when workspace changes

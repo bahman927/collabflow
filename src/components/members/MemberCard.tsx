@@ -100,68 +100,85 @@ if (member.projects?.length > 0) {
   // -----------------------------
   // Render
   // -----------------------------
-  return (
-    <div className="flex items-center justify-between px-4 py-3 bg-white border border-gray-200 rounded-lg hover:border-gray-300 transition-colors">
-      <div className="flex items-center gap-3">
+return (
+  <div className="flex flex-col gap-3 rounded-lg border border-gray-200 bg-white px-3 py-3 transition-colors hover:border-gray-300 sm:flex-row sm:items-center sm:justify-between sm:px-4">
+
+    {/* Member information + assignments */}
+    <div className="flex min-w-0 items-start gap-3">
+
+      <div className="shrink-0">
         <AvatarChip
           name={member.displayName}
           avatarUrl={member.avatarUrl}
           size="md"
           showName={false}
         />
-
-        <div className="flex flex-col gap-1">
-          {/* Member Name */}
-          <div className="font-medium text-gray-900">
-            {member.displayName}
-          </div>
-
-          {/* Assignment rows */}
-          {uniqueRows.map((row) => (
-            <div
-              key={`${member.id}-${row.project?.id || 'none'}-${row.task?.id || 'none'}`}
-              className="flex items-center gap-3"
-            >
-              {/* Project badge */}
-              {row.project ? (
-                <span className="inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium bg-pink-100 text-blue-800">
-                  project: {row.project.name}
-                </span>
-              ) : (
-                <span className="text-gray-400 text-xs">No project</span>
-              )}
-
-              {/* Task badge */}
-              {row.task ? (
-                <span className="inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                  task: {row.task.name}
-                </span>
-              ) : (
-                <span className="text-gray-400 text-xs">No task</span>
-              )}
-            </div>
-          ))}
-        </div>
       </div>
 
-      {/* Role + Edit button */}
-      <div className="flex items-center gap-3">
-        <span
-          className={`px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${ROLE_BADGES[member.role]}`}
-        >
-          {member.role}
-        </span>
+      <div className="flex min-w-0 flex-col gap-1">
 
-        { canEdit && member.role?.toLowerCase() !== "owner" && (
-          <button
-            onClick={onEdit}
-            className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
+        {/* Member Name */}
+        <div className="font-medium text-gray-900 wrap-break-word">
+          {member.displayName}
+        </div>
+
+        {/* Assignment rows */}
+        {uniqueRows.map((row) => (
+          <div
+            key={`${member.id}-${row.project?.id || 'none'}-${row.task?.id || 'none'}`}
+            className="flex flex-wrap items-center gap-2 sm:gap-3"
           >
-            <Pencil className="w-4 h-4 text-gray-400" />
-          </button>
-        )}
-        
+
+            {/* Project badge */}
+            {row.project ? (
+              <span className="inline-flex max-w-full rounded-full bg-pink-100 px-2.5 py-1 text-xs font-medium text-blue-800 wrap-break-word">
+                project: {row.project.name}
+              </span>
+            ) : (
+              <span className="text-xs text-gray-400">
+                No project
+              </span>
+            )}
+
+            {/* Task badge */}
+            {row.task ? (
+              <span className="inline-flex max-w-full rounded-full bg-green-100 px-2.5 py-1 text-xs font-medium text-green-800 wrap-break-word">
+                task: {row.task.name}
+              </span>
+            ) : (
+              <span className="text-xs text-gray-400">
+                No task
+              </span>
+            )}
+
+          </div>
+        ))}
       </div>
     </div>
-  );
+
+    {/* Role + Edit button */}
+    <div className="flex shrink-0 items-center justify-between gap-3 border-t border-gray-100 pt-2 sm:justify-end sm:border-0 sm:pt-0">
+
+      <span
+        className={`rounded-full px-2.5 py-1 text-xs font-medium capitalize ${ROLE_BADGES[member.role]}`}
+      >
+        {member.role}
+      </span>
+
+      {canEdit && member.role?.toLowerCase() !== "owner" && (
+        <button
+          type="button"
+          onClick={onEdit}
+          aria-label={`Edit ${member.displayName}`}
+          className="shrink-0 rounded-lg p-2 transition-colors hover:bg-gray-100"
+        >
+          <Pencil className="h-4 w-4 text-gray-400" />
+        </button>
+      )}
+
+    </div>
+  </div>
+);
+
+   
 }

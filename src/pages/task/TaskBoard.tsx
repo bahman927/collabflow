@@ -17,7 +17,6 @@ import { useProject }       from "../../context/ProjectProvider";
 import { useTask }          from "../../context/TaskProvider";
 import KanbanColumn         from "../../components/task/KanbanColumn";
 import TaskCard             from "../../components/task/TaskCard";
-import TaskDetailDrawer     from "../../components/task/TaskDetailDrawer";
 import type { Task, TaskStatus } from "../../types/task";
 import DeleteTaskModal from "@/components/DeleteTaskModal";
 import CreateTaskModal     from "../../components/CreateTaskModal";
@@ -101,54 +100,59 @@ export default function TaskBoard() {
       void moveTask(Number(taskId), targetStatus);
     }
   };
+
+
   if (!currentWorkspace || !currentProject) {
-    return (
-      <div className="p-6">
-        <p className="text-sm text-gray-500">Loading board…</p>
-      </div>
+   return (
+    <div className="flex min-h-[calc(100dvh-80px)] min-w-0 items-center justify-center p-4 sm:p-6">
+      <p className="text-sm text-gray-500">Loading board…</p>
+    </div>
     );
   }
 
-   
-  return (
-    <div className="p-6 space-y-4 h-full">
-      {/* Breadcrumbs & title */}
-      <header>
-        <p className="text-xs text-gray-600">
-          <Link to={`/workspace/${workspaceId}`} className="hover:underline">
-            {currentWorkspace.name}
-          </Link>{" "}
-          /{" "}
-          <Link
-            to={`/workspace/${workspaceId}/project/${projectId}`}
-            className="hover:underline"
-          >
-            {currentProject.name}
-          </Link>{" "}
-          / Board
-        </p>
-        <h1 className="text-2xl font-bold mt-1 text-gray-900">Task Board</h1>
-      </header>
+return (
+  <div className="kanban-scroll flex min-h-0 min-w-0 w-full flex-col space-y-4 p-3 sm:p-4 lg:p-6">
+    {/* Breadcrumbs & title */}
+    <header className="min-w-0 shrink-0">
+      <p className="wrap-break-word text-xs leading-relaxed text-gray-600 sm:text-sm">
+        <Link to={`/workspace/${workspaceId}`} className="hover:underline">
+          {currentWorkspace.name}
+        </Link>
+        {" / "}
+        <Link
+          to={`/workspace/${workspaceId}/project/${projectId}`}
+          className="hover:underline"
+        >
+          {currentProject.name}
+        </Link>
+        {" / Board"}
+      </p>
 
-      {/* Kanban columns */}
+      <h1 className="mt-1 text-xl font-bold text-gray-900 sm:text-2xl">
+        Task Board
+      </h1>
+    </header>
+
+    {/* Kanban columns */}
+    <div className="w-full min-w-0 flex-1">
       <DndContext
         sensors={sensors}
         collisionDetection={closestCorners}
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-        <div className="flex gap-4 overflow-x-auto pb-4">
-          {COLUMNS.map((col) => (
-            <KanbanColumn
-              key={col.key}
-              status={col.key}
-              label={col.label}
-              tasks={groupedTasks[col.key] ?? []}
-              // tasks={currentTask}
-              onTaskClick={(task) => setCurrentTask(task)}
-
-            />
-          ))}
+        <div className=" w-full min-w-0 max-w-full overflow-x-auto overflow-y-auto pb-6">
+          <div className="flex  w-max min-w-full items-start gap-3 sm:gap-4">
+            {COLUMNS.map((col) => (
+              <KanbanColumn
+                key={col.key}
+                status={col.key}
+                label={col.label}
+                tasks={groupedTasks[col.key] ?? []}
+                onTaskClick={(task) => setCurrentTask(task)}
+              />
+            ))}
+          </div>
         </div>
 
         <DragOverlay>
@@ -159,29 +163,111 @@ export default function TaskBoard() {
           ) : null}
         </DragOverlay>
       </DndContext>
-
-     <CreateTaskModal
-               isOpen={showModal}
-               onClose={() => setShowModal(false)}
-               onCreate={handleCreate}
-             />  
-     
-      {/* -----------------------------
-          Delete Task Modal
-      ------------------------------ */}
-      {taskToDelete && (
-        <DeleteTaskModal
-          task={taskToDelete}
-          onClose={() => setTaskToDelete(null)}
-          onConfirm={async () => {
-            await deleteTask(taskToDelete.id);
-            setTaskToDelete(null);
-            setCurrentTask(null); 
-          }}
-        />
-      )}
-
-
     </div>
-  );
+
+    {/* Create Task Modal */}
+    <CreateTaskModal
+      isOpen={showModal}
+      onClose={() => setShowModal(false)}
+      onCreate={handleCreate}
+    />
+
+    {/* Delete Task Modal */}
+    {taskToDelete && (
+      <DeleteTaskModal
+        task={taskToDelete}
+        onClose={() => setTaskToDelete(null)}
+        onConfirm={async () => {
+          await deleteTask(taskToDelete.id);
+          setTaskToDelete(null);
+          setCurrentTask(null);
+        }}
+      />
+    )}
+  </div>
+);
+
+  // if (!currentWorkspace || !currentProject) {
+  //   return (
+  //     <div className="p-6">
+  //       <p className="text-sm text-gray-500">Loading board…</p>
+  //     </div>
+  //   );
+  // }
+
+   
+  // return (
+  //   <div className="p-6 space-y-4 h-full">
+  //     {/* Breadcrumbs & title */}
+  //     <header>
+  //       <p className="text-xs text-gray-600">
+  //         <Link to={`/workspace/${workspaceId}`} className="hover:underline">
+  //           {currentWorkspace.name}
+  //         </Link>{" "}
+  //         /{" "}
+  //         <Link
+  //           to={`/workspace/${workspaceId}/project/${projectId}`}
+  //           className="hover:underline"
+  //         >
+  //           {currentProject.name}
+  //         </Link>{" "}
+  //         / Board
+  //       </p>
+  //       <h1 className="text-2xl font-bold mt-1 text-gray-900">Task Board</h1>
+  //     </header>
+
+  //     {/* Kanban columns */}
+  //     <DndContext
+  //       sensors={sensors}
+  //       collisionDetection={closestCorners}
+  //       onDragStart={handleDragStart}
+  //       onDragEnd={handleDragEnd}
+  //     >
+  //       <div className="flex gap-4 overflow-x-auto pb-4">
+  //         {COLUMNS.map((col) => (
+  //           <KanbanColumn
+  //             key={col.key}
+  //             status={col.key}
+  //             label={col.label}
+  //             tasks={groupedTasks[col.key] ?? []}
+  //             // tasks={currentTask}
+  //             onTaskClick={(task) => setCurrentTask(task)}
+
+  //           />
+  //         ))}
+  //       </div>
+
+  //       <DragOverlay>
+  //         {activeTask ? (
+  //           <div className="rotate-3 scale-105">
+  //             <TaskCard task={activeTask} />
+  //           </div>
+  //         ) : null}
+  //       </DragOverlay>
+  //     </DndContext>
+
+  //    <CreateTaskModal
+  //              isOpen={showModal}
+  //              onClose={() => setShowModal(false)}
+  //              onCreate={handleCreate}
+  //            />  
+     
+  //     {/* -----------------------------
+  //         Delete Task Modal
+  //     ------------------------------ */}
+  //     {taskToDelete && (
+  //       <DeleteTaskModal
+  //         task={taskToDelete}
+  //         onClose={() => setTaskToDelete(null)}
+  //         onConfirm={async () => {
+  //           await deleteTask(taskToDelete.id);
+  //           setTaskToDelete(null);
+  //           setCurrentTask(null); 
+  //         }}
+  //       />
+  //     )}
+
+
+  //   </div>
+  // );
 }

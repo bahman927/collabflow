@@ -8,7 +8,6 @@ import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import Modal                 from "../../components/shared/Modal2";
 import EditWorkspaceModal    from "../../components/EditWorkspaceModal";
 import DeleteWorkspaceModal  from "../../components/DeleteWorkspaceModal";
-import ConfirmDeleteModal    from "../../components/ConfirmDeleteModal";
 import AutoScrollModal from "@/components/AutoScrollModal";
 import WorkspaceComment   from  "@/components/WorkspaceComment"
 
@@ -35,122 +34,255 @@ export default function WorkspacePage() {
     }
   }, [workspaceId, workspaces, currentWorkspace, setCurrentWorkspace, fetchProjects]);
 
-    if (!currentWorkspace ) {
-        return (
-          <div className="flex flex-col items-center justify-center h-[calc(100vh-80px)] text-center px-6">
-            <img
-              src={!currentWorkspace ? "No-workspace.png" : "/empty-state.png"}
-              className=" object-contain mb-6 opacity-90"
-            />
-                         
-          </div>
-        );
-      }
-
+  if (!currentWorkspace) {
   return (
-    <div className="p-2 space-y-6">
-      <header className="flex items-center justify-between">
-        <div>
-              <h1 className="text-xl font-semibold">{currentWorkspace.name}</h1>
-              {currentWorkspace.description && (
-                <p className="text-sm text-gray-500 mt-1">
-                  {currentWorkspace.description}
-                </p>
-              )}
-        </div>
-
-      {userRole === "owner" && (
-       <>
-        <div className="relative">
-          <button
-            onClick={() => setShowMenu(!showMenu)}
-            className="p-2 rounded-md border border-blue-600 text-blue-600 hover:bg-blue-50 ml-2"
-          >
-            <MoreHorizontal size={18} className="text-gray-500" />
-          </button>
-
-          {showMenu && (
-            <div className="absolute right-0 mt-1 w-44 bg-white rounded-lg shadow-lg border z-50 py-1">
-              <button
-                onClick={() => { setShowMenu(false); setShowEditModal(true); }}
-                className="flex items-center gap-2 w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-              >
-                <Pencil size={14} /> Edit Workspace
-              </button>
-
-              <button
-                onClick={() => { setShowMenu(false); setShowDeleteModal(true); }}
-                className="flex items-center gap-2 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-              >
-                <Trash2 size={14} /> Delete Workspace
-              </button>
-            </div>
-          )}
-        </div>
-
-        {showEditModal && (
-          <Modal
-            isOpen={showEditModal}
-            onClose={() => setShowEditModal(false)}
-            title="Edit Workspace"
-          >
-            <EditWorkspaceModal onClose={() => setShowEditModal(false)} />
-          </Modal>
-        )}
-
-        {showDeleteModal && (
-          <Modal
-            isOpen={showDeleteModal}
-            onClose={() => setShowDeleteModal(false)}
-            title="Delete Workspace"
-          >
-            <DeleteWorkspaceModal onClose={() => setShowDeleteModal(false)} />
-          </Modal>
-        )}
-      </>
-)}
-
- </header>
-
-      <section>
-        <h2 className="text-sm font-medium text-gray-500 mb-2">
-          Projects in this workspace
-        </h2>
-
-        {projects.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-gray-300 p-6 text-center text-sm text-gray-500">
-            No projects yet. Create your first project to get started.
-          </div>
-        ) : (
-          <div className="flex  gap-4 flex-col md:flex-row  justify-center">
-            
-             {projects.map(project => (
-               
-                <h3
-                 key={project.id}
-                 className="font-medium block rounded-lg border border-gray-200 bg-green-50 p-4 mb-4  hover:shadow-sm transition"
-                >
-                  {project.name}
-                </h3>
-              
-              ))} 
-              
-          </div>
-          
-        )}
-        
-        <div className="relative w-full ml-12 h-137.5">
-          <AutoScrollModal photo="Collab Dashboard.png">
-            <div className="mt-6">
-             <WorkspaceComment />
-            </div>
-
-          </AutoScrollModal>
-        </div>    
-                            
-      </section>
+    <div className="flex min-h-[calc(100dvh-80px)] min-w-0 flex-col items-center justify-center px-4 py-8 text-center sm:px-6">
+      <img
+        src={!currentWorkspace ? "No-workspace.png" : "/empty-state.png"}
+        alt={!currentWorkspace ? "No workspace" : "No workspace selected"}
+        className="mb-6 max-h-64 w-full max-w-xs object-contain opacity-90 sm:max-h-80"
+      />
     </div>
   );
+}
+
+return (
+  <div className="min-w-0 space-y-5 p-3 sm:space-y-6 sm:p-4 lg:p-6">
+    {/* Workspace Header */}
+    <header className="flex min-w-0 items-start justify-between gap-3">
+      <div className="min-w-0 flex-1">
+        <h1 className="wrap-break-word text-xl font-semibold sm:text-2xl">
+          {currentWorkspace.name}
+        </h1>
+
+        {currentWorkspace.description && (
+          <p className="mt-1 wrap-break-word text-sm leading-relaxed text-gray-500 sm:text-base">
+            {currentWorkspace.description}
+          </p>
+        )}
+      </div>
+
+      {/* Owner Options */}
+      {userRole === "owner" && (
+        <>
+          <div className="relative shrink-0">
+            <button
+              type="button"
+              onClick={() => setShowMenu(!showMenu)}
+              aria-label="Workspace options"
+              aria-expanded={showMenu}
+              className="ml-0 rounded-md border border-blue-600 p-2 text-blue-600 transition hover:bg-blue-50 sm:ml-2"
+            >
+              <MoreHorizontal size={18} className="text-gray-500" />
+            </button>
+
+            {showMenu && (
+              <div className="absolute right-0 z-50 mt-1 w-44 rounded-lg border bg-white py-1 shadow-lg">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowMenu(false);
+                    setShowEditModal(true);
+                  }}
+                  className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm text-gray-700 transition hover:bg-gray-50 sm:py-2"
+                >
+                  <Pencil size={14} />
+                  Edit Workspace
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowMenu(false);
+                    setShowDeleteModal(true);
+                  }}
+                  className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm text-red-600 transition hover:bg-red-50 sm:py-2"
+                >
+                  <Trash2 size={14} />
+                  Delete Workspace
+                </button>
+              </div>
+            )}
+          </div>
+
+          {showEditModal && (
+            <Modal
+              isOpen={showEditModal}
+              onClose={() => setShowEditModal(false)}
+              title="Edit Workspace"
+            >
+              <EditWorkspaceModal
+                onClose={() => setShowEditModal(false)}
+              />
+            </Modal>
+          )}
+
+          {showDeleteModal && (
+            <Modal
+              isOpen={showDeleteModal}
+              onClose={() => setShowDeleteModal(false)}
+              title="Delete Workspace"
+            >
+              <DeleteWorkspaceModal
+                onClose={() => setShowDeleteModal(false)}
+              />
+            </Modal>
+          )}
+        </>
+      )}
+    </header>
+
+    {/* Projects */}
+    <section className="min-w-0 space-y-3">
+      <h2 className="text-sm font-medium text-gray-500 sm:text-base">
+        Projects in this workspace
+      </h2>
+
+      {projects.length === 0 ? (
+        <div className="rounded-lg border border-dashed border-gray-300 p-4 text-center text-sm text-gray-500 sm:p-6">
+          No projects yet. Create your first project to get started.
+        </div>
+       ) : (
+        <div className="flex justify-center  min-w-0 grid-cols-1    gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {projects.map((project) => (
+            <h3
+              key={project.id}
+              className="flex  justify-center min-w-0 wrap-break-word rounded-lg border border-gray-200 bg-green-50 p-4 font-medium transition hover:shadow-sm"
+            >
+              {project.name}
+            </h3>
+          ))}
+        </div>
+      )}
+
+      {/* Dashboard Image and Workspace Comment */}
+      <div className="relative mt-4 h-[400px] min-h-80 w-full min-w-0 sm:mt-6 sm:min-h-96 lg:min-h-137.5">
+        <AutoScrollModal photo="Collab Dashboard.png">
+          <div className="mt-4 min-w-0 sm:mt-6">
+            <WorkspaceComment />
+          </div>
+        </AutoScrollModal>
+      </div>
+    </section>
+  </div>
+);
+
+//     if (!currentWorkspace ) {
+//         return (
+//           <div className="flex flex-col items-center justify-center h-[calc(100vh-80px)] text-center px-6">
+//             <img
+//               src={!currentWorkspace ? "No-workspace.png" : "/empty-state.png"}
+//               className=" object-contain mb-6 opacity-90"
+//             />
+                         
+//           </div>
+//         );
+//       }
+
+//   return (
+//     <div className="p-2 space-y-6">
+//       <header className="flex items-center justify-between">
+//         <div>
+//               <h1 className="text-xl font-semibold">{currentWorkspace.name}</h1>
+//               {currentWorkspace.description && (
+//                 <p className="text-sm text-gray-500 mt-1">
+//                   {currentWorkspace.description}
+//                 </p>
+//               )}
+//         </div>
+
+//       {userRole === "owner" && (
+//        <>
+//         <div className="relative">
+//           <button
+//             onClick={() => setShowMenu(!showMenu)}
+//             className="p-2 rounded-md border border-blue-600 text-blue-600 hover:bg-blue-50 ml-2"
+//           >
+//             <MoreHorizontal size={18} className="text-gray-500" />
+//           </button>
+
+//           {showMenu && (
+//             <div className="absolute right-0 mt-1 w-44 bg-white rounded-lg shadow-lg border z-50 py-1">
+//               <button
+//                 onClick={() => { setShowMenu(false); setShowEditModal(true); }}
+//                 className="flex items-center gap-2 w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+//               >
+//                 <Pencil size={14} /> Edit Workspace
+//               </button>
+
+//               <button
+//                 onClick={() => { setShowMenu(false); setShowDeleteModal(true); }}
+//                 className="flex items-center gap-2 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+//               >
+//                 <Trash2 size={14} /> Delete Workspace
+//               </button>
+//             </div>
+//           )}
+//         </div>
+
+//         {showEditModal && (
+//           <Modal
+//             isOpen={showEditModal}
+//             onClose={() => setShowEditModal(false)}
+//             title="Edit Workspace"
+//           >
+//             <EditWorkspaceModal onClose={() => setShowEditModal(false)} />
+//           </Modal>
+//         )}
+
+//         {showDeleteModal && (
+//           <Modal
+//             isOpen={showDeleteModal}
+//             onClose={() => setShowDeleteModal(false)}
+//             title="Delete Workspace"
+//           >
+//             <DeleteWorkspaceModal onClose={() => setShowDeleteModal(false)} />
+//           </Modal>
+//         )}
+//       </>
+// )}
+
+//  </header>
+
+      // <section>
+      //   <h2 className="text-sm font-medium text-gray-500 mb-2">
+      //     Projects in this workspace
+      //   </h2>
+
+      //   {projects.length === 0 ? (
+      //     <div className="rounded-lg border border-dashed border-gray-300 p-6 text-center text-sm text-gray-500">
+      //       No projects yet. Create your first project to get started.
+      //     </div>
+      //   ) : (
+      //     <div className="flex  gap-4 flex-col md:flex-row  justify-center">
+            
+      //        {projects.map(project => (
+               
+      //           <h3
+      //            key={project.id}
+      //            className="font-medium block rounded-lg border border-gray-200 bg-green-50 p-4 mb-4  hover:shadow-sm transition"
+      //           >
+      //             {project.name}
+      //           </h3>
+              
+      //         ))} 
+              
+      //     </div>
+          
+      //   )}
+        
+      //   <div className="relative w-full ml-12 h-137.5">
+      //     <AutoScrollModal photo="Collab Dashboard.png">
+      //       <div className="mt-6">
+      //        <WorkspaceComment />
+      //       </div>
+
+      //     </AutoScrollModal>
+      //   </div>    
+                            
+      // </section>
+//     </div>
+//   );
 }
 
 

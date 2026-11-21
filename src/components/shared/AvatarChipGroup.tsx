@@ -22,26 +22,51 @@ export function AvatarChipGroup({
   const overflow = members.length - max;
 
   return (
-    <div className="flex items-center flex-wrap gap-1.5">
-      {visible.map((m) => (
-        <AvatarChip
-          key={m.id}
-          name={m.displayName}
-          avatarUrl={m.avatarUrl}
-          size={size}
-          showName={members.length === 1}
-          onRemove={
-            onRemove
-              ? () => onRemove(m.id)
-              : undefined
-          }
-        />
-      ))}
-      {overflow > 0 && (
-        <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-xs font-medium text-gray-600">
-          +{overflow}
-        </div>
-      )}
-    </div>
-  );
+  <div className="flex min-w-0 max-w-full flex-wrap items-center gap-1.5">
+    {visible.map((m) => (
+      <AvatarChip
+        key={m.id}
+        name={m.displayName}
+        avatarUrl={m.avatarUrl}
+        size={size}
+        showName={members.length === 1}
+        onRemove={
+          onRemove
+            ? () => onRemove(m.id)
+            : undefined
+        }
+      />
+    ))}
+
+    {overflow > 0 && (
+      <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gray-200 text-xs font-medium text-gray-600">
+        +{overflow}
+      </div>
+    )}
+  </div>
+);
+
+  // return (
+  //   <div className="flex items-center flex-wrap gap-1.5">
+  //     {visible.map((m) => (
+  //       <AvatarChip
+  //         key={m.id}
+  //         name={m.displayName}
+  //         avatarUrl={m.avatarUrl}
+  //         size={size}
+  //         showName={members.length === 1}
+  //         onRemove={
+  //           onRemove
+  //             ? () => onRemove(m.id)
+  //             : undefined
+  //         }
+  //       />
+  //     ))}
+  //     {overflow > 0 && (
+  //       <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-xs font-medium text-gray-600">
+  //         +{overflow}
+  //       </div>
+  //     )}
+  //   </div>
+  // );
 }

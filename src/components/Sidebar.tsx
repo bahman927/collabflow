@@ -30,7 +30,6 @@ export default function Sidebar({
   const { role } = useWorkspace();
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
-  // console.log(" sidebar - user :", user)
   const capName = user?.email
                   ? user.email.charAt(0).toUpperCase() +
                     user.email.slice(1)
@@ -75,242 +74,191 @@ export default function Sidebar({
       iconColor: "text-sky-600",
     },
   ];
-
-   
-  
-
-  // const profileImage = user?.email
-  //   ? `/${user.email.split("@")[0]}.JPG`
-  //   : "";
-
+ 
   const profileImage = user?.avatar || "";
   return (
-    // <aside className=" left-38 bottom-25   w-55 shrink-0  bg-gray-50 text-black  flex flex-col">
-    <aside className="w-55 shrink-0  bg-gray-50 text-black  flex flex-col">
+
+   <aside className="lg:w-55 shrink-0  bg-gray-50 text-black  flex flex-col">
 
       {/* ========================= */}
       {/* NAVIGATION */}
       {/* ========================= */}
        <p>
-        <img src="image2-vibrant.png" alt=""  className="h-20 w-55 bg-gray-300 " />
+        <img src="image2-vibrant.png" alt=""  className="h-16 lg:w-55 bg-gray-300 " />
        </p>
-      <nav className="flex-1 px-3 py-6 space-y-1">
-     
-        {navItems.filter( item =>
-              !item.showFor ||
-              (userRole && item.showFor.includes(userRole))
-          )
-          .map(
-            ({
-              label,
-              path,
-              icon: Icon,
-              iconColor,
-              onClick,
-            }) =>
-              onClick ? (
-                <button
-                  key={label}
-                  onClick={onClick}
-                  className="group flex items-center gap-6 px-4 py-6 rounded-md font-semibold w-full text-left hover:bg-gray-300"
-                >
-                  <Icon
-                    size={26}
-                    className={`
-                      transition-colors duration-200
-                      ${iconColor}
-                      group-hover:text-blue-500
-                    `}
-                  />
+ 
 
+    {/* NAVIGATION */}
+    <nav className="flex min-w-0 flex-1 flex-col gap-1 px-3 py-3 sm:py-4 lg:py-6">
+
+      {navItems
+        .filter(
+          (item) =>
+            !item.showFor ||
+            (userRole && item.showFor.includes(userRole))
+        )
+        .map(
+          ({
+            label,
+            path,
+            icon: Icon,
+            iconColor,
+            onClick,
+          }) =>
+            onClick ? (
+              <button
+                key={label}
+                type="button"
+                onClick={onClick}
+                className="group flex min-w-0 w-full items-center gap-3 rounded-md px-3 py-3 text-left text-sm font-semibold transition hover:bg-gray-300 sm:px-4 lg:gap-6 lg:py-4"
+              >
+                <Icon
+                  size={24}
+                  className={`shrink-0 transition-colors duration-200 ${iconColor} group-hover:text-blue-500`}
+                />
+
+                <span className="min-w-0 wrap-break-word">
                   {label}
-                </button>
-              ) : (
-                <NavLink
-                  key={path}
-                  to={path!}
-                  end={path === "/"}
-                >
-                  {({ isActive }) => (
-                    <div
+                </span>
+              </button>
+            ) : (
+              <NavLink
+                key={path}
+                to={path!}
+                end={path === "/"}
+              >
+                {({ isActive }) => (
+                  <div
+                    className={`
+                      group flex min-w-0 items-center gap-3
+                      rounded-md px-3 py-3 text-sm font-semibold
+                      transition sm:px-4 lg:py-2
+
+                      ${
+                        isActive
+                          ? "bg-gray-200 text-black"
+                          : "text-black hover:bg-gray-300"
+                      }
+                    `}
+                  >
+                    <Icon
+                      size={24}
                       className={`
-                        group flex items-center gap-3
-                        px-4 py-2 rounded-md
-                        text-md font-semibold transition
-
-                        ${
-                          isActive
-                            ? "bg-gray-200 text-black"
-                            : "text-black hover:bg-gray-300"
-                        }
+                        shrink-0 transition-colors duration-200
+                        ${isActive ? "text-blue-600" : iconColor}
+                        group-hover:text-blue-500
                       `}
-                    >
-                      <Icon
-                        size={26}
-                        className={`
-                          transition-colors duration-200
+                    />
 
-                          ${
-                            isActive
-                              ? "text-blue-600"
-                              : iconColor
-                          }
-
-                          group-hover:text-blue-500
-                        `}
-                      />
-
+                    <span className="min-w-0 wrap-break-word">
                       {label}
-                    </div>
-                  )}
-                </NavLink>
-              )
-          )}
-
-      </nav>
-
-
-      {/* ========================= */}
-      {/* USER MENU */}
-      {/* ========================= */}
-
-      <div className="relative border-t border-gray-300 p-3">
-
-        {/* USER BUTTON */}
-
-        <button
-          onClick={() =>
-            setShowUserMenu(prev => !prev)
-          }
-          className="w-full text-left rounded-md p-2 hover:bg-gray-200 transition"
-        >
-
-          <div className="flex items-center gap-2">
-
-            {profileImage && !imageError ? (
-                <img
-                  src={profileImage}
-                  alt="profile"
-                  onError={() => setImageError(true)}
-                  className="w-8 h-8 rounded-full object-cover shrink-0"
-                />
-              ) : (
-                <UserCircle
-                  size={32}
-                  className="text-gray-500 shrink-0"
-                />
-              )}
-
-            <div className="min-w-0">
-
-              <p className="text-sm font-semibold text-gray-800 truncate">
-                {user?.full_name || capName}
-              </p>
-
-              <p className="text-xs text-gray-500 truncate">
-                {user?.email}
-              </p>
-              <p className="text-xs text-blue-600 font-medium mt-1">
-                  {role}
-              </p>
-              
-
-            </div>
-
-          </div>
-
-        </button>
-
-
-        {/* ========================= */}
-        {/* DROPDOWN */}
-        {/* ========================= */}
-
-        {showUserMenu && (
-          <div
-            className="
-              absolute
-              bottom-full
-              left-3
-              right-3
-              mb-4
-              bg-white
-              border
-              border-gray-200
-              rounded-lg
-              shadow-lg
-              overflow-hidden
-              z-50
-            "
-          >
-
-            {/* PROFILE */}
-
-            <button
-              onClick={() => {
-                setShowUserMenu(false);
-                navigate("/profile")
-              }}
-              className="
-                w-full
-                text-left
-                px-4
-                py-3
-                hover:bg-gray-100
-                transition
-              "
-            >
-              Profile
-            </button>
-
-
-            {/* THEME */}
-
-            <button
-              onClick={() => {
-                setShowUserMenu(false);
-                setTheme(theme === "dark" ? "light" : "dark");
-              }}
-              className="
-                w-full
-                text-left
-                px-4
-                py-3
-                hover:bg-gray-100
-                transition
-              "
-            >
-               Theme: {theme}
-            </button>
-
-
-            {/* LOGOUT */}
-
-            <button
-              onClick={() => {
-                setShowUserMenu(false);
-                logout();
-              }}
-              className="
-                w-full
-                text-left
-                px-4
-                py-3
-                text-red-600
-                hover:bg-gray-100
-                transition
-              "
-            >
-              Logout
-            </button>
-
-          </div>
+                    </span>
+                  </div>
+                )}
+              </NavLink>
+            )
         )}
 
-      </div>
+    </nav>
 
-    </aside>
-  );
+    {/* USER MENU */}
+    <div className="relative border-t border-gray-300 p-5">
+
+      {/* USER BUTTON */}
+      <button
+        type="button"
+        onClick={() => setShowUserMenu((prev) => !prev)}
+        aria-expanded={showUserMenu}
+        className="w-full rounded-md p-3 text-left transition hover:bg-gray-200"
+      >
+        <div className="flex min-w-0 items-center gap-3">
+
+          {profileImage && !imageError ? (
+            <img
+              src={profileImage}
+              alt="Profile"
+              onError={() => setImageError(true)}
+              className="h-9 w-9 shrink-0 rounded-full object-cover"
+            />
+          ) : (
+            <UserCircle
+              size={36}
+              className="shrink-0 text-gray-500"
+            />
+          )}
+
+          <div className="min-w-0 flex-1">
+
+            <p className="truncate text-sm font-semibold text-gray-800">
+              {user?.full_name || capName}
+            </p>
+
+            <p className="truncate text-xs text-gray-500">
+              {user?.email}
+            </p>
+
+            <p className="mt-1 text-xs font-medium text-blue-600">
+              {role}
+            </p>
+
+          </div>
+
+        </div>
+      </button>
+
+      {/* DROPDOWN */}
+      {showUserMenu && (
+        <div
+          className="
+            absolute bottom-full left-3 right-3 z-50 mb-2
+            overflow-hidden rounded-lg border border-gray-200
+            bg-white shadow-lg
+          "
+        >
+
+          {/* PROFILE */}
+          <button
+            type="button"
+            onClick={() => {
+              setShowUserMenu(false);
+              navigate("/profile");
+            }}
+            className="w-full px-4 py-3 text-left text-sm transition hover:bg-gray-100"
+          >
+            Profile
+          </button>
+
+          {/* THEME */}
+          <button
+            type="button"
+            onClick={() => {
+              setShowUserMenu(false);
+              setTheme(theme === "dark" ? "light" : "dark");
+            }}
+            className="w-full px-4 py-3 text-left text-sm transition hover:bg-gray-100"
+          >
+            Theme: {theme}
+          </button>
+
+          {/* LOGOUT */}
+          <button
+            type="button"
+            onClick={() => {
+              setShowUserMenu(false);
+              logout();
+            }}
+            className="w-full px-4 py-3 text-left text-sm text-red-600 transition hover:bg-gray-100"
+          >
+            Logout
+          </button>
+
+        </div>
+      )}
+
+    </div>
+
+  </aside>
+);
 }
 
 
