@@ -112,17 +112,22 @@ const createProject = useCallback(
   // Update project (optimistic)
   // -----------------------------
   const updateProject = useCallback(
-   async (id: number, data: ProjectUpdateData): Promise<void> => {
-    // ⭐ Optimistic update
+  async (id: number, data: ProjectUpdateData): Promise<void> => {
+    // Optimistic update
     setProjects((prev) =>
       prev.map((p) => (p.id === id ? { ...p, ...data } : p))
     );
 
     try {
-      const { url, options } = projectService.update(id,currentWorkspace!.id, data);
+      const { url, options } = projectService.update(
+        id,
+        currentWorkspace!.id,
+        data
+      );
+
       const updated = await apiFetch<Project>(url, options);
 
-      // Replace optimistic with real
+      // Replace optimistic update with server response
       setProjects((prev) =>
         prev.map((p) => (p.id === id ? updated : p))
       );
@@ -131,16 +136,16 @@ const createProject = useCallback(
         setCurrentProject(updated);
       }
 
-      // ⭐ NEW — refresh activity feed
+      // Refresh activity feed
       await activity.fetchActivity();
-      
+
     } catch (err) {
       // Roll back optimistic update
       await fetchProjects();
       throw err;
     }
   },
-  [apiFetch, currentProject, fetchProjects, activity]
+  [apiFetch, currentProject, fetchProjects, activity, currentWorkspace]
 );
 
  
