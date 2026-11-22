@@ -125,6 +125,7 @@ const createProject = useCallback(
         data
       );
 
+      console.log("PROJECT UPDATE URL:", url);
       const updated = await apiFetch<Project>(url, options);
 
       // Replace optimistic update with server response
