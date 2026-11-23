@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import type { Tokens } from "../../types/auth";
 import {
   Camera,
@@ -12,9 +12,11 @@ import {
   X,
 } from "lucide-react";
 import { API_BASE_URL } from "../../api/config";
+
 type InvitationData = {
   valid: boolean;
   email: string;
+  existing_account: boolean;
   workspace: {
     id: number;
     name: string;
@@ -54,10 +56,18 @@ type SignupResponse = {
 };
 
 interface InvitationUserProps {
-  onSignupSuccess: (newTokens: Tokens) => Promise<void>
+  onSignupSuccess: (newTokens: Tokens) => Promise<void>;
+  onAcceptInvitation: (
+    token: string,
+    tokens: Tokens
+  ) => Promise<void>;
 }
 
-export  const InvitationUser = ({onSignupSuccess}: InvitationUserProps) => {
+export const InvitationUser = ({
+  onSignupSuccess,
+  onAcceptInvitation,
+}: InvitationUserProps) => {
+
   const { token } = useParams<{ token: string }>();
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -75,6 +85,7 @@ export  const InvitationUser = ({onSignupSuccess}: InvitationUserProps) => {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+  const location = useLocation();
 
   useEffect(() => {
     if (!token) {
@@ -109,6 +120,61 @@ export  const InvitationUser = ({onSignupSuccess}: InvitationUserProps) => {
 
     validateInvitation();
   }, [token]);
+
+  useEffect(() => {
+  const invitationTokens = (
+    location.state as { invitationTokens?: Tokens } | null
+  )?.invitationTokens;
+
+  if (
+    !invitation ||
+    !invitation.existing_account ||
+    !invitationTokens ||
+    !token
+  ) {
+    return;
+  }
+
+  const acceptInvitation = async () => {
+    try {
+      setSubmitting(true);
+      setError("");
+
+      await onAcceptInvitation(token, invitationTokens);
+
+      setSuccess(true);
+
+      // Clear the route state so the invitation isn't accepted twice.
+      navigate(location.pathname, {
+        replace: true,
+        state: null,
+      });
+
+      setTimeout(() => {
+        navigate("/", { replace: true });
+      }, 3000);
+
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Unable to accept invitation."
+      );
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  acceptInvitation();
+
+}, [
+  invitation,
+  location.state,
+  location.pathname,
+  navigate,
+  token,
+  onAcceptInvitation,
+]);
 
   const handleAvatarChange = (
     event: React.ChangeEvent<HTMLInputElement>
@@ -327,13 +393,15 @@ export  const InvitationUser = ({onSignupSuccess}: InvitationUserProps) => {
               </div>
             )}
 
-            {/* SUCCESS */}
+          {/* SUCCESS */}
             {success && (
               <div className="mb-5 flex items-start gap-2 rounded-lg border border-green-200 bg-green-50 px-3 py-3 text-sm text-green-700 sm:px-4">
                 <Check className="mt-0.5 h-4 w-4 shrink-0" />
 
                 <span>
-                  Your account has been created successfully.
+                  {invitation.existing_account
+                    ? "You have successfully joined the workspace!"
+                    : "Your account has been created successfully."}
                 </span>
               </div>
             )}
@@ -499,264 +567,4 @@ export  const InvitationUser = ({onSignupSuccess}: InvitationUserProps) => {
   </>
 );
 
-  // if (loadingInvitation) {
-  //   return (
-  //     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-  //       <div className="flex items-center gap-3 text-gray-600">
-  //         <Loader2 className="w-5 h-5 animate-spin" />
-  //         <span>Checking invitation...</span>
-  //       </div>
-  //     </div>
-  //   );
-  // }
- 
-  // if (!invitation) {
-  //   return (
-  //     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-  //       <div className="w-full max-w-md rounded-2xl bg-white border border-gray-200 shadow-sm p-8 text-center">
-  //         <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-red-50">
-  //           <X className="h-7 w-7 text-red-500" />
-  //         </div>
-  //         <h1 className="text-2xl font-semibold text-gray-900">
-  //           Invalid invitation
-  //         </h1>
-  //         <p className="mt-3 text-sm text-gray-500">
-  //           {error || "This invitation link is no longer valid."}
-  //         </p>
-  //         <button
-  //           type="button"
-  //           onClick={() => navigate("/login")}
-  //           className="mt-6 w-full rounded-lg bg-gray-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-gray-800"
-  //         >
-  //           Go to login
-  //         </button>
-
-  //       </div>
-  //     </div>
-  //   );
-  // }
-
-  // return (
-  //   <div className=" bg-gray-50 flex items-center justify-center px-4 py-10">
-  //     <div className="w-full max-w-lg">
-  //       <div className="text-center mb-8">
-  //         <h1 className="text-3xl font-bold text-gray-900">
-  //           Join CollabFlow
-  //         </h1>
-  //         <p className="mt-2 text-sm text-gray-500">
-  //           Create your account to join the workspace.
-  //         </p>
-  //       </div>
-
-  //       <div className="rounded-2xl bg-white border border-gray-200 shadow-sm p-7">
-  //         <div className="rounded-xl bg-gray-50 border border-gray-200 p-4 mb-7">
-  //           <div className="flex items-center gap-3 mb-4">
-  //             <div className="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center">
-  //               <User className="h-5 w-5 text-blue-600" />
-  //             </div>
-  //             <div>
-  //               <p className="text-xs text-gray-500">
-  //                 You've been invited to
-  //               </p>
-  //               <p className="font-semibold text-gray-900">
-  //                 {invitation.workspace.name}
-  //               </p>
-  //             </div>
-  //           </div>
-  //           <div className="space-y-3">
-  //             <div>
-  //               <p className="text-xs text-gray-500 mb-1">
-  //                 Email
-  //               </p>
-  //               <div className="rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-700">
-  //                 {invitation.email}
-  //               </div>
-  //             </div>
-  //             <div>
-  //               <p className="text-xs text-gray-500 mb-1">
-  //                 Workspace role
-  //               </p>
-  //               <div className="rounded-lg border border-gray-200 bg-white px-3 py-2.5">
-  //                 <span className="inline-flex items-center gap-2 text-sm font-medium text-gray-800">
-  //                   <span className="h-2 w-2 rounded-full bg-blue-500" />
-  //                    {invitation.role === "viewer"
-  //                     ? "Viewer"
-  //                     : "Member"}
-  //                   </span>
-  //               </div>
-  //             </div>
-  //           </div>
-  //         </div>
- 
-  //         {error && (
-  //           <div className="mb-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-  //             {error}
-  //           </div>
-  //         )}
- 
-  //         {success && (
-  //           <div className="mb-5 flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
-  //             <Check className="h-4 w-4 shrink-0" />
-  //             Your account has been created successfully.
-  //           </div>
-  //         )}
- 
-  //         <form
-  //           onSubmit={handleSubmit}
-  //           className="space-y-5"
-  //         >
-  //           <div>
-  //             <label
-  //               htmlFor="fullName"
-  //               className="block text-sm font-medium text-gray-700 mb-1.5"
-  //             >
-  //               Full name
-  //             </label>
-  //             <input
-  //               id="fullName"
-  //               type="text"
-  //               value={fullName}
-  //               onChange={(e) =>
-  //                 setFullName(e.target.value)
-  //               }
-  //               placeholder="Enter your full name"
-  //               autoComplete="name"
-  //               disabled={submitting}
-  //               className="w-full rounded-lg border border-gray-300 px-3.5 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
-  //             />
-  //           </div>
-  //           <div>
-  //             <label
-  //               htmlFor="password"
-  //               className="block text-sm font-medium text-gray-700 mb-1.5"
-  //             >
-  //               Password
-  //             </label>
-  //             <div className="relative">
-  //               <input
-  //                 id="password"
-  //                 type={
-  //                   showPassword
-  //                     ? "text"
-  //                     : "password"
-  //                 }
-  //                 value={password}
-  //                 onChange={(e) =>
-  //                   setPassword(e.target.value)
-  //                 }
-  //                 placeholder="Create a password"
-  //                 autoComplete="new-password"
-  //                 disabled={submitting}
-  //                 className="w-full rounded-lg border border-gray-300 px-3.5 py-2.5 pr-11 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
-  //               />
-
-  //               <button
-  //                 type="button"
-  //                 onClick={() =>
-  //                   setShowPassword((value) => !value)
-  //                 }
-  //                 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-  //                 aria-label={
-  //                   showPassword
-  //                     ? "Hide password"
-  //                     : "Show password"
-  //                 }
-  //               >
-  //                 {showPassword ? (
-  //                   <EyeOff className="h-5 w-5" />
-  //                 ) : (
-  //                   <Eye className="h-5 w-5" />
-  //                 )}
-  //               </button>
-
-  //             </div>
-  //           </div>
-  //           <div>
-
-  //             <label className="block text-sm font-medium text-gray-700 mb-2">
-  //               Profile photo
-  //               <span className="ml-1 font-normal text-gray-400">
-  //                 (optional)
-  //               </span>
-  //             </label>
-  //             <div className="flex items-center gap-4">                 
-  //               <div className="relative shrink-0">
-  //                 {avatarPreview ? (
-  //                   <img
-  //                     src={avatarPreview}
-  //                     alt="Profile preview"
-  //                     className="h-20 w-20 rounded-full object-cover border border-gray-200"
-  //                   />
-  //                 ) : (
-  //                   <div className="h-20 w-20 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center">
-  //                     <User className="h-8 w-8 text-gray-400" />
-  //                   </div>
-  //                 )}
-
-  //                 {avatarPreview && (
-  //                   <button
-  //                     type="button"
-  //                     onClick={handleRemoveAvatar}
-  //                     className="absolute -right-1 -top-1 h-6 w-6 rounded-full bg-gray-900 text-white flex items-center justify-center hover:bg-gray-700"
-  //                     aria-label="Remove profile photo"
-  //                   >
-  //                     <X className="h-3.5 w-3.5" />
-  //                   </button>
-  //                 )}
-
-  //               </div>
-  //               <div>
-  //                 <input
-  //                   ref={fileInputRef}
-  //                   type="file"
-  //                   accept="image/*"
-  //                   onChange={handleAvatarChange}
-  //                   className="hidden"
-  //                 />
-
-  //                 <button
-  //                   type="button"
-  //                   onClick={() => {
-  //                      console.log("Upload clicked");
-  //                      console.log("File input:", fileInputRef.current);
-  //                     fileInputRef.current?.click();
-  //                   }}
-  //                   disabled={submitting}
-  //                   className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-3.5 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
-  //                 > 
-  //                   <ImagePlus className="h-4 w-4" />
-  //                     Upload photo  
-  //                 </button>
-  //                 <p className="mt-1.5 text-xs text-gray-400">
-  //                   JPG, PNG or other image · Max 5 MB
-  //                 </p>
-  //               </div>
-  //             </div>
-  //           </div>
- 
-  //           <button
-  //             type="submit"
-  //             disabled={submitting}
-  //             className="w-full rounded-lg bg-gray-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-60"
-  //           >
-  //             {submitting ? (
-  //               <span className="flex items-center justify-center gap-2">
-  //                 <Loader2 className="h-4 w-4 animate-spin" />
-  //                 Creating account...
-  //               </span>
-  //             ) : (
-  //               "Create account"
-  //             )}
-  //           </button>
-  //         </form>
- 
-  //         <p className="mt-6 text-center text-xs text-gray-400">
-  //           By creating an account, you will join this workspace
-  //           with the role shown above.
-  //         </p>
-
-  //       </div>
-  //     </div>
-  //   </div>
-  // );
 }
