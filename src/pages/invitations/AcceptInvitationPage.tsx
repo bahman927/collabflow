@@ -9,6 +9,7 @@ import type { Workspace } from "../../types/workspace";
 import type { Tokens}     from "../../types/auth.ts"
 import { ApiError } from "../../api/apiError";
 import {InvitationUser} from "./InvitationUser";
+import { API_BASE_URL } from "../../api/config";
  
 // --------------------------------------------------
 // Response returned by POST /api/invitations/accept/
@@ -54,48 +55,49 @@ const AcceptInvitationPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  
   const validateInvitation = useCallback(async () => {
-
-    if (!token) {
-      setError("Invalid invitation token.");;
-      setLoading(false);
-      return;
-    }
-    try {   
-
-      setLoading(true);
-      setError("");
-
-      const {url, options } = invitationService.validate(token);
-      const result = await apiFetch<InvitationValidationResponse>(url, options);
- 
-      if (!result.valid) {
-        setError("This invitation is no longer valid.");
+      if (!token) {
+        setError("Invalid invitation token.");;
+        setLoading(false);
         return;
       }
+      try {   
 
-      setInvitationData(result);
+        setLoading(true);
+        setError("");
 
-    } catch (err: any) {
-      console.error(
-        "Invitation validation failed:",
-        err
-      );
+        const {url, options } = invitationService.validate(token);
+        const result = await apiFetch<InvitationValidationResponse>(url, options);
+  
+        if (!result.valid) {
+          setError("This invitation is no longer valid.");
+          return;
+        }
 
-      setError(
-        err.message ||
-        "Invalid invitation."
-      );
+        setInvitationData(result);
 
-    } finally {
-      setLoading(false);
-    }
+      } catch (err: any) {
+        console.error(
+          "Invitation validation failed:",
+          err
+        );
+
+        setError(
+          err.message ||
+          "Invalid invitation."
+        );
+
+      } finally {
+        setLoading(false);
+      }
 
   }, [token, apiFetch]);
 
   useEffect(() => {
         validateInvitation();
     }, [validateInvitation]);
+
 
   const acceptInvitation = useCallback(
     async (newTokens?: Tokens) => {
@@ -181,6 +183,25 @@ const AcceptInvitationPage = () => {
     acceptInvitation,
   ]);
 
+  const handleSignupSuccess = async (newTokens: Tokens) => {
+    setTokens(newTokens);
+  };
+  
+  const handleAcceptInvitation = useCallback(
+    async (token: string, newTokens: Tokens) => {
+      await apiFetch(
+        `${API_BASE_URL}/invitations/accept/`,
+        {
+          method: "POST",
+          body: JSON.stringify({ token }),
+          auth: true,
+        },
+        newTokens
+      );
+    },
+    [apiFetch]
+  );
+
   const handleAcceptExistingUser = () => {
         acceptInvitation();
     };
@@ -195,10 +216,10 @@ const AcceptInvitationPage = () => {
       <div className="min-h-screen bg-slate-100 flex items-center justify-center p-6">
 
         {/* <InvitationSignupPage */}
-        <InvitationUser
-          onSignupSuccess={acceptInvitation}
-        />
-
+       <InvitationUser
+          onSignupSuccess={handleSignupSuccess}
+          onAcceptInvitation={handleAcceptInvitation}
+       />
       </div>
     );
 
@@ -299,9 +320,10 @@ const AcceptInvitationPage = () => {
         </div>
       ) : (
         <div className="mt-6 min-w-0">
-          <InvitationUser
-            onSignupSuccess={acceptInvitation}
-          />
+         <InvitationUser
+          onSignupSuccess={handleSignupSuccess}
+          onAcceptInvitation={handleAcceptInvitation}
+        />
         </div>
       )}
 

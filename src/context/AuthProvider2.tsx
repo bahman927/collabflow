@@ -31,22 +31,22 @@ const [tokens, setTokensState] = useState<Tokens | null>(() => {
 });
 
 const setTokens = (newTokens: Tokens | null) => {
-  setTokensState(newTokens);
+    setTokensState(newTokens);
 
-  if (newTokens) {
-    localStorage.setItem(
-      "tokens",
-      JSON.stringify(newTokens)
-    );
-  } else {
-    localStorage.removeItem("tokens");
-  }
-};  
+    if (newTokens) {
+      localStorage.setItem(
+        "tokens",
+        JSON.stringify(newTokens)
+      );
+    } else {
+      localStorage.removeItem("tokens");
+    }
+  };  
  
-  const [user, setUser] = useState<User | null>(null);
-  const navigate = useNavigate();
+const [user, setUser] = useState<User | null>(null);
+const navigate = useNavigate();
 
-  const logout = useCallback(() => {
+const logout = useCallback(() => {
     setTokens(null);
     setUser(null);
   
@@ -54,42 +54,43 @@ const setTokens = (newTokens: Tokens | null) => {
     navigate("/")
   }, []);
 
-  useEffect(() => {
+useEffect(() => {
     const stored = localStorage.getItem("tokens");
     if (stored) {
       setTokens(JSON.parse(stored));
     }
    }, []);
 
+const wrappedFetch = useCallback(
+  <T,>(
+    url: string,
+    options: ApiRequestInit = {},
+    tokenOverride?: Tokens
+  ) => {
+    return apiFetch<T>(
+      url,
+      options,
+      () => tokenOverride ?? tokens,
+      setTokens,
+      logout
+    );
+  },
+  [tokens, setTokens, logout]
+);
 
-  const wrappedFetch = useCallback( <T,>
-      (url: string,
-       options: ApiRequestInit = {},
-       tokenOverride?: Tokens) => {
-      return apiFetch<T>(
-        url,
-        options,
-        () => tokenOverride ?? tokens,
-        setTokens,
-        logout);
-    },
-    [tokens, logout]  
-  );
-
-  const login = useCallback(async (data: LoginData) => {
-
+ const login = useCallback(async (data: LoginData) => {
     interface TokenResponse {
-     access: string;
-     refresh: string;
+      access: string;
+      refresh: string;
     }
 
     const tokenResult = await wrappedFetch<TokenResponse>(
-        `${API_BASE_URL}/auth/token/`,
-        {
-          method: "POST",
-          body: JSON.stringify(data),
-          auth: false,
-        }
+      `${API_BASE_URL}/auth/token/`,
+      {
+        method: "POST",
+        body: JSON.stringify(data),
+        auth: false,
+      }
     );
 
     const newTokens: Tokens = {
@@ -97,28 +98,24 @@ const setTokens = (newTokens: Tokens | null) => {
       refresh: tokenResult.refresh,
     };
 
-      setTokens(newTokens);
+    setTokens(newTokens);
 
-      const me = await apiFetch<User>(
+    const me = await wrappedFetch<User>(
       `${API_BASE_URL}/users/me/`,
       {
         method: "GET",
         auth: true,
       },
-      () => newTokens,
-      setTokens,
-      logout
+      newTokens
     );
-      
-      setUser(me);
+
+    setUser(me);
 
     return {
-          user: me,
-          tokens: newTokens,
-        };
-      },
-      [wrappedFetch, logout]
-    );
+      user: me,
+      tokens: newTokens,
+    };
+  }, [wrappedFetch, setTokens]);
    
 const updateUser = useCallback(
   async (data: UpdateUserData): Promise<User> => {
@@ -227,7 +224,6 @@ const signup = useCallback(
     <AuthContext.Provider
       value={{
         user,
-        // setUser,
         tokens,
         setTokens,
         isAuthenticated: !!user,
