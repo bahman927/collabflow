@@ -20,7 +20,7 @@ export default function Header() {
         {/* Logo */}
         <Link to="/" onClick={closeMobileMenu} className="shrink-0">
           <img
-            src="/CollabFlow-logo.png"
+            src="/CollabFlo-logo.png"
             alt="CollabFlow"
             className="h-12 sm:h-14 w-auto object-contain"
           />
