@@ -77,16 +77,14 @@ const handleSelectMember = (member: Member) => {
   setSearch("");
 };
  
-// useEffect(() => {
-//   if (!currentWorkspace?.id) return;
+useEffect(() => {
+  if (!currentWorkspace?.id) return;
 
-//   fetchMembers();
-//   fetchInvitations(currentWorkspace.id);
-// }, [
-//     currentWorkspace?.id,
-//     fetchMembers,
-//     fetchInvitations,
-//    ]);
+  fetchInvitations(currentWorkspace.id);
+}, [
+    currentWorkspace?.id,
+    fetchInvitations,
+   ]);
 
 
   // Find current user's membership to get their role
