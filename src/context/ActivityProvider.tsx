@@ -39,6 +39,10 @@ export function ActivityProvider({ children }: { children: React.ReactNode }) {
   const workspaceId = currentWorkspace?.id;
 
   const fetchActivity = useCallback(async () => {
+    console.log("FETCH ACTIVITY CALLED", {
+      workspaceId,
+      time: new Date().toISOString(),
+    });
     if (!workspaceId) return;
     setLoading(true);
     setError(null);
@@ -73,9 +77,10 @@ export function ActivityProvider({ children }: { children: React.ReactNode }) {
   }, [workspaceId]);
  
     useEffect(() => {
+      console.log("ACTIVITY EFFECT RUNNING", workspaceId);
       fetchActivity();
     }, [fetchActivity]);
-   
+    
    const value: ActivityContextType = {
     loading,
     error,

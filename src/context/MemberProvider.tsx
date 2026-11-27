@@ -7,6 +7,7 @@ import React, {
   useCallback,
   useMemo,
   useEffect,
+  useRef,
 } from 'react';
 import {
   Member,
@@ -21,7 +22,6 @@ import { useAuth }              from "../hooks/useAuth";
 import { useWorkspace }         from "./WorkspaceProvider";
 import { useProject }           from "../context/ProjectProvider";
 import { useTask }              from "../context/TaskProvider";
-// import { getTokens }            from '../services/authService';
 import { useActivity }          from "../context/ActivityProvider";
 
 
@@ -43,8 +43,7 @@ interface MemberContextType {
 
   export function MemberProvider({ children }: { children: React.ReactNode
     }) {
-      const { user } = useAuth();
-      // const { members } = useMember();
+      // const { user } = useAuth();
       const {apiFetch, tokens, setTokens, logout } = useAuth();
       const { currentWorkspace } = useWorkspace();
       const activity = useActivity();
@@ -60,14 +59,21 @@ interface MemberContextType {
           status: 'active',
         });
 
+
+  const tokensRef = useRef(tokens);
+
+// Keep the latest tokens available to memberService.
+  tokensRef.current = tokens;
+
   const memberService = useMemo(
-      () => createMemberService(
-        () => tokens,
+    () =>
+      createMemberService(
+        () => tokensRef.current,
         setTokens,
         logout
       ),
-      [tokens, setTokens, logout]
-    );
+    [setTokens, logout]
+  );
 
   const workspaceId = currentWorkspace?.id;
  

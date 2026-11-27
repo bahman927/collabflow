@@ -19,7 +19,6 @@ export function MembersPage() {
     error,
     activeMembers,
     inviteMember,
-    fetchMembers,
   } = useMember();
 
   const {
